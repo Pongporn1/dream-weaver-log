@@ -4,12 +4,13 @@ import { Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DreamCard } from '@/components/DreamCard';
-import { getDreamLogs, getWorlds } from '@/lib/store';
+import { getDreamLogs, getWorlds } from '@/lib/api';
 import { DreamLog, World, TIME_SYSTEMS, SAFETY_OVERRIDES } from '@/types/dream';
 
 export default function DreamLogs() {
   const [dreams, setDreams] = useState<DreamLog[]>([]);
   const [worlds, setWorlds] = useState<World[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   
   // Filters
@@ -19,8 +20,21 @@ export default function DreamLogs() {
   const [safetyFilter, setSafetyFilter] = useState<string>('all');
 
   useEffect(() => {
-    setDreams(getDreamLogs());
-    setWorlds(getWorlds());
+    const loadData = async () => {
+      try {
+        const [dreamsData, worldsData] = await Promise.all([
+          getDreamLogs(),
+          getWorlds()
+        ]);
+        setDreams(dreamsData);
+        setWorlds(worldsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const filteredDreams = dreams.filter(dream => {
@@ -30,6 +44,10 @@ export default function DreamLogs() {
     if (safetyFilter !== 'all' && dream.safetyOverride !== safetyFilter) return false;
     return true;
   });
+
+  if (loading) {
+    return <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>;
+  }
 
   return (
     <div className="space-y-4 py-4">

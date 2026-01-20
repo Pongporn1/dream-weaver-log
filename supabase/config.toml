@@ -1,1 +1,4 @@
 project_id = "rapxqrjhrehfhqsafovf"
+
+[functions.parse-sleep]
+verify_jwt = false

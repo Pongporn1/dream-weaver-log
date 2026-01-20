@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getDreamLogs, deleteDreamLog } from '@/lib/store';
+import { getDreamLogs, deleteDreamLog } from '@/lib/api';
 import { DreamLog } from '@/types/dream';
+import { toast } from '@/hooks/use-toast';
 
 const threatColors: Record<number, string> = {
   0: 'bg-muted text-muted-foreground',
@@ -18,19 +19,38 @@ export default function DreamDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dream, setDream] = useState<DreamLog | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const dreams = getDreamLogs();
-    const found = dreams.find(d => d.id === id);
-    setDream(found || null);
+    const loadDream = async () => {
+      try {
+        const dreams = await getDreamLogs();
+        const found = dreams.find(d => d.id === id);
+        setDream(found || null);
+      } catch (error) {
+        console.error('Error loading dream:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDream();
   }, [id]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (dream && confirm('ลบบันทึกนี้?')) {
-      deleteDreamLog(dream.id);
-      navigate('/logs');
+      const success = await deleteDreamLog(dream.id);
+      if (success) {
+        toast({ title: "ลบเรียบร้อย" });
+        navigate('/logs');
+      } else {
+        toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+      }
     }
   };
+
+  if (loading) {
+    return <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>;
+  }
 
   if (!dream) {
     return (

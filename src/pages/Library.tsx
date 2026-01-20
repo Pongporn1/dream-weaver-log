@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
-import { getWorlds, getEntities, getModules, getThreats } from '@/lib/store';
+import { getWorlds, getEntities, getModules, getThreats } from '@/lib/api';
 import { World, Entity, SystemModule, ThreatEntry } from '@/types/dream';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -10,13 +9,33 @@ export default function Library() {
   const [modules, setModules] = useState<SystemModule[]>([]);
   const [threats, setThreats] = useState<ThreatEntry[]>([]);
   const [activeTab, setActiveTab] = useState('worlds');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setWorlds(getWorlds());
-    setEntities(getEntities());
-    setModules(getModules());
-    setThreats(getThreats());
+    const loadData = async () => {
+      try {
+        const [worldsData, entitiesData, modulesData, threatsData] = await Promise.all([
+          getWorlds(),
+          getEntities(),
+          getModules(),
+          getThreats()
+        ]);
+        setWorlds(worldsData);
+        setEntities(entitiesData);
+        setModules(modulesData);
+        setThreats(threatsData);
+      } catch (error) {
+        console.error('Error loading library:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
+
+  if (loading) {
+    return <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>;
+  }
 
   return (
     <div className="py-4 space-y-4">
