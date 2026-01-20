@@ -1,0 +1,126 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DreamCard } from '@/components/DreamCard';
+import { getDreamLogs, getWorlds } from '@/lib/store';
+import { DreamLog, World, TIME_SYSTEMS, SAFETY_OVERRIDES } from '@/types/dream';
+
+export default function DreamLogs() {
+  const [dreams, setDreams] = useState<DreamLog[]>([]);
+  const [worlds, setWorlds] = useState<World[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filters
+  const [worldFilter, setWorldFilter] = useState<string>('all');
+  const [threatFilter, setThreatFilter] = useState<string>('all');
+  const [timeSystemFilter, setTimeSystemFilter] = useState<string>('all');
+  const [safetyFilter, setSafetyFilter] = useState<string>('all');
+
+  useEffect(() => {
+    setDreams(getDreamLogs());
+    setWorlds(getWorlds());
+  }, []);
+
+  const filteredDreams = dreams.filter(dream => {
+    if (worldFilter !== 'all' && dream.world !== worldFilter) return false;
+    if (threatFilter !== 'all' && dream.threatLevel !== Number(threatFilter)) return false;
+    if (timeSystemFilter !== 'all' && dream.timeSystem !== timeSystemFilter) return false;
+    if (safetyFilter !== 'all' && dream.safetyOverride !== safetyFilter) return false;
+    return true;
+  });
+
+  return (
+    <div className="space-y-4 py-4">
+      <div className="flex items-center justify-between">
+        <h1>Dream Logs</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/logs/new">
+              <Plus className="w-4 h-4 mr-1" />
+              New
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {showFilters && (
+        <div className="card-minimal space-y-3">
+          <p className="text-sm font-medium">Filters</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Select value={worldFilter} onValueChange={setWorldFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="World" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Worlds</SelectItem>
+                {worlds.map(w => (
+                  <SelectItem key={w.id} value={w.name}>{w.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={threatFilter} onValueChange={setThreatFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Threat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Threats</SelectItem>
+                {[0, 1, 2, 3, 4, 5].map(t => (
+                  <SelectItem key={t} value={String(t)}>Level {t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={timeSystemFilter} onValueChange={setTimeSystemFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Time System" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {TIME_SYSTEMS.map(ts => (
+                  <SelectItem key={ts} value={ts}>{ts}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={safetyFilter} onValueChange={setSafetyFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Safety" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {SAFETY_OVERRIDES.map(so => (
+                  <SelectItem key={so} value={so}>{so}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {filteredDreams.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>ไม่พบบันทึก</p>
+            <Button asChild variant="link" className="mt-2">
+              <Link to="/logs/new">สร้างบันทึกใหม่</Link>
+            </Button>
+          </div>
+        ) : (
+          filteredDreams.map(dream => (
+            <DreamCard key={dream.id} dream={dream} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
