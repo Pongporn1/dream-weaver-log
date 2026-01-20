@@ -14,7 +14,338 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dream_log_entities: {
+        Row: {
+          dream_log_id: string
+          entity_id: string
+          id: string
+        }
+        Insert: {
+          dream_log_id: string
+          entity_id: string
+          id?: string
+        }
+        Update: {
+          dream_log_id?: string
+          entity_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_log_entities_dream_log_id_fkey"
+            columns: ["dream_log_id"]
+            isOneToOne: false
+            referencedRelation: "dream_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dream_log_entities_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dream_log_modules: {
+        Row: {
+          dream_log_id: string
+          id: string
+          module_id: string
+        }
+        Insert: {
+          dream_log_id: string
+          id?: string
+          module_id: string
+        }
+        Update: {
+          dream_log_id?: string
+          id?: string
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_log_modules_dream_log_id_fkey"
+            columns: ["dream_log_id"]
+            isOneToOne: false
+            referencedRelation: "dream_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dream_log_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "system_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dream_log_threats: {
+        Row: {
+          dream_log_id: string
+          id: string
+          threat_id: string
+        }
+        Insert: {
+          dream_log_id: string
+          id?: string
+          threat_id: string
+        }
+        Update: {
+          dream_log_id?: string
+          id?: string
+          threat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_log_threats_dream_log_id_fkey"
+            columns: ["dream_log_id"]
+            isOneToOne: false
+            referencedRelation: "dream_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dream_log_threats_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dream_logs: {
+        Row: {
+          created_at: string
+          date: string
+          dream_id: string
+          environments: string[]
+          exit: Database["public"]["Enums"]["exit_type"]
+          id: string
+          notes: string | null
+          safety_override: Database["public"]["Enums"]["safety_override"]
+          threat_level: number
+          time_system: Database["public"]["Enums"]["time_system"]
+          updated_at: string
+          wake_time: string
+          world_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          dream_id: string
+          environments?: string[]
+          exit?: Database["public"]["Enums"]["exit_type"]
+          id?: string
+          notes?: string | null
+          safety_override?: Database["public"]["Enums"]["safety_override"]
+          threat_level?: number
+          time_system?: Database["public"]["Enums"]["time_system"]
+          updated_at?: string
+          wake_time: string
+          world_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          dream_id?: string
+          environments?: string[]
+          exit?: Database["public"]["Enums"]["exit_type"]
+          id?: string
+          notes?: string | null
+          safety_override?: Database["public"]["Enums"]["safety_override"]
+          threat_level?: number
+          time_system?: Database["public"]["Enums"]["time_system"]
+          updated_at?: string
+          wake_time?: string
+          world_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_logs_world_id_fkey"
+            columns: ["world_id"]
+            isOneToOne: false
+            referencedRelation: "worlds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["entity_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          role?: Database["public"]["Enums"]["entity_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["entity_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          created_at: string
+          date: string
+          deep_continuity_score: number | null
+          deep_hours: number
+          deep_minutes: number
+          id: string
+          light_hours: number
+          light_minutes: number
+          nap_end: string | null
+          nap_minutes: number | null
+          nap_start: string | null
+          rem_hours: number
+          rem_minutes: number
+          sleep_id: string
+          sleep_score: number | null
+          sleep_start: string
+          total_hours: number
+          total_minutes: number
+          wake_time: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          deep_continuity_score?: number | null
+          deep_hours?: number
+          deep_minutes?: number
+          id?: string
+          light_hours?: number
+          light_minutes?: number
+          nap_end?: string | null
+          nap_minutes?: number | null
+          nap_start?: string | null
+          rem_hours?: number
+          rem_minutes?: number
+          sleep_id: string
+          sleep_score?: number | null
+          sleep_start: string
+          total_hours?: number
+          total_minutes?: number
+          wake_time: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          deep_continuity_score?: number | null
+          deep_hours?: number
+          deep_minutes?: number
+          id?: string
+          light_hours?: number
+          light_minutes?: number
+          nap_end?: string | null
+          nap_minutes?: number | null
+          nap_start?: string | null
+          rem_hours?: number
+          rem_minutes?: number
+          sleep_id?: string
+          sleep_score?: number | null
+          sleep_start?: string
+          total_hours?: number
+          total_minutes?: number
+          wake_time?: string
+        }
+        Relationships: []
+      }
+      system_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["module_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          type?: Database["public"]["Enums"]["module_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["module_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      threats: {
+        Row: {
+          created_at: string
+          id: string
+          level: number
+          name: string
+          response: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number
+          name: string
+          response?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number
+          name?: string
+          response?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      worlds: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          stability: number
+          type: Database["public"]["Enums"]["world_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          stability?: number
+          type?: Database["public"]["Enums"]["world_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          stability?: number
+          type?: Database["public"]["Enums"]["world_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +354,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      entity_role: "observer" | "protector" | "guide" | "intruder"
+      exit_type: "wake" | "separation" | "collapse" | "unknown"
+      module_type:
+        | "time_activation"
+        | "safety_override"
+        | "distance_expansion"
+        | "other"
+      safety_override: "none" | "helper" | "separation" | "wake" | "unknown"
+      time_system: "inactive" | "activated" | "unknown"
+      world_type: "persistent" | "transient"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +490,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      entity_role: ["observer", "protector", "guide", "intruder"],
+      exit_type: ["wake", "separation", "collapse", "unknown"],
+      module_type: [
+        "time_activation",
+        "safety_override",
+        "distance_expansion",
+        "other",
+      ],
+      safety_override: ["none", "helper", "separation", "wake", "unknown"],
+      time_system: ["inactive", "activated", "unknown"],
+      world_type: ["persistent", "transient"],
+    },
   },
 } as const

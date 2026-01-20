@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Send, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getDreamLogs, getWorlds, getEntities, getThreats } from '@/lib/store';
-import { DreamLog } from '@/types/dream';
+import { getDreamLogs, getWorlds, getEntities, getThreats } from '@/lib/api';
+import { DreamLog, World, Entity, ThreatEntry } from '@/types/dream';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -20,16 +20,32 @@ export default function Librarian() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dreamLogs, setDreamLogs] = useState<DreamLog[]>([]);
+  const [worlds, setWorlds] = useState<World[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [threats, setThreats] = useState<ThreatEntry[]>([]);
 
   useEffect(() => {
-    setDreamLogs(getDreamLogs());
+    const loadData = async () => {
+      try {
+        const [dreamsData, worldsData, entitiesData, threatsData] = await Promise.all([
+          getDreamLogs(),
+          getWorlds(),
+          getEntities(),
+          getThreats()
+        ]);
+        setDreamLogs(dreamsData);
+        setWorlds(worldsData);
+        setEntities(entitiesData);
+        setThreats(threatsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    loadData();
   }, []);
 
   const searchLibrary = (query: string): string => {
     const lowerQuery = query.toLowerCase();
-    const worlds = getWorlds();
-    const entities = getEntities();
-    const threats = getThreats();
 
     // Search in worlds
     const matchedWorlds = worlds.filter(w => 
@@ -63,7 +79,7 @@ export default function Librarian() {
       response += `พบโลก:\n`;
       matchedWorlds.forEach(w => {
         response += `• ${w.name} (${w.type}, stability ${w.stability})\n`;
-        response += `  อ้างอิง: ${w.dreamIds.join(', ') || 'ไม่มี'}\n`;
+        response += `  อ้างอิง: ${w.dreamIds.length > 0 ? w.dreamIds.join(', ') : 'ไม่มี'}\n`;
       });
       response += '\n';
     }
@@ -72,7 +88,7 @@ export default function Librarian() {
       response += `พบสิ่งมีชีวิต:\n`;
       matchedEntities.forEach(e => {
         response += `• ${e.name} (${e.role})\n`;
-        response += `  อ้างอิง: ${e.dreamIds.join(', ') || 'ไม่มี'}\n`;
+        response += `  อ้างอิง: ${e.dreamIds.length > 0 ? e.dreamIds.join(', ') : 'ไม่มี'}\n`;
       });
       response += '\n';
     }
@@ -81,7 +97,7 @@ export default function Librarian() {
       response += `พบภัยคุกคาม:\n`;
       matchedThreats.forEach(t => {
         response += `• ${t.name} (level ${t.level})\n`;
-        response += `  อ้างอิง: ${t.dreamIds.join(', ') || 'ไม่มี'}\n`;
+        response += `  อ้างอิง: ${t.dreamIds.length > 0 ? t.dreamIds.join(', ') : 'ไม่มี'}\n`;
       });
       response += '\n';
     }
@@ -109,12 +125,12 @@ export default function Librarian() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
-    // Simulate processing
+    // Process search
     setTimeout(() => {
       const response = searchLibrary(userMessage);
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
       setIsLoading(false);
-    }, 500);
+    }, 300);
   };
 
   return (

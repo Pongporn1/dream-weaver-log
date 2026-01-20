@@ -2,21 +2,25 @@ import { useState, useEffect } from 'react';
 import { Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SleepCard } from '@/components/SleepCard';
-import { getSleepLogs, addSleepLog } from '@/lib/store';
+import { getSleepLogs, addSleepLog, parseSleepImage } from '@/lib/api';
 import { SleepLog } from '@/types/dream';
 import { toast } from '@/hooks/use-toast';
 
 interface ParsedSleepData {
-  date_th: string | null;
-  sleep_start: string | null;
-  wake_time: string | null;
-  total_sleep: { hours: number; minutes: number } | null;
-  deep: { hours: number; minutes: number } | null;
-  light: { hours: number; minutes: number } | null;
-  rem: { hours: number; minutes: number } | null;
-  nap: { minutes: number; start?: string; end?: string } | null;
-  sleep_score: number | null;
-  deep_continuity_score: number | null;
+  date_th?: string;
+  sleep_start?: string;
+  wake_time?: string;
+  total_sleep?: { hours: number; minutes: number };
+  deep?: { hours: number; minutes: number };
+  light?: { hours: number; minutes: number };
+  rem?: { hours: number; minutes: number };
+  nap?: { minutes: number; start?: string; end?: string };
+  sleep_score?: number;
+  deep_continuity_score?: number;
+  deep_percent?: number;
+  light_percent?: number;
+  rem_percent?: number;
+  inconsistent?: boolean;
 }
 
 export default function SleepCalculator() {
@@ -24,17 +28,27 @@ export default function SleepCalculator() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedSleepData | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [inconsistentFlag, setInconsistentFlag] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setSleepLogs(getSleepLogs());
+    const loadLogs = async () => {
+      try {
+        const logs = await getSleepLogs();
+        setSleepLogs(logs);
+      } catch (error) {
+        console.error('Error loading sleep logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadLogs();
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview
+    // Show preview and convert to base64
     const reader = new FileReader();
     reader.onload = (event) => {
       setUploadedImage(event.target?.result as string);
@@ -42,7 +56,6 @@ export default function SleepCalculator() {
     reader.readAsDataURL(file);
 
     setParsedData(null);
-    setInconsistentFlag(false);
   };
 
   const handleAnalyze = async () => {
@@ -53,50 +66,35 @@ export default function SleepCalculator() {
 
     setIsAnalyzing(true);
 
-    // Simulated parsing - In production, this would call the AI API
-    // For now, we'll show a demo result
-    setTimeout(() => {
-      const mockData: ParsedSleepData = {
-        date_th: "14 ม.ค. 2569",
-        sleep_start: "04:48",
-        wake_time: "12:23",
-        total_sleep: { hours: 7, minutes: 25 },
-        deep: { hours: 2, minutes: 14 },
-        light: { hours: 3, minutes: 46 },
-        rem: { hours: 1, minutes: 25 },
-        nap: { minutes: 11, start: "12:12", end: "12:23" },
-        sleep_score: 84,
-        deep_continuity_score: 69
-      };
-
-      // Check consistency
-      if (mockData.total_sleep && mockData.deep && mockData.light && mockData.rem) {
-        const totalMinutes = mockData.total_sleep.hours * 60 + mockData.total_sleep.minutes;
-        const sumMinutes = 
-          (mockData.deep.hours * 60 + mockData.deep.minutes) +
-          (mockData.light.hours * 60 + mockData.light.minutes) +
-          (mockData.rem.hours * 60 + mockData.rem.minutes);
-        
-        setInconsistentFlag(Math.abs(totalMinutes - sumMinutes) > 5);
+    try {
+      const result = await parseSleepImage(uploadedImage);
+      
+      if (result.error) {
+        toast({ title: result.error, variant: "destructive" });
+        return;
       }
 
-      setParsedData(mockData);
-      setIsAnalyzing(false);
+      setParsedData(result);
       toast({ title: "วิเคราะห์เสร็จสิ้น" });
-    }, 2000);
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast({ title: "เกิดข้อผิดพลาดในการวิเคราะห์", variant: "destructive" });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!parsedData || !parsedData.total_sleep) {
       toast({ title: "ไม่มีข้อมูลให้บันทึก", variant: "destructive" });
       return;
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const newLog = addSleepLog({
+    const newLog = await addSleepLog({
       date: today,
-      sleepStart: parsedData.sleep_start || '',
-      wakeTime: parsedData.wake_time || '',
+      sleepStart: parsedData.sleep_start || '00:00',
+      wakeTime: parsedData.wake_time || '00:00',
       totalSleep: parsedData.total_sleep,
       deep: parsedData.deep || { hours: 0, minutes: 0 },
       light: parsedData.light || { hours: 0, minutes: 0 },
@@ -106,18 +104,14 @@ export default function SleepCalculator() {
       deepContinuityScore: parsedData.deep_continuity_score || undefined
     });
 
-    setSleepLogs([newLog, ...sleepLogs]);
-    setParsedData(null);
-    setUploadedImage(null);
-    setInconsistentFlag(false);
-    toast({ title: "บันทึกเรียบร้อย" });
-  };
-
-  const calcPercentage = (h: number, m: number, totalH: number, totalM: number): number => {
-    const partMinutes = h * 60 + m;
-    const totalMinutes = totalH * 60 + totalM;
-    if (totalMinutes === 0) return 0;
-    return Math.round((partMinutes / totalMinutes) * 100);
+    if (newLog) {
+      setSleepLogs([newLog, ...sleepLogs]);
+      setParsedData(null);
+      setUploadedImage(null);
+      toast({ title: "บันทึกเรียบร้อย" });
+    } else {
+      toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+    }
   };
 
   return (
@@ -177,7 +171,7 @@ export default function SleepCalculator() {
             )}
           </div>
 
-          {inconsistentFlag && (
+          {parsedData.inconsistent && (
             <div className="bg-destructive/10 text-destructive text-sm p-2 rounded">
               ⚠️ ผลรวม Deep+Light+REM ไม่ตรงกับ Total
             </div>
@@ -202,30 +196,30 @@ export default function SleepCalculator() {
                 <span>{parsedData.total_sleep.hours}h {parsedData.total_sleep.minutes}m</span>
               </div>
             )}
-            {parsedData.deep && parsedData.total_sleep && (
+            {parsedData.deep && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Deep</span>
                 <span>
                   {parsedData.deep.hours}h {parsedData.deep.minutes}m 
-                  ({calcPercentage(parsedData.deep.hours, parsedData.deep.minutes, parsedData.total_sleep.hours, parsedData.total_sleep.minutes)}%)
+                  {parsedData.deep_percent !== undefined && ` (${parsedData.deep_percent}%)`}
                 </span>
               </div>
             )}
-            {parsedData.light && parsedData.total_sleep && (
+            {parsedData.light && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Light</span>
                 <span>
                   {parsedData.light.hours}h {parsedData.light.minutes}m 
-                  ({calcPercentage(parsedData.light.hours, parsedData.light.minutes, parsedData.total_sleep.hours, parsedData.total_sleep.minutes)}%)
+                  {parsedData.light_percent !== undefined && ` (${parsedData.light_percent}%)`}
                 </span>
               </div>
             )}
-            {parsedData.rem && parsedData.total_sleep && (
+            {parsedData.rem && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">REM</span>
                 <span>
                   {parsedData.rem.hours}h {parsedData.rem.minutes}m 
-                  ({calcPercentage(parsedData.rem.hours, parsedData.rem.minutes, parsedData.total_sleep.hours, parsedData.total_sleep.minutes)}%)
+                  {parsedData.rem_percent !== undefined && ` (${parsedData.rem_percent}%)`}
                 </span>
               </div>
             )}
@@ -238,7 +232,7 @@ export default function SleepCalculator() {
                 </span>
               </div>
             )}
-            {parsedData.deep_continuity_score !== null && (
+            {parsedData.deep_continuity_score !== undefined && (
               <div className="flex justify-between text-sm border-t pt-2">
                 <span className="text-muted-foreground">Deep Continuity</span>
                 <span>{parsedData.deep_continuity_score}</span>
@@ -253,7 +247,9 @@ export default function SleepCalculator() {
       )}
 
       {/* Previous Logs */}
-      {sleepLogs.length > 0 && (
+      {loading ? (
+        <div className="text-center py-4 text-muted-foreground">กำลังโหลด...</div>
+      ) : sleepLogs.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-medium">Previous Logs</h2>
           {sleepLogs.map(log => (

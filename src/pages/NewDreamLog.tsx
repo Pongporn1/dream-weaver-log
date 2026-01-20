@@ -7,13 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { addDreamLog, getWorlds, getEntities, addWorld, addEntity } from '@/lib/store';
+import { addDreamLog, getWorlds, getEntities } from '@/lib/api';
 import { ENVIRONMENTS, TIME_SYSTEMS, SAFETY_OVERRIDES, EXIT_TYPES, DreamLog } from '@/types/dream';
+import { toast } from '@/hooks/use-toast';
 
 export default function NewDreamLog() {
   const navigate = useNavigate();
   const [worlds, setWorlds] = useState<{ id: string; name: string }[]>([]);
   const [entities, setEntities] = useState<{ id: string; name: string }[]>([]);
+  const [saving, setSaving] = useState(false);
   
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -31,48 +33,53 @@ export default function NewDreamLog() {
   });
 
   useEffect(() => {
-    setWorlds(getWorlds().map(w => ({ id: w.id, name: w.name })));
-    setEntities(getEntities().map(e => ({ id: e.id, name: e.name })));
+    const loadData = async () => {
+      const [worldsData, entitiesData] = await Promise.all([
+        getWorlds(),
+        getEntities()
+      ]);
+      setWorlds(worldsData.map(w => ({ id: w.id, name: w.name })));
+      setEntities(entitiesData.map(e => ({ id: e.id, name: e.name })));
+    };
+    loadData();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     
-    let worldName = form.world;
-    if (form.newWorld) {
-      const newWorld = addWorld({
-        name: form.newWorld,
-        type: 'transient',
-        stability: 3,
-        dreamIds: []
+    try {
+      const worldName = form.newWorld || form.world;
+      const entityNames = [...form.selectedEntities];
+      if (form.newEntity) {
+        entityNames.push(form.newEntity);
+      }
+
+      const result = await addDreamLog({
+        date: form.date,
+        wakeTime: form.wakeTime,
+        world: worldName,
+        timeSystem: form.timeSystem,
+        environments: form.environments,
+        entities: entityNames,
+        threatLevel: form.threatLevel,
+        safetyOverride: form.safetyOverride,
+        exit: form.exit,
+        notes: form.notes || undefined
       });
-      worldName = newWorld.name;
+
+      if (result) {
+        toast({ title: "บันทึกเรียบร้อย" });
+        navigate('/logs');
+      } else {
+        toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Error saving dream:', error);
+      toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-
-    let entityNames = form.selectedEntities;
-    if (form.newEntity) {
-      const newEntity = addEntity({
-        name: form.newEntity,
-        role: 'observer',
-        dreamIds: []
-      });
-      entityNames = [...entityNames, newEntity.name];
-    }
-
-    addDreamLog({
-      date: form.date,
-      wakeTime: form.wakeTime,
-      world: worldName,
-      timeSystem: form.timeSystem,
-      environments: form.environments,
-      entities: entityNames,
-      threatLevel: form.threatLevel,
-      safetyOverride: form.safetyOverride,
-      exit: form.exit,
-      notes: form.notes || undefined
-    });
-
-    navigate('/logs');
   };
 
   const toggleEnvironment = (env: string) => {
@@ -273,8 +280,8 @@ export default function NewDreamLog() {
           />
         </div>
 
-        <Button type="submit" className="w-full">
-          บันทึก
+        <Button type="submit" className="w-full" disabled={saving}>
+          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
       </form>
     </div>
