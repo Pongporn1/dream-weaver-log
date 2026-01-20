@@ -4,6 +4,8 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // สำหรับ GitHub Pages - เปลี่ยน 'dream-weaver-log' เป็นชื่อ repository ของคุณ
+  base: mode === 'production' ? '/dream-weaver-log/' : '/',
   server: {
     host: "::",
     port: 8080,
