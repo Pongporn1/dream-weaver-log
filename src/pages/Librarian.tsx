@@ -326,11 +326,12 @@ Return ONLY valid JSON, no other text.`;
 - ตอบแบบเป็นมิตร สนุกสนาน และมีประโยชน์`;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_AI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-goog-api-key": GOOGLE_AI_API_KEY,
           },
           body: JSON.stringify({
             contents: [
