@@ -222,7 +222,7 @@ export default function Librarian() {
 
     try {
       // Call Gemini API directly from frontend
-      const GOOGLE_AI_API_KEY = import.meta.env.VITE_GOOGLE_AI_API_KEY;
+      const GOOGLE_AI_API_KEY = import.meta.env.VITE_GOOGLE_AI_API_KEY || 'AIzaSyB20PAkEHNwPGlpEVCL6K_qcomEJirYmU';
 
       console.log("API Key check:", GOOGLE_AI_API_KEY ? "Found" : "Not found");
       console.log("API Key length:", GOOGLE_AI_API_KEY?.length);
