@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Bot, ExternalLink, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getDreamLogs, getWorlds, getEntities, getThreats, sendAIChat } from "@/lib/api";
+import {
+  getDreamLogs,
+  getWorlds,
+  getEntities,
+  getThreats,
+  sendAIChat,
+} from "@/lib/api";
 import { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -109,7 +115,7 @@ export default function Librarian() {
 
       const result = await sendAIChat(
         [...chatHistory, { role: "user", content: userMessage }],
-        context
+        context,
       );
 
       if (result.error) {
@@ -140,32 +146,34 @@ export default function Librarian() {
         });
 
         // Also add links from matched items
-        [...(result.matchedWorlds || []), ...(result.matchedEntities || []), ...(result.matchedThreats || [])].forEach(
-          (name: string) => {
-            const world = worlds.find((w) => w.name === name);
-            const entity = entities.find((e) => e.name === name);
-            const threat = threats.find((t) => t.name === name);
+        [
+          ...(result.matchedWorlds || []),
+          ...(result.matchedEntities || []),
+          ...(result.matchedThreats || []),
+        ].forEach((name: string) => {
+          const world = worlds.find((w) => w.name === name);
+          const entity = entities.find((e) => e.name === name);
+          const threat = threats.find((t) => t.name === name);
 
-            const item = world || entity || threat;
-            if (item && item.dreamIds) {
-              item.dreamIds.forEach((id: string) => {
-                if (!links.find((l) => l.id === id)) {
-                  const dream = dreamLogs.find((d) => d.id === id);
-                  if (dream) {
-                    const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-                      locale: th,
-                    });
-                    links.push({
-                      id,
-                      label: `${name} - ${dateStr}`,
-                      date: dateStr,
-                    });
-                  }
+          const item = world || entity || threat;
+          if (item && item.dreamIds) {
+            item.dreamIds.forEach((id: string) => {
+              if (!links.find((l) => l.id === id)) {
+                const dream = dreamLogs.find((d) => d.id === id);
+                if (dream) {
+                  const dateStr = format(new Date(dream.date), "d MMM yyyy", {
+                    locale: th,
+                  });
+                  links.push({
+                    id,
+                    label: `${name} - ${dateStr}`,
+                    date: dateStr,
+                  });
                 }
-              });
-            }
+              }
+            });
           }
-        );
+        });
 
         setMessages((prev) => [
           ...prev,
@@ -183,7 +191,8 @@ export default function Librarian() {
         ...prev,
         {
           role: "assistant",
-          content: "ขอโทษครับ ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
+          content:
+            "ขอโทษครับ ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
         },
       ]);
     } finally {
@@ -203,9 +212,7 @@ export default function Librarian() {
             DreamWeaver AI
             <Sparkles className="w-4 h-4 text-primary" />
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Powered by Lovable AI
-          </p>
+          <p className="text-xs text-muted-foreground">Powered by Lovable AI</p>
         </div>
       </div>
 
@@ -275,7 +282,11 @@ export default function Librarian() {
             disabled={isLoading}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isLoading || !input.trim()}
+          >
             <Send className="w-4 h-4" />
           </Button>
         </div>
