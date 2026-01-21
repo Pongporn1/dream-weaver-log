@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { Send, Bot, ExternalLink, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Send, Bot, ExternalLink, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getDreamLogs, getWorlds, getEntities, getThreats } from "@/lib/api";
+import { getDreamLogs, getWorlds, getEntities, getThreats, sendAIChat } from "@/lib/api";
 import { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "assistant";
@@ -19,7 +20,7 @@ export default function Librarian() {
     {
       role: "assistant",
       content:
-        "สวัสดีครับ ผม DreamWeaver AI 🤖✨\n\nผมเป็น AI ผู้ช่วยส่วนตัวของคุณ คุยเรื่องอะไรก็ได้เหมือน ChatGPT:\n\n💬 คุยทั่วไป:\n• ถามคำถามอะไรก็ได้\n• ขอคำแนะนำ\n• สนทนาเป็นเพื่อน\n• แชร์ความคิด\n\n🌙 เรื่องความฝัน:\n• วิเคราะห์ความฝันของคุณ\n• ค้นหาข้อมูลจากคลัง\n• สรุปและหา pattern\n• แสดงลิงก์ที่เกี่ยวข้อง\n\nลองคุยกับผมได้เลยครับ! 😊",
+        "สวัสดีครับ ผม DreamWeaver AI 🤖✨\n\nผมเป็น AI ผู้ช่วยส่วนตัวของคุณ คุยเรื่องอะไรก็ได้:\n\n💬 คุยทั่วไป: ถามอะไรก็ได้ ขอคำแนะนำ สนทนาเป็นเพื่อน\n\n🌙 เรื่องความฝัน: วิเคราะห์ความฝัน ค้นหาข้อมูลจากคลัง สรุป patterns\n\nลองคุยกับผมได้เลยครับ! 😊",
     },
   ]);
   const [input, setInput] = useState("");
@@ -28,6 +29,7 @@ export default function Librarian() {
   const [worlds, setWorlds] = useState<World[]>([]);
   const [entities, setEntities] = useState<Entity[]>([]);
   const [threats, setThreats] = useState<ThreatEntry[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,170 +52,13 @@ export default function Librarian() {
     loadData();
   }, []);
 
-  const searchLibrary = (
-    query: string,
-  ): {
-    response: string;
-    links: { id: string; label: string; date?: string }[];
-  } => {
-    const lowerQuery = query.toLowerCase();
-    const links: { id: string; label: string; date?: string }[] = [];
-
-    // Search in worlds
-    const matchedWorlds = worlds.filter(
-      (w) =>
-        w.name.toLowerCase().includes(lowerQuery) ||
-        w.description?.toLowerCase().includes(lowerQuery),
-    );
-
-    // Search in entities
-    const matchedEntities = entities.filter(
-      (e) =>
-        e.name.toLowerCase().includes(lowerQuery) ||
-        e.role.toLowerCase().includes(lowerQuery),
-    );
-
-    // Search in threats
-    const matchedThreats = threats.filter((t) =>
-      t.name.toLowerCase().includes(lowerQuery),
-    );
-
-    // Search in dream logs
-    const matchedDreams = dreamLogs.filter(
-      (d) =>
-        d.world.toLowerCase().includes(lowerQuery) ||
-        d.notes?.toLowerCase().includes(lowerQuery) ||
-        d.entities.some((e) => e.toLowerCase().includes(lowerQuery)) ||
-        d.environments.some((e) => e.toLowerCase().includes(lowerQuery)),
-    );
-
-    // Compile response
-    let response = "";
-
-    if (matchedWorlds.length > 0) {
-      response += `🌍 พบโลก (${matchedWorlds.length}):\n\n`;
-      matchedWorlds.forEach((w) => {
-        response += `• ${w.name}\n`;
-        response += `  ประเภท: ${w.type} | ความมั่นคง: ${w.stability}/5\n`;
-        if (w.description) {
-          response += `  "${w.description}"\n`;
-        }
-        response += `  ปรากฏใน: ${w.dreamIds.length} ครั้ง\n`;
-
-        // Add links for each dream
-        w.dreamIds.forEach((dreamId) => {
-          const dream = dreamLogs.find((d) => d.id === dreamId);
-          if (dream) {
-            const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-              locale: th,
-            });
-            links.push({
-              id: dreamId,
-              label: `${w.name} - ${dateStr}`,
-              date: dateStr,
-            });
-          }
-        });
-        response += "\n";
-      });
-    }
-
-    if (matchedEntities.length > 0) {
-      response += `👥 พบสิ่งมีชีวิต (${matchedEntities.length}):\n\n`;
-      matchedEntities.forEach((e) => {
-        response += `• ${e.name}\n`;
-        response += `  บทบาท: ${e.role}\n`;
-        if (e.description) {
-          response += `  ${e.description}\n`;
-        }
-        response += `  ปรากฏใน: ${e.dreamIds.length} ครั้ง\n`;
-
-        // Add links for each dream
-        e.dreamIds.forEach((dreamId) => {
-          const dream = dreamLogs.find((d) => d.id === dreamId);
-          if (dream) {
-            const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-              locale: th,
-            });
-            links.push({
-              id: dreamId,
-              label: `${e.name} - ${dateStr}`,
-              date: dateStr,
-            });
-          }
-        });
-        response += "\n";
-      });
-    }
-
-    if (matchedThreats.length > 0) {
-      response += `⚠️ พบภัยคุกคาม (${matchedThreats.length}):\n\n`;
-      matchedThreats.forEach((t) => {
-        response += `• ${t.name}\n`;
-        response += `  ระดับ: ${t.level}/5`;
-        const levelDesc =
-          t.level >= 4 ? " (อันตราย!)" : t.level >= 3 ? " (ระวัง)" : "";
-        response += levelDesc + "\n";
-        if (t.response) {
-          response += `  การตอบสนอง: ${t.response}\n`;
-        }
-        response += `  พบ: ${t.dreamIds.length} ครั้ง\n`;
-
-        // Add links for each dream
-        t.dreamIds.forEach((dreamId) => {
-          const dream = dreamLogs.find((d) => d.id === dreamId);
-          if (dream) {
-            const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-              locale: th,
-            });
-            links.push({
-              id: dreamId,
-              label: `${t.name} - ${dateStr}`,
-              date: dateStr,
-            });
-          }
-        });
-        response += "\n";
-      });
-    }
-
-    if (matchedDreams.length > 0 && response === "") {
-      response += `📖 พบบันทึกความฝัน (${matchedDreams.length}):\n\n`;
-      matchedDreams.slice(0, 10).forEach((d) => {
-        const dateStr = format(new Date(d.date), "d MMM yyyy", { locale: th });
-        response += `• ${d.world}\n`;
-        response += `  วันที่: ${dateStr}\n`;
-        if (d.notes) {
-          const preview =
-            d.notes.length > 80 ? d.notes.substring(0, 80) + "..." : d.notes;
-          response += `  "${preview}"\n`;
-        }
-        response += `  Entities: ${d.entities.join(", ")}\n`;
-
-        links.push({
-          id: d.id,
-          label: `${d.world} - ${dateStr}`,
-          date: dateStr,
-        });
-        response += "\n";
-      });
-
-      if (matchedDreams.length > 10) {
-        response += `... และอีก ${matchedDreams.length - 10} รายการ\n`;
-      }
-    }
-
-    if (response === "") {
-      response =
-        "🔍 ไม่พบข้อมูลที่ตรงกับคำค้นหา\n\nลองใช้คำค้นอื่น หรือตรวจสอบว่าได้บันทึกข้อมูลแล้ว\n\nเคล็ดลับ: ลองค้นหาด้วยคำง่ายๆ หรือคำบางส่วนของชื่อ";
-    }
-
-    return { response: response.trim(), links };
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput("");
@@ -221,25 +66,8 @@ export default function Librarian() {
     setIsLoading(true);
 
     try {
-      // Call Gemini API directly from frontend
-      const GOOGLE_AI_API_KEY =
-        import.meta.env.VITE_GOOGLE_AI_API_KEY ||
-        "AIzaSyB20PAkEHNwPGlpEVCi_6K_qcomEJirYmU";
-
-      console.log("API Key check:", GOOGLE_AI_API_KEY ? "Found" : "Not found");
-      console.log("API Key length:", GOOGLE_AI_API_KEY?.length);
-
-      if (
-        !GOOGLE_AI_API_KEY ||
-        GOOGLE_AI_API_KEY === "YOUR_GOOGLE_AI_API_KEY_HERE"
-      ) {
-        throw new Error(
-          "API key not configured. กรุณา restart dev server (Ctrl+C แล้ว npm run dev)",
-        );
-      }
-
-      // Prepare context summary
-      const contextSummary = {
+      // Build context for AI
+      const context = {
         totalDreams: dreamLogs.length,
         totalWorlds: worlds.length,
         totalEntities: entities.length,
@@ -273,207 +101,89 @@ export default function Librarian() {
         })),
       };
 
-      const systemPrompt = `คุณเป็น AI ผู้ช่วยส่วนตัวชื่อ "DreamWeaver AI" 🤖✨
+      // Build message history for AI
+      const chatHistory = messages.slice(-10).map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
 
-บทบาทของคุณ:
-- คุยเรื่องอะไรก็ได้ เหมือน ChatGPT - ตอบคำถามทั่วไป ให้คำแนะนำ พูดคุยเป็นเพื่อน
-- ใช้ภาษาไทยที่เป็นมิตร สุภาพ และสนุกสนาน มีอารมณ์ขัน เข้าใจง่าย
-- พูดคุยได้หลากหลายหัวข้อ: เทคโนโลยี, ชีวิต, ความรู้ทั่วไป, แนะนำอะไรก็ได้
-- เมื่อผู้ใช้ถามเกี่ยวกับความฝันของเขา ให้ใช้ข้อมูลจากคลังความฝันด้านล่าง
-
-ความสามารถพิเศษ - มีข้อมูลความฝันของผู้ใช้:
-- เมื่อถูกถามเกี่ยวกับความฝัน โลก entity หรือภัยคุกคาม ให้ค้นหาและใช้ข้อมูลจากคลัง
-- ระบุ Dream IDs ที่เกี่ยวข้องในรูปแบบ Array เสมอ
-- สามารถวิเคราะห์ สรุป และให้ข้อมูล insights จากความฝันได้
-
-IMPORTANT RULES:
-1. คุยเรื่องทั่วไปได้ทุกเรื่อง - ไม่จำกัดแค่ความฝัน
-2. ถ้าไม่เกี่ยวกับความฝัน ตอบตามปกติเหมือน ChatGPT (ใส่ dreamIds เป็น array ว่าง)
-3. ถ้าเกี่ยวกับความฝัน ใช้ข้อมูลจากคลังและระบุ dreamIds
-4. ตอบแบบเป็นกันเอง ไม่เกร็ง มีบุคลิก
-5. ใช้ emoji ให้เหมาะสมกับบริบท
-6. จำบทสนทนาก่อนหน้าและอ้างอิงได้
-
-รูปแบบการตอบ JSON:
-{
-  "response": "คำตอบเป็นข้อความ",
-  "dreamIds": ["รายการ dream IDs ถ้ามี หรือ [] ถ้าไม่เกี่ยวกับความฝัน"],
-  "matchedWorlds": ["ชื่อโลกที่พบ ถ้ามี"],
-  "matchedEntities": ["ชื่อ entity ที่พบ ถ้ามี"],
-  "matchedThreats": ["ชื่อภัยคุกคามที่พบ ถ้ามี"]
-}
-
-ข้อมูลความฝันในคลัง:
-${contextSummary.totalDreams > 0 ? JSON.stringify(contextSummary, null, 2) : "ยังไม่มีข้อมูลความฝัน"}
-
-Return ONLY valid JSON, no other text.`;
-
-      // Build conversation history for context
-      const conversationHistory = messages
-        .slice(-10) // Last 10 messages for context
-        .map((m) => `${m.role === "user" ? "ผู้ใช้" : "AI"}: ${m.content}`)
-        .join("\n\n");
-
-      const userPrompt = `${
-        conversationHistory
-          ? `บทสนทนาก่อนหน้า:\n${conversationHistory}\n\n`
-          : ""
-      }ผู้ใช้: "${userMessage}"
-
-กรุณาตอบคำถามหรือพูดคุย:
-- ถ้าเป็นคำถามทั่วไป ตอบตามปกติ (dreamIds: [])
-- ถ้าเกี่ยวกับความฝันของผู้ใช้ ใช้ข้อมูลจากคลังและระบุ dreamIds
-- ตอบแบบเป็นมิตร สนุกสนาน และมีประโยชน์`;
-
-      // Retry logic for rate limiting
-      let response;
-      let retries = 0;
-      const maxRetries = 3;
-
-      while (retries < maxRetries) {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": GOOGLE_AI_API_KEY,
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text: systemPrompt }, { text: userPrompt }],
-                },
-              ],
-              generationConfig: {
-                temperature: 0.8,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 4096,
-              },
-            }),
-          },
-        );
-
-        if (response.status === 429) {
-          retries++;
-          if (retries < maxRetries) {
-            // Wait before retrying (exponential backoff: 2s, 4s, 8s)
-            await new Promise((resolve) =>
-              setTimeout(resolve, 2000 * Math.pow(2, retries - 1)),
-            );
-            continue;
-          }
-          throw new Error(
-            "ขอโทษครับ API ถูกใช้งานบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่ 🙏",
-          );
-        }
-        break;
-      }
-
-      if (!response || !response.ok) {
-        throw new Error(`API error: ${response?.status || "unknown"}`);
-      }
-
-      const data = await response.json();
-      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!aiResponse) {
-        throw new Error("No response from AI");
-      }
-
-      // Parse JSON from AI response
-      let parsedResponse;
-      try {
-        const jsonMatch =
-          aiResponse.match(/```json\s*([\s\S]*?)\s*```/) ||
-          aiResponse.match(/```\s*([\s\S]*?)\s*```/);
-        const jsonText = jsonMatch ? jsonMatch[1] : aiResponse;
-        parsedResponse = JSON.parse(jsonText.trim());
-      } catch (e) {
-        parsedResponse = {
-          response: aiResponse,
-          dreamIds: [],
-          matchedWorlds: [],
-          matchedEntities: [],
-          matchedThreats: [],
-        };
-      }
-
-      const {
-        response: aiText,
-        dreamIds = [],
-        matchedWorlds = [],
-        matchedEntities = [],
-        matchedThreats = [],
-      } = parsedResponse;
-
-      // Build links from dreamIds
-      const links: { id: string; label: string; date?: string }[] = [];
-
-      dreamIds.forEach((dreamId: string) => {
-        const dream = dreamLogs.find((d) => d.id === dreamId);
-        if (dream) {
-          const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-            locale: th,
-          });
-          links.push({
-            id: dreamId,
-            label: `${dream.world} - ${dateStr}`,
-            date: dateStr,
-          });
-        }
-      });
-
-      // Also add links from matched items
-      [...matchedWorlds, ...matchedEntities, ...matchedThreats].forEach(
-        (name: string) => {
-          const world = worlds.find((w) => w.name === name);
-          const entity = entities.find((e) => e.name === name);
-          const threat = threats.find((t) => t.name === name);
-
-          const item = world || entity || threat;
-          if (item && item.dreamIds) {
-            item.dreamIds.forEach((id: string) => {
-              if (!links.find((l) => l.id === id)) {
-                const dream = dreamLogs.find((d) => d.id === id);
-                if (dream) {
-                  const dateStr = format(new Date(dream.date), "d MMM yyyy", {
-                    locale: th,
-                  });
-                  links.push({
-                    id,
-                    label: `${name} - ${dateStr}`,
-                    date: dateStr,
-                  });
-                }
-              }
-            });
-          }
-        },
+      const result = await sendAIChat(
+        [...chatHistory, { role: "user", content: userMessage }],
+        context
       );
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: aiText,
-          links: links.length > 0 ? links : undefined,
-        },
-      ]);
+      if (result.error) {
+        toast.error(result.error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `ขอโทษครับ เกิดข้อผิดพลาด: ${result.error}`,
+          },
+        ]);
+      } else {
+        // Build links from dreamIds
+        const links: { id: string; label: string; date?: string }[] = [];
+
+        result.dreamIds?.forEach((dreamId: string) => {
+          const dream = dreamLogs.find((d) => d.id === dreamId);
+          if (dream) {
+            const dateStr = format(new Date(dream.date), "d MMM yyyy", {
+              locale: th,
+            });
+            links.push({
+              id: dreamId,
+              label: `${dream.world} - ${dateStr}`,
+              date: dateStr,
+            });
+          }
+        });
+
+        // Also add links from matched items
+        [...(result.matchedWorlds || []), ...(result.matchedEntities || []), ...(result.matchedThreats || [])].forEach(
+          (name: string) => {
+            const world = worlds.find((w) => w.name === name);
+            const entity = entities.find((e) => e.name === name);
+            const threat = threats.find((t) => t.name === name);
+
+            const item = world || entity || threat;
+            if (item && item.dreamIds) {
+              item.dreamIds.forEach((id: string) => {
+                if (!links.find((l) => l.id === id)) {
+                  const dream = dreamLogs.find((d) => d.id === id);
+                  if (dream) {
+                    const dateStr = format(new Date(dream.date), "d MMM yyyy", {
+                      locale: th,
+                    });
+                    links.push({
+                      id,
+                      label: `${name} - ${dateStr}`,
+                      date: dateStr,
+                    });
+                  }
+                }
+              });
+            }
+          }
+        );
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: result.response,
+            links: links.length > 0 ? links : undefined,
+          },
+        ]);
+      }
     } catch (error) {
       console.error("AI error:", error);
-
-      // Fallback to local search
-      const { response, links } = searchLibrary(userMessage);
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "⚠️ AI ไม่พร้อมใช้งาน (ตรวจสอบ API key ใน .env)\n\nใช้การค้นหาแบบธรรมดาแทน:\n\n" +
-            response,
-          links: links.length > 0 ? links : undefined,
+          content: "ขอโทษครับ ไม่สามารถเชื่อมต่อ AI ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
         },
       ]);
     } finally {
@@ -482,72 +192,94 @@ Return ONLY valid JSON, no other text.`;
   };
 
   return (
-    <div className="py-4 flex flex-col h-[calc(100vh-200px)]">
-      <div className="flex items-center gap-2 mb-4">
-        <Bot className="w-5 h-5 text-primary" />
-        <h1>DreamWeaver AI</h1>
-        <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+          <Bot className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-lg font-medium flex items-center gap-2">
+            DreamWeaver AI
+            <Sparkles className="w-4 h-4 text-primary" />
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Powered by Lovable AI
+          </p>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-        {messages.map((message, index) => (
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto py-4 space-y-4">
+        {messages.map((msg, idx) => (
           <div
-            key={index}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            key={idx}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                message.role === "user"
+              className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                msg.role === "user"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
+                  : "bg-muted"
               }`}
             >
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
 
-              {/* Show links if available */}
-              {message.links && message.links.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-border/50 space-y-1">
-                  <div className="text-xs font-semibold mb-2 opacity-70">
-                    🔗 ลิงก์ที่เกี่ยวข้อง ({message.links.length})
+              {/* Dream Links */}
+              {msg.links && msg.links.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <p className="text-xs font-medium mb-2 opacity-70">
+                    📎 Related Dreams:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {msg.links.slice(0, 5).map((link, i) => (
+                      <Link
+                        key={i}
+                        to={`/logs/${link.id}`}
+                        className="inline-flex items-center gap-1 text-xs bg-background/50 hover:bg-background px-2 py-1 rounded-full transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {link.label}
+                      </Link>
+                    ))}
+                    {msg.links.length > 5 && (
+                      <span className="text-xs opacity-70">
+                        +{msg.links.length - 5} more
+                      </span>
+                    )}
                   </div>
-                  {message.links.map((link, idx) => (
-                    <Link
-                      key={idx}
-                      to={`/dreams/${link.id}`}
-                      className="flex items-center gap-1.5 text-xs hover:underline py-1 px-2 rounded hover:bg-background/50 transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">{link.label}</span>
-                    </Link>
-                  ))}
                 </div>
               )}
             </div>
           </div>
         ))}
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-secondary text-secondary-foreground rounded-lg px-3 py-2 text-sm flex items-center gap-2">
-              <Sparkles className="w-3 h-3 animate-spin" />
-              <span>AI กำลังคิด...</span>
+            <div className="bg-muted rounded-2xl px-4 py-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </div>
           </div>
         )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="คุยเรื่องอะไรก็ได้... 💬"
-          disabled={isLoading}
-        />
-        <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-          <Send className="w-4 h-4" />
-        </Button>
+      {/* Input */}
+      <form onSubmit={handleSubmit} className="pt-4 border-t">
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="พิมพ์ข้อความ..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
       </form>
-
-      <p className="text-xs text-muted-foreground mt-2 text-center"></p>
     </div>
   );
 }
