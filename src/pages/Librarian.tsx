@@ -329,7 +329,7 @@ Return ONLY valid JSON, no other text.`;
       let response;
       let retries = 0;
       const maxRetries = 3;
-      
+
       while (retries < maxRetries) {
         response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
@@ -359,16 +359,20 @@ Return ONLY valid JSON, no other text.`;
           retries++;
           if (retries < maxRetries) {
             // Wait before retrying (exponential backoff: 2s, 4s, 8s)
-            await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries - 1)));
+            await new Promise((resolve) =>
+              setTimeout(resolve, 2000 * Math.pow(2, retries - 1)),
+            );
             continue;
           }
-          throw new Error("ขอโทษครับ API ถูกใช้งานบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่ 🙏");
+          throw new Error(
+            "ขอโทษครับ API ถูกใช้งานบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่ 🙏",
+          );
         }
         break;
       }
 
       if (!response || !response.ok) {
-        throw new Error(`API error: ${response?.status || 'unknown'}`);
+        throw new Error(`API error: ${response?.status || "unknown"}`);
       }
 
       const data = await response.json();
