@@ -193,7 +193,7 @@ export default function DreamLogs() {
           </div>
         ) : (
           filteredDreams.map((dream) => (
-            <DreamCard key={dream.id} dream={dream} />
+            <DreamCard key={dream.id} dream={dream} showEdit={true} />
           ))
         )}
       </div>

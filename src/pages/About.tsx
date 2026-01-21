@@ -38,27 +38,6 @@ export default function About() {
           </ul>
         </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Bot className="w-4 h-4 text-primary" />
-            <h2 className="text-lg font-medium">AI ในระบบนี้</h2>
-          </div>
-          <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-            <li>
-              <strong>Sleep Calculator:</strong> ใช้ AI Vision
-              ดึงตัวเลขจากภาพหน้าจอแอปนอน คำนวณสถิติการนอน
-            </li>
-            <li>
-              <strong>DreamWeaver AI:</strong> AI ผู้ช่วยแบบ ChatGPT
-              คุยได้ทุกเรื่อง ตอบคำถาม ให้คำแนะนำ
-              และมีความรู้เกี่ยวกับความฝันของคุณเพื่อช่วยวิเคราะห์และค้นหาข้อมูล
-            </li>
-          </ul>
-          <p className="text-sm text-muted-foreground">
-            DreamWeaver AI ใช้ Google Gemini ช่วยพูดคุยและวิเคราะห์ข้อมูล
-            แต่ไม่ใช่การทำนายหรือตีความเชิงลึก
-          </p>
-        </section>
 
         <section className="card-minimal text-center">
           <p className="text-sm text-muted-foreground">

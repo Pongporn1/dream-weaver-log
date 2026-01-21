@@ -9,8 +9,6 @@ import DreamLogs from "./pages/DreamLogs";
 import NewDreamLog from "./pages/NewDreamLog";
 import DreamDetail from "./pages/DreamDetail";
 import Library from "./pages/Library";
-import SleepCalculator from "./pages/SleepCalculator";
-import Librarian from "./pages/Librarian";
 import Statistics from "./pages/Statistics";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -34,8 +32,6 @@ const App = () => (
             <Route path="/logs/new" element={<NewDreamLog />} />
             <Route path="/logs/:id" element={<DreamDetail />} />
             <Route path="/library" element={<Library />} />
-            <Route path="/sleep" element={<SleepCalculator />} />
-            <Route path="/librarian" element={<Librarian />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
