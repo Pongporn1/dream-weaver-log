@@ -325,32 +325,50 @@ Return ONLY valid JSON, no other text.`;
 - ถ้าเกี่ยวกับความฝันของผู้ใช้ ใช้ข้อมูลจากคลังและระบุ dreamIds
 - ตอบแบบเป็นมิตร สนุกสนาน และมีประโยชน์`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": GOOGLE_AI_API_KEY,
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: systemPrompt }, { text: userPrompt }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.8,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 4096,
+      // Retry logic for rate limiting
+      let response;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": GOOGLE_AI_API_KEY,
             },
-          }),
-        },
-      );
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: systemPrompt }, { text: userPrompt }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.8,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 4096,
+              },
+            }),
+          },
+        );
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        if (response.status === 429) {
+          retries++;
+          if (retries < maxRetries) {
+            // Wait before retrying (exponential backoff: 2s, 4s, 8s)
+            await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries - 1)));
+            continue;
+          }
+          throw new Error("ขอโทษครับ API ถูกใช้งานบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่ 🙏");
+        }
+        break;
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(`API error: ${response?.status || 'unknown'}`);
       }
 
       const data = await response.json();
