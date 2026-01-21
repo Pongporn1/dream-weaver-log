@@ -290,7 +290,7 @@ export default function Home() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                วิเคราะห์ด้วย AI
+                วิเคราะห์
               </>
             )}
           </Button>
