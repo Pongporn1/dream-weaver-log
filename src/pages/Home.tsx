@@ -1,30 +1,91 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Library, Moon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Library, Moon, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { DreamCard } from '@/components/DreamCard';
-import { getDreamLogs } from '@/lib/api';
+import { getDreamLogs, getWorlds, getEntities, suggestTags, addDreamLog } from '@/lib/api';
 import { DreamLog } from '@/types/dream';
+import { toast } from 'sonner';
 
 export default function Home() {
+  const navigate = useNavigate();
   const [recentDreams, setRecentDreams] = useState<DreamLog[]>([]);
   const [quickNote, setQuickNote] = useState('');
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [existingWorlds, setExistingWorlds] = useState<string[]>([]);
+  const [existingEntities, setExistingEntities] = useState<string[]>([]);
 
   useEffect(() => {
-    const loadDreams = async () => {
+    const loadData = async () => {
       try {
-        const dreams = await getDreamLogs();
+        const [dreams, worlds, entities] = await Promise.all([
+          getDreamLogs(),
+          getWorlds(),
+          getEntities()
+        ]);
         setRecentDreams(dreams.slice(0, 5));
+        setExistingWorlds(worlds.map(w => w.name));
+        setExistingEntities(entities.map(e => e.name));
       } catch (error) {
-        console.error('Error loading dreams:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
-    loadDreams();
+    loadData();
   }, []);
+
+  const handleQuickSave = async () => {
+    if (!quickNote.trim()) {
+      toast.error('เขียนอะไรสักหน่อยก่อนนะ');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      // Get AI suggestions
+      const suggestions = await suggestTags(
+        quickNote, 
+        existingWorlds, 
+        existingEntities,
+        ['fog', 'sea', 'mountain', 'city', 'tunnel', 'rain', 'night', 'sunset', 'forest', 'building']
+      );
+
+      // Create dream log with suggested data
+      const today = new Date();
+      const newLog = await addDreamLog({
+        date: today.toISOString().split('T')[0],
+        wakeTime: today.toTimeString().slice(0, 5),
+        world: suggestions.world || 'Unknown',
+        timeSystem: (suggestions.timeSystem as DreamLog['timeSystem']) || 'unknown',
+        environments: suggestions.environments || [],
+        entities: suggestions.entities || [],
+        threatLevel: (suggestions.threatLevel as DreamLog['threatLevel']) || 0,
+        safetyOverride: (suggestions.safetyOverride as DreamLog['safetyOverride']) || 'unknown',
+        exit: (suggestions.exit as DreamLog['exit']) || 'unknown',
+        notes: quickNote
+      });
+
+      if (newLog) {
+        toast.success('บันทึกความฝันแล้ว! 🌙', {
+          description: `โลก: ${suggestions.world || 'Unknown'} | Threat: ${suggestions.threatLevel}`
+        });
+        setQuickNote('');
+        // Reload dreams
+        const dreams = await getDreamLogs();
+        setRecentDreams(dreams.slice(0, 5));
+      } else {
+        toast.error('ไม่สามารถบันทึกได้');
+      }
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error('เกิดข้อผิดพลาด');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   return (
     <div className="space-y-8 py-4">
@@ -37,19 +98,36 @@ export default function Home() {
       {/* Quick Entry */}
       <div className="space-y-3">
         <Textarea
-          placeholder="จดบันทึกสั้นๆ ที่นี่..."
+          placeholder="เล่าความฝันสั้นๆ... AI จะช่วยวิเคราะห์และใส่แท็กให้อัตโนมัติ 🤖"
           value={quickNote}
           onChange={(e) => setQuickNote(e.target.value)}
-          className="min-h-[100px] resize-none"
+          className="min-h-[120px] resize-none"
         />
+        <Button 
+          onClick={handleQuickSave} 
+          disabled={analyzing || !quickNote.trim()}
+          className="w-full gap-2"
+        >
+          {analyzing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              กำลังวิเคราะห์...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              บันทึกด่วน (AI วิเคราะห์อัตโนมัติ)
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-3">
-        <Button asChild variant="default" className="w-full justify-start gap-2">
+        <Button asChild variant="outline" className="w-full justify-start gap-2">
           <Link to="/logs/new">
             <Plus className="w-4 h-4" />
-            บันทึกฝันใหม่
+            บันทึกฝันใหม่ (กรอกเอง)
           </Link>
         </Button>
         <div className="grid grid-cols-2 gap-3">

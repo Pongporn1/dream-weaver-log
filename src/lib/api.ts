@@ -392,3 +392,198 @@ export async function parseSleepImage(imageBase64: string): Promise<{
 
   return response.json();
 }
+
+// AI Chat for Librarian
+export async function sendAIChat(messages: { role: 'user' | 'assistant'; content: string }[], context: Record<string, unknown>): Promise<{
+  response: string;
+  dreamIds: string[];
+  matchedWorlds: string[];
+  matchedEntities: string[];
+  matchedThreats: string[];
+  error?: string;
+}> {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+    },
+    body: JSON.stringify({ messages, context })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    return { 
+      response: '', 
+      dreamIds: [], 
+      matchedWorlds: [], 
+      matchedEntities: [], 
+      matchedThreats: [],
+      error: errorData.error || 'AI error' 
+    };
+  }
+
+  return response.json();
+}
+
+// Suggest tags from dream text
+export async function suggestTags(text: string, existingWorlds: string[], existingEntities: string[], existingEnvironments: string[]): Promise<{
+  world: string | null;
+  environments: string[];
+  entities: string[];
+  threatLevel: number;
+  safetyOverride: string;
+  exit: string;
+  timeSystem: string;
+}> {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suggest-tags`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+    },
+    body: JSON.stringify({ text, existingWorlds, existingEntities, existingEnvironments })
+  });
+
+  if (!response.ok) {
+    return { 
+      world: null, 
+      environments: [], 
+      entities: [],
+      threatLevel: 0,
+      safetyOverride: 'unknown',
+      exit: 'unknown',
+      timeSystem: 'unknown'
+    };
+  }
+
+  return response.json();
+}
+
+// Update World
+export async function updateWorld(id: string, updates: Partial<Omit<World, 'id' | 'dreamIds'>>): Promise<World | null> {
+  const { data, error } = await supabase
+    .from('worlds')
+    .update({
+      name: updates.name,
+      type: updates.type,
+      stability: updates.stability,
+      description: updates.description
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error updating world:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    type: data.type as World['type'],
+    stability: data.stability,
+    description: data.description || undefined,
+    dreamIds: []
+  };
+}
+
+export async function deleteWorld(id: string): Promise<boolean> {
+  const { error } = await supabase.from('worlds').delete().eq('id', id);
+  return !error;
+}
+
+// Update Entity
+export async function updateEntity(id: string, updates: Partial<Omit<Entity, 'id' | 'dreamIds'>>): Promise<Entity | null> {
+  const { data, error } = await supabase
+    .from('entities')
+    .update({
+      name: updates.name,
+      role: updates.role,
+      description: updates.description
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error updating entity:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    role: data.role as Entity['role'],
+    description: data.description || undefined,
+    dreamIds: []
+  };
+}
+
+export async function deleteEntity(id: string): Promise<boolean> {
+  const { error } = await supabase.from('entities').delete().eq('id', id);
+  return !error;
+}
+
+// Add Module
+export async function addModule(mod: Omit<SystemModule, 'id' | 'dreamIds'>): Promise<SystemModule | null> {
+  const { data, error } = await supabase
+    .from('system_modules')
+    .insert({
+      name: mod.name,
+      type: mod.type,
+      description: mod.description
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error adding module:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    type: data.type as SystemModule['type'],
+    description: data.description || undefined,
+    dreamIds: []
+  };
+}
+
+export async function deleteModule(id: string): Promise<boolean> {
+  const { error } = await supabase.from('system_modules').delete().eq('id', id);
+  return !error;
+}
+
+// Add Threat
+export async function addThreat(threat: Omit<ThreatEntry, 'id' | 'dreamIds'>): Promise<ThreatEntry | null> {
+  const { data, error } = await supabase
+    .from('threats')
+    .insert({
+      name: threat.name,
+      level: threat.level,
+      response: threat.response
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error adding threat:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    level: data.level as ThreatEntry['level'],
+    response: data.response || undefined,
+    dreamIds: []
+  };
+}
+
+export async function deleteThreat(id: string): Promise<boolean> {
+  const { error } = await supabase.from('threats').delete().eq('id', id);
+  return !error;
+}
