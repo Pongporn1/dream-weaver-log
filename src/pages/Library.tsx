@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   BookOpen,
   X,
-  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   getWorlds,
@@ -43,157 +43,40 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 type CategoryType = "worlds" | "entities" | "modules" | "threats";
 
-// Book spine colors based on category
-const categoryStyles = {
+const categoryConfig = {
   worlds: {
-    gradient: "from-blue-600 to-indigo-700",
-    accent: "bg-blue-500",
-    text: "text-blue-100",
     icon: Globe,
     label: "โลก",
     labelEn: "Worlds",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/30",
   },
   entities: {
-    gradient: "from-emerald-600 to-teal-700",
-    accent: "bg-emerald-500",
-    text: "text-emerald-100",
     icon: Users,
     label: "สิ่งมีชีวิต",
     labelEn: "Entities",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
   },
   modules: {
-    gradient: "from-purple-600 to-violet-700",
-    accent: "bg-purple-500",
-    text: "text-purple-100",
     icon: Cog,
     label: "โมดูล",
     labelEn: "Modules",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50 dark:bg-purple-950/30",
   },
   threats: {
-    gradient: "from-red-600 to-rose-700",
-    accent: "bg-red-500",
-    text: "text-red-100",
     icon: AlertTriangle,
     label: "ภัยคุกคาม",
     labelEn: "Threats",
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-red-50 dark:bg-red-950/30",
   },
 };
-
-// Book spine component - looks like book on a shelf
-function BookSpine({
-  item,
-  category,
-  isSelected,
-  onClick,
-}: {
-  item: { id: string; name: string };
-  category: CategoryType;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const style = categoryStyles[category];
-  
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "group relative h-32 w-10 flex-shrink-0 rounded-sm transition-all duration-200 cursor-pointer",
-        "bg-gradient-to-b shadow-md hover:shadow-lg",
-        style.gradient,
-        isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background -translate-y-2",
-        !isSelected && "hover:-translate-y-1"
-      )}
-    >
-      {/* Book spine texture */}
-      <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
-      {/* Top edge highlight */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 rounded-t-sm" />
-      
-      {/* Book title - vertical text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span
-          className={cn(
-            "text-[10px] font-medium writing-mode-vertical transform rotate-180 truncate max-h-24 px-1",
-            style.text
-          )}
-          style={{ writingMode: "vertical-rl" }}
-        >
-          {item.name}
-        </span>
-      </div>
-      
-      {/* Bottom label strip */}
-      <div className={cn("absolute bottom-1 left-1 right-1 h-1 rounded-full", style.accent, "opacity-60")} />
-    </button>
-  );
-}
-
-// Bookshelf section
-function BookshelfSection({
-  category,
-  items,
-  selectedId,
-  onSelect,
-  onAdd,
-}: {
-  category: CategoryType;
-  items: { id: string; name: string }[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onAdd: () => void;
-}) {
-  const style = categoryStyles[category];
-  const Icon = style.icon;
-
-  return (
-    <div className="space-y-2">
-      {/* Shelf label */}
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
-          <Icon className={cn("w-4 h-4", `text-${category === 'worlds' ? 'blue' : category === 'entities' ? 'emerald' : category === 'modules' ? 'purple' : 'red'}-500`)} />
-          <span className="text-sm font-medium">{style.label}</span>
-          <span className="text-xs text-muted-foreground">({items.length})</span>
-        </div>
-        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onAdd}>
-          <Plus className="w-3 h-3 mr-1" />
-          เพิ่ม
-        </Button>
-      </div>
-      
-      {/* Shelf with books */}
-      <div className="relative">
-        {/* Shelf board */}
-        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-sm shadow-md" />
-        <div className="absolute bottom-2 left-0 right-0 h-1 bg-amber-700/50" />
-        
-        {/* Books container */}
-        <div className="relative pb-3 px-2 flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent min-h-[140px]">
-          {items.length === 0 ? (
-            <div className="flex items-center justify-center w-full text-muted-foreground text-xs">
-              ว่างเปล่า
-            </div>
-          ) : (
-            items.map((item) => (
-              <BookSpine
-                key={item.id}
-                item={item}
-                category={category}
-                isSelected={selectedId === item.id}
-                onClick={() => onSelect(item.id)}
-              />
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Library() {
   const [worlds, setWorlds] = useState<World[]>([]);
@@ -202,10 +85,8 @@ export default function Library() {
   const [threats, setThreats] = useState<ThreatEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<{
-    type: CategoryType;
-    id: string;
-  } | null>(null);
+  const [activeTab, setActiveTab] = useState<CategoryType>("worlds");
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   // Dialog states
   const [showAddWorld, setShowAddWorld] = useState(false);
@@ -260,7 +141,7 @@ export default function Library() {
   };
 
   // Filter items by search
-  const filterItems = <T extends { name: string; description?: string }>(items: T[]) => {
+  const filterItems = <T extends { name: string; description?: string | null }>(items: T[]) => {
     if (!searchQuery.trim()) return items;
     const q = searchQuery.toLowerCase();
     return items.filter(
@@ -268,6 +149,20 @@ export default function Library() {
         item.name.toLowerCase().includes(q) ||
         item.description?.toLowerCase().includes(q)
     );
+  };
+
+  // Get current items based on active tab
+  const getCurrentItems = () => {
+    switch (activeTab) {
+      case "worlds":
+        return filterItems(worlds);
+      case "entities":
+        return filterItems(entities);
+      case "modules":
+        return filterItems(modules);
+      case "threats":
+        return filterItems(threats);
+    }
   };
 
   // Add handlers
@@ -328,9 +223,9 @@ export default function Library() {
   };
 
   // Delete handlers
-  const handleDelete = async (type: CategoryType, id: string) => {
+  const handleDelete = async (id: string) => {
     let success = false;
-    switch (type) {
+    switch (activeTab) {
       case "worlds":
         success = await deleteWorld(id);
         if (success) setWorlds((prev) => prev.filter((w) => w.id !== id));
@@ -354,18 +249,35 @@ export default function Library() {
     }
   };
 
+  const handleAddClick = () => {
+    switch (activeTab) {
+      case "worlds":
+        setShowAddWorld(true);
+        break;
+      case "entities":
+        setShowAddEntity(true);
+        break;
+      case "modules":
+        setShowAddModule(true);
+        break;
+      case "threats":
+        setShowAddThreat(true);
+        break;
+    }
+  };
+
   // Get selected item details
   const getSelectedDetails = () => {
     if (!selectedItem) return null;
-    switch (selectedItem.type) {
+    switch (activeTab) {
       case "worlds":
-        return worlds.find((w) => w.id === selectedItem.id);
+        return worlds.find((w) => w.id === selectedItem);
       case "entities":
-        return entities.find((e) => e.id === selectedItem.id);
+        return entities.find((e) => e.id === selectedItem);
       case "modules":
-        return modules.find((m) => m.id === selectedItem.id);
+        return modules.find((m) => m.id === selectedItem);
       case "threats":
-        return threats.find((t) => t.id === selectedItem.id);
+        return threats.find((t) => t.id === selectedItem);
     }
   };
 
@@ -375,28 +287,60 @@ export default function Library() {
     );
   }
 
+  const currentItems = getCurrentItems();
+  const config = categoryConfig[activeTab];
   const selected = getSelectedDetails();
-  const selectedStyle = selectedItem ? categoryStyles[selectedItem.type] : null;
 
   return (
-    <div className="py-4 min-h-screen">
+    <div className="py-4">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <BookOpen className="w-6 h-6 text-primary" />
-        <div>
-          <h1 className="text-xl font-semibold">Dream Library</h1>
-          <p className="text-xs text-muted-foreground">ห้องสมุดความฝัน</p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-primary" />
+          <h1 className="text-lg font-semibold">Library</h1>
         </div>
+        <Button size="sm" onClick={handleAddClick}>
+          <Plus className="w-4 h-4 mr-1" />
+          เพิ่ม
+        </Button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-4 p-1 bg-muted rounded-lg">
+        {(Object.keys(categoryConfig) as CategoryType[]).map((cat) => {
+          const cfg = categoryConfig[cat];
+          const Icon = cfg.icon;
+          const count = cat === "worlds" ? worlds.length : cat === "entities" ? entities.length : cat === "modules" ? modules.length : threats.length;
+          return (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveTab(cat);
+                setSelectedItem(null);
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-colors",
+                activeTab === cat
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{cfg.label}</span>
+              <span className="text-[10px] opacity-60">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="ค้นหาในห้องสมุด..."
+          placeholder="ค้นหา..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-9"
+          className="pl-9 h-9"
         />
         {searchQuery && (
           <Button
@@ -410,351 +354,258 @@ export default function Library() {
         )}
       </div>
 
-      {/* Bookshelves - Main View or Detail View */}
-      {!selected ? (
-        <div className="space-y-6">
-          {/* Bookcase frame */}
-          <div className="relative bg-gradient-to-b from-amber-950/20 to-amber-900/30 rounded-lg p-4 border border-amber-800/30">
-            {/* Bookcase sides */}
-            <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-amber-800 to-amber-900 rounded-l-lg" />
-            <div className="absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-l from-amber-800 to-amber-900 rounded-r-lg" />
-            
-            <div className="space-y-6 px-2">
-              <BookshelfSection
-                category="worlds"
-                items={filterItems(worlds)}
-                selectedId={selectedItem?.type === "worlds" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "worlds", id })}
-                onAdd={() => setShowAddWorld(true)}
-              />
-              
-              <BookshelfSection
-                category="entities"
-                items={filterItems(entities)}
-                selectedId={selectedItem?.type === "entities" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "entities", id })}
-                onAdd={() => setShowAddEntity(true)}
-              />
-              
-              <BookshelfSection
-                category="modules"
-                items={filterItems(modules)}
-                selectedId={selectedItem?.type === "modules" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "modules", id })}
-                onAdd={() => setShowAddModule(true)}
-              />
-              
-              <BookshelfSection
-                category="threats"
-                items={filterItems(threats)}
-                selectedId={selectedItem?.type === "threats" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "threats", id })}
-                onAdd={() => setShowAddThreat(true)}
-              />
-            </div>
+      {/* Content */}
+      <div className="space-y-2">
+        {currentItems.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground text-sm">
+            ยังไม่มีข้อมูล
           </div>
-        </div>
-      ) : (
-        // Detail View - Open Book
-        <div className="space-y-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedItem(null)}
-            className="mb-2"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            กลับไปชั้นหนังสือ
-          </Button>
-
-          {/* Open book design */}
-          <div className={cn(
-            "relative rounded-lg overflow-hidden shadow-xl",
-            "bg-gradient-to-br",
-            selectedStyle?.gradient
-          )}>
-            {/* Book cover texture */}
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,white_1px,transparent_1px)] bg-[length:20px_20px]" />
-            
-            {/* Content */}
-            <div className="relative p-6 text-white">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    {selectedStyle && <selectedStyle.icon className="w-5 h-5 opacity-80" />}
-                    <span className="text-xs uppercase tracking-wider opacity-70">
-                      {selectedStyle?.labelEn}
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-bold">{selected.name}</h2>
-                  
-                  {/* Type badges */}
-                  {selectedItem?.type === "worlds" && (
-                    <div className="flex gap-2 mt-2">
-                      <span className="text-xs px-2 py-1 rounded bg-white/20 backdrop-blur">
-                        {(selected as World).type === "persistent" ? "🌟 Persistent" : "✨ Transient"}
-                      </span>
-                      <span className="text-xs px-2 py-1 rounded bg-white/20 backdrop-blur">
-                        Stability: {"●".repeat((selected as World).stability)}{"○".repeat(5 - (selected as World).stability)}
-                      </span>
-                    </div>
+        ) : (
+          currentItems.map((item) => {
+            const isSelected = selectedItem === item.id;
+            return (
+              <div key={item.id}>
+                <button
+                  onClick={() => setSelectedItem(isSelected ? null : item.id)}
+                  className={cn(
+                    "w-full text-left p-3 rounded-lg border transition-colors",
+                    isSelected
+                      ? "bg-accent border-primary/20"
+                      : "bg-card hover:bg-accent/50 border-transparent"
                   )}
-                  
-                  {selectedItem?.type === "entities" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      {(selected as Entity).role === "protector" ? "🛡️" : 
-                       (selected as Entity).role === "guide" ? "🧭" :
-                       (selected as Entity).role === "intruder" ? "⚠️" : "👁️"} {(selected as Entity).role}
-                    </span>
-                  )}
-                  
-                  {selectedItem?.type === "modules" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      ⚙️ {(selected as SystemModule).type.replace("_", " ")}
-                    </span>
-                  )}
-                  
-                  {selectedItem?.type === "threats" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      ⚡ Level {(selected as ThreatEntry).level}/5
-                    </span>
-                  )}
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/20"
-                  onClick={() => selectedItem && handleDelete(selectedItem.type, selectedItem.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Description */}
-              {selectedItem?.type !== "threats" && "description" in selected && selected.description && (
-                <div className="mb-6">
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    คำอธิบาย
-                  </label>
-                  <p className="text-sm leading-relaxed bg-white/10 rounded-lg p-4 backdrop-blur">
-                    {selected.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Response for threats */}
-              {selectedItem?.type === "threats" && (selected as ThreatEntry).response && (
-                <div className="mb-6">
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    วิธีตอบสนอง
-                  </label>
-                  <p className="text-sm leading-relaxed bg-white/10 rounded-lg p-4 backdrop-blur">
-                    {(selected as ThreatEntry).response}
-                  </p>
-                </div>
-              )}
-
-              {/* Related Dreams */}
-              {selected.dreamIds && selected.dreamIds.length > 0 && (
-                <div>
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    ความฝันที่เกี่ยวข้อง ({selected.dreamIds.length})
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {selected.dreamIds.map((id) => (
-                      <Link
-                        key={id}
-                        to={`/logs/${id}`}
-                        className="text-xs font-mono bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors backdrop-blur"
-                      >
-                        {id}
-                      </Link>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <config.icon className={cn("w-4 h-4", config.color)} />
+                      <span className="font-medium text-sm">{item.name}</span>
+                    </div>
+                    <ChevronRight
+                      className={cn(
+                        "w-4 h-4 text-muted-foreground transition-transform",
+                        isSelected && "rotate-90"
+                      )}
+                    />
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                  
+                  {/* Quick info badges */}
+                  <div className="flex gap-2 mt-1.5 ml-6">
+                    {activeTab === "worlds" && (
+                      <>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          {(item as World).type === "persistent" ? "Persistent" : "Transient"}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          Stability {(item as World).stability}/5
+                        </span>
+                      </>
+                    )}
+                    {activeTab === "entities" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">
+                        {(item as Entity).role}
+                      </span>
+                    )}
+                    {activeTab === "modules" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        {(item as SystemModule).type.replace("_", " ")}
+                      </span>
+                    )}
+                    {activeTab === "threats" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        Level {(item as ThreatEntry).level}
+                      </span>
+                    )}
+                  </div>
+                </button>
 
-      {/* Add Dialogs */}
+                {/* Expanded detail */}
+                {isSelected && selected && (
+                  <div className="mt-2 p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
+                    {/* Description */}
+                    {"description" in selected && selected.description && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">คำอธิบาย</p>
+                        <p>{selected.description}</p>
+                      </div>
+                    )}
+                    
+                    {/* Response for threats */}
+                    {activeTab === "threats" && (selected as ThreatEntry).response && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">การตอบสนอง</p>
+                        <p>{(selected as ThreatEntry).response}</p>
+                      </div>
+                    )}
+
+                    {/* Delete button */}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      ลบ
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Add World Dialog */}
       <Dialog open={showAddWorld} onOpenChange={setShowAddWorld}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-500" />
-              เพิ่มโลกใหม่
-            </DialogTitle>
+            <DialogTitle>เพิ่มโลกใหม่</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               placeholder="ชื่อโลก"
               value={newWorld.name}
-              onChange={(e) => setNewWorld((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setNewWorld({ ...newWorld, name: e.target.value })}
             />
             <Select
               value={newWorld.type}
-              onValueChange={(v: "persistent" | "transient") =>
-                setNewWorld((prev) => ({ ...prev, type: v }))
-              }
+              onValueChange={(v) => setNewWorld({ ...newWorld, type: v as "persistent" | "transient" })}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="ประเภท" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="persistent">🌟 Persistent (ถาวร)</SelectItem>
-                <SelectItem value="transient">✨ Transient (ชั่วคราว)</SelectItem>
+                <SelectItem value="persistent">Persistent</SelectItem>
+                <SelectItem value="transient">Transient</SelectItem>
               </SelectContent>
             </Select>
             <div>
-              <label className="text-sm">Stability: {newWorld.stability}/5</label>
+              <label className="text-sm text-muted-foreground">Stability: {newWorld.stability}</label>
               <input
                 type="range"
                 min="1"
                 max="5"
                 value={newWorld.stability}
-                onChange={(e) =>
-                  setNewWorld((prev) => ({ ...prev, stability: parseInt(e.target.value) }))
-                }
-                className="w-full"
+                onChange={(e) => setNewWorld({ ...newWorld, stability: Number(e.target.value) })}
+                className="w-full mt-1"
               />
             </div>
             <Textarea
-              placeholder="คำอธิบาย (optional)"
+              placeholder="คำอธิบาย (ถ้ามี)"
               value={newWorld.description}
-              onChange={(e) => setNewWorld((prev) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setNewWorld({ ...newWorld, description: e.target.value })}
             />
             <Button onClick={handleAddWorld} className="w-full">
-              บันทึก
+              เพิ่ม
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Add Entity Dialog */}
       <Dialog open={showAddEntity} onOpenChange={setShowAddEntity}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-emerald-500" />
-              เพิ่ม Entity ใหม่
-            </DialogTitle>
+            <DialogTitle>เพิ่ม Entity ใหม่</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               placeholder="ชื่อ Entity"
               value={newEntity.name}
-              onChange={(e) => setNewEntity((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setNewEntity({ ...newEntity, name: e.target.value })}
             />
             <Select
               value={newEntity.role}
-              onValueChange={(v: "observer" | "protector" | "guide" | "intruder") =>
-                setNewEntity((prev) => ({ ...prev, role: v }))
-              }
+              onValueChange={(v) => setNewEntity({ ...newEntity, role: v as Entity["role"] })}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="บทบาท" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="observer">👁️ Observer (ผู้สังเกต)</SelectItem>
-                <SelectItem value="protector">🛡️ Protector (ผู้ปกป้อง)</SelectItem>
-                <SelectItem value="guide">🧭 Guide (ผู้นำทาง)</SelectItem>
-                <SelectItem value="intruder">⚠️ Intruder (ผู้บุกรุก)</SelectItem>
+                <SelectItem value="observer">Observer</SelectItem>
+                <SelectItem value="protector">Protector</SelectItem>
+                <SelectItem value="guide">Guide</SelectItem>
+                <SelectItem value="intruder">Intruder</SelectItem>
               </SelectContent>
             </Select>
             <Textarea
-              placeholder="คำอธิบาย (optional)"
+              placeholder="คำอธิบาย (ถ้ามี)"
               value={newEntity.description}
-              onChange={(e) => setNewEntity((prev) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setNewEntity({ ...newEntity, description: e.target.value })}
             />
             <Button onClick={handleAddEntity} className="w-full">
-              บันทึก
+              เพิ่ม
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Add Module Dialog */}
       <Dialog open={showAddModule} onOpenChange={setShowAddModule}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Cog className="w-5 h-5 text-purple-500" />
-              เพิ่ม System Module ใหม่
-            </DialogTitle>
+            <DialogTitle>เพิ่ม Module ใหม่</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               placeholder="ชื่อ Module"
               value={newModule.name}
-              onChange={(e) => setNewModule((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
             />
             <Select
               value={newModule.type}
-              onValueChange={(v: "time_activation" | "safety_override" | "distance_expansion" | "other") =>
-                setNewModule((prev) => ({ ...prev, type: v }))
-              }
+              onValueChange={(v) => setNewModule({ ...newModule, type: v as SystemModule["type"] })}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="ประเภท" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="time_activation">⏰ Time Activation</SelectItem>
-                <SelectItem value="safety_override">🛡️ Safety Override</SelectItem>
-                <SelectItem value="distance_expansion">🌌 Distance Expansion</SelectItem>
-                <SelectItem value="other">📦 Other</SelectItem>
+                <SelectItem value="time_activation">Time Activation</SelectItem>
+                <SelectItem value="safety_override">Safety Override</SelectItem>
+                <SelectItem value="distance_expansion">Distance Expansion</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
             <Textarea
-              placeholder="คำอธิบาย (optional)"
+              placeholder="คำอธิบาย (ถ้ามี)"
               value={newModule.description}
-              onChange={(e) => setNewModule((prev) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
             />
             <Button onClick={handleAddModule} className="w-full">
-              บันทึก
+              เพิ่ม
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Add Threat Dialog */}
       <Dialog open={showAddThreat} onOpenChange={setShowAddThreat}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              เพิ่มภัยคุกคามใหม่
-            </DialogTitle>
+            <DialogTitle>เพิ่มภัยคุกคามใหม่</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               placeholder="ชื่อภัยคุกคาม"
               value={newThreat.name}
-              onChange={(e) => setNewThreat((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setNewThreat({ ...newThreat, name: e.target.value })}
             />
             <div>
-              <label className="text-sm">Level: {newThreat.level}/5</label>
+              <label className="text-sm text-muted-foreground">Level: {newThreat.level}</label>
               <input
                 type="range"
-                min="1"
+                min="0"
                 max="5"
                 value={newThreat.level}
-                onChange={(e) =>
-                  setNewThreat((prev) => ({
-                    ...prev,
-                    level: parseInt(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5,
-                  }))
-                }
-                className="w-full"
+                onChange={(e) => setNewThreat({ ...newThreat, level: Number(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5 })}
+                className="w-full mt-1"
               />
             </div>
             <Textarea
-              placeholder="วิธีตอบสนอง (optional)"
+              placeholder="การตอบสนอง (ถ้ามี)"
               value={newThreat.response}
-              onChange={(e) => setNewThreat((prev) => ({ ...prev, response: e.target.value }))}
+              onChange={(e) => setNewThreat({ ...newThreat, response: e.target.value })}
             />
             <Button onClick={handleAddThreat} className="w-full">
-              บันทึก
+              เพิ่ม
             </Button>
           </div>
         </DialogContent>
