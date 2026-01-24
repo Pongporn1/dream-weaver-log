@@ -229,11 +229,22 @@ export async function updateDreamLog(
     }
   }
 
+  // Get world name if needed
+  let worldName = updates.world || "";
+  if (!worldName && worldId) {
+    const { data: worldData } = await supabase
+      .from("worlds")
+      .select("name")
+      .eq("id", worldId)
+      .maybeSingle();
+    worldName = worldData?.name || "";
+  }
+
   return {
     id: updatedLog.dream_id,
     date: updatedLog.date,
     wakeTime: updatedLog.wake_time,
-    world: updates.world || currentLog.world?.name || "",
+    world: worldName,
     timeSystem: updatedLog.time_system as DreamLog["timeSystem"],
     environments: updatedLog.environments || [],
     entities: updates.entities || [],
