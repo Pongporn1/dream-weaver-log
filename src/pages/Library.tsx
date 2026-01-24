@@ -1,764 +1,515 @@
 import { useState, useEffect } from "react";
 import {
-  Plus,
-  Trash2,
   Search,
+  Home,
+  Book,
+  Library as LibraryIcon,
+  BarChart3,
+  Info,
+  Calendar,
   Globe,
-  Users,
-  Cog,
-  AlertTriangle,
-  BookOpen,
-  X,
-  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
 } from "lucide-react";
-import {
-  getWorlds,
-  getEntities,
-  getModules,
-  getThreats,
-  addWorld,
-  addEntity,
-  addModule,
-  addThreat,
-  deleteWorld,
-  deleteEntity,
-  deleteModule,
-  deleteThreat,
-} from "@/lib/api";
-import { World, Entity, SystemModule, ThreatEntry } from "@/types/dream";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { getDreamLogs } from "@/lib/api";
+import { DreamLog } from "@/types/dream";
+import { Link, useLocation } from "react-router-dom";
+import { format, isToday, isThisWeek, isThisMonth, startOfDay } from "date-fns";
+import { th } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-type CategoryType = "worlds" | "entities" | "modules" | "threats";
+const navItems = [
+  { path: "/", icon: Home, label: "Home" },
+  { path: "/logs", icon: Book, label: "Logs" },
+  { path: "/library", icon: LibraryIcon, label: "Library" },
+  { path: "/statistics", icon: BarChart3, label: "Stats" },
+  { path: "/about", icon: Info, label: "About" },
+];
 
-// Book spine colors based on category
-const categoryStyles = {
-  worlds: {
-    gradient: "from-blue-600 to-indigo-700",
-    accent: "bg-blue-500",
-    text: "text-blue-100",
-    icon: Globe,
-    label: "โลก",
-    labelEn: "Worlds",
-  },
-  entities: {
-    gradient: "from-emerald-600 to-teal-700",
-    accent: "bg-emerald-500",
-    text: "text-emerald-100",
-    icon: Users,
-    label: "สิ่งมีชีวิต",
-    labelEn: "Entities",
-  },
-  modules: {
-    gradient: "from-purple-600 to-violet-700",
-    accent: "bg-purple-500",
-    text: "text-purple-100",
-    icon: Cog,
-    label: "โมดูล",
-    labelEn: "Modules",
-  },
-  threats: {
-    gradient: "from-red-600 to-rose-700",
-    accent: "bg-red-500",
-    text: "text-red-100",
-    icon: AlertTriangle,
-    label: "ภัยคุกคาม",
-    labelEn: "Threats",
-  },
-};
+type GroupBy = "date" | "world";
 
-// Book spine component - looks like book on a shelf
-function BookSpine({
-  item,
-  category,
-  isSelected,
-  onClick,
-}: {
-  item: { id: string; name: string };
-  category: CategoryType;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const style = categoryStyles[category];
-  
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "group relative h-32 w-10 flex-shrink-0 rounded-sm transition-all duration-200 cursor-pointer",
-        "bg-gradient-to-b shadow-md hover:shadow-lg",
-        style.gradient,
-        isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background -translate-y-2",
-        !isSelected && "hover:-translate-y-1"
-      )}
-    >
-      {/* Book spine texture */}
-      <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
-      {/* Top edge highlight */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 rounded-t-sm" />
-      
-      {/* Book title - vertical text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span
-          className={cn(
-            "text-[10px] font-medium writing-mode-vertical transform rotate-180 truncate max-h-24 px-1",
-            style.text
-          )}
-          style={{ writingMode: "vertical-rl" }}
-        >
-          {item.name}
-        </span>
-      </div>
-      
-      {/* Bottom label strip */}
-      <div className={cn("absolute bottom-1 left-1 right-1 h-1 rounded-full", style.accent, "opacity-60")} />
-    </button>
-  );
+// Generate cover image from dream data
+function generateCoverImage(dream: DreamLog): string {
+  const colors = [
+    "from-cyan-600 via-blue-700 to-blue-900", // Water/Ocean
+    "from-purple-600 via-indigo-700 to-purple-900", // Mystery
+    "from-emerald-600 via-teal-700 to-green-900", // Forest
+    "from-orange-600 via-red-700 to-pink-900", // Fire/Sunset
+    "from-slate-600 via-gray-700 to-slate-900", // Urban/Night
+    "from-amber-600 via-yellow-700 to-orange-900", // Desert
+    "from-rose-600 via-pink-700 to-purple-900", // Dream
+    "from-teal-600 via-cyan-700 to-blue-900", // Sky
+  ];
+
+  const hash = dream.id
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
 }
 
-// Bookshelf section
-function BookshelfSection({
-  category,
-  items,
-  selectedId,
-  onSelect,
-  onAdd,
-}: {
-  category: CategoryType;
-  items: { id: string; name: string }[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onAdd: () => void;
-}) {
-  const style = categoryStyles[category];
-  const Icon = style.icon;
+// Get background pattern based on dream content
+function getBackgroundPattern(dream: DreamLog): string {
+  const world = dream.world?.toLowerCase() || "";
+  const notes = dream.notes?.toLowerCase() || "";
+  const content = world + notes;
 
-  return (
-    <div className="space-y-2">
-      {/* Shelf label */}
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
-          <Icon className={cn("w-4 h-4", `text-${category === 'worlds' ? 'blue' : category === 'entities' ? 'emerald' : category === 'modules' ? 'purple' : 'red'}-500`)} />
-          <span className="text-sm font-medium">{style.label}</span>
-          <span className="text-xs text-muted-foreground">({items.length})</span>
-        </div>
-        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onAdd}>
-          <Plus className="w-3 h-3 mr-1" />
-          เพิ่ม
-        </Button>
-      </div>
-      
-      {/* Shelf with books */}
-      <div className="relative">
-        {/* Shelf board */}
-        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-sm shadow-md" />
-        <div className="absolute bottom-2 left-0 right-0 h-1 bg-amber-700/50" />
-        
-        {/* Books container */}
-        <div className="relative pb-3 px-2 flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent min-h-[140px]">
-          {items.length === 0 ? (
-            <div className="flex items-center justify-center w-full text-muted-foreground text-xs">
-              ว่างเปล่า
-            </div>
-          ) : (
-            items.map((item) => (
-              <BookSpine
-                key={item.id}
-                item={item}
-                category={category}
-                isSelected={selectedId === item.id}
-                onClick={() => onSelect(item.id)}
-              />
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  if (
+    content.includes("น้ำ") ||
+    content.includes("water") ||
+    content.includes("ทะเล") ||
+    content.includes("sea")
+  ) {
+    return "🌊";
+  }
+  if (
+    content.includes("ไฟ") ||
+    content.includes("fire") ||
+    content.includes("แสง") ||
+    content.includes("light")
+  ) {
+    return "🔥";
+  }
+  if (
+    content.includes("ป่า") ||
+    content.includes("forest") ||
+    content.includes("ต้นไม้") ||
+    content.includes("tree")
+  ) {
+    return "🌲";
+  }
+  if (
+    content.includes("เมือง") ||
+    content.includes("city") ||
+    content.includes("อาคาร") ||
+    content.includes("building")
+  ) {
+    return "🏙️";
+  }
+  if (
+    content.includes("ท้องฟ้า") ||
+    content.includes("sky") ||
+    content.includes("เมgh") ||
+    content.includes("cloud")
+  ) {
+    return "☁️";
+  }
+  if (
+    content.includes("ดาว") ||
+    content.includes("star") ||
+    content.includes("จันทร์") ||
+    content.includes("moon")
+  ) {
+    return "✨";
+  }
+  return "🌙";
 }
 
 export default function Library() {
-  const [worlds, setWorlds] = useState<World[]>([]);
-  const [entities, setEntities] = useState<Entity[]>([]);
-  const [modules, setModules] = useState<SystemModule[]>([]);
-  const [threats, setThreats] = useState<ThreatEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<{
-    type: CategoryType;
-    id: string;
-  } | null>(null);
-
-  // Dialog states
-  const [showAddWorld, setShowAddWorld] = useState(false);
-  const [showAddEntity, setShowAddEntity] = useState(false);
-  const [showAddModule, setShowAddModule] = useState(false);
-  const [showAddThreat, setShowAddThreat] = useState(false);
-
-  // Form states
-  const [newWorld, setNewWorld] = useState<{
-    name: string;
-    type: "persistent" | "transient";
-    stability: number;
-    description: string;
-  }>({ name: "", type: "transient", stability: 3, description: "" });
-  const [newEntity, setNewEntity] = useState<{
-    name: string;
-    role: "observer" | "protector" | "guide" | "intruder";
-    description: string;
-  }>({ name: "", role: "observer", description: "" });
-  const [newModule, setNewModule] = useState<{
-    name: string;
-    type: "time_activation" | "safety_override" | "distance_expansion" | "other";
-    description: string;
-  }>({ name: "", type: "other", description: "" });
-  const [newThreat, setNewThreat] = useState<{
-    name: string;
-    level: 0 | 1 | 2 | 3 | 4 | 5;
-    response: string;
-  }>({ name: "", level: 1, response: "" });
+  const [groupBy, setGroupBy] = useState<GroupBy>("date");
+  const [dreamLogs, setDreamLogs] = useState<DreamLog[]>([]);
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
+    today: true,
+    thisWeek: true,
+    thisMonth: true,
+    older: false,
+  });
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const dreamsData = await getDreamLogs();
+        setDreamLogs(dreamsData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
     loadData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      const [worldsData, entitiesData, modulesData, threatsData] = await Promise.all([
-        getWorlds(),
-        getEntities(),
-        getModules(),
-        getThreats(),
-      ]);
-      setWorlds(worldsData);
-      setEntities(entitiesData);
-      setModules(modulesData);
-      setThreats(threatsData);
-    } catch (error) {
-      console.error("Error loading library:", error);
-    } finally {
-      setLoading(false);
-    }
+  const filteredDreams = searchQuery
+    ? dreamLogs.filter(
+        (dream) =>
+          dream.world.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          dream.entities.some((e) =>
+            e.toLowerCase().includes(searchQuery.toLowerCase()),
+          ) ||
+          dream.notes?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : dreamLogs;
+
+  // Group dreams by date
+  const groupedByDate = () => {
+    const today: DreamLog[] = [];
+    const thisWeek: DreamLog[] = [];
+    const thisMonth: DreamLog[] = [];
+    const older: DreamLog[] = [];
+
+    filteredDreams.forEach((dream) => {
+      const dreamDate = new Date(dream.date);
+      if (isToday(dreamDate)) {
+        today.push(dream);
+      } else if (isThisWeek(dreamDate, { weekStartsOn: 1 })) {
+        thisWeek.push(dream);
+      } else if (isThisMonth(dreamDate)) {
+        thisMonth.push(dream);
+      } else {
+        older.push(dream);
+      }
+    });
+
+    return { today, thisWeek, thisMonth, older };
   };
 
-  // Filter items by search
-  const filterItems = <T extends { name: string; description?: string }>(items: T[]) => {
-    if (!searchQuery.trim()) return items;
-    const q = searchQuery.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q)
-    );
+  // Group dreams by world
+  const groupedByWorld = () => {
+    const groups: Record<string, DreamLog[]> = {};
+    filteredDreams.forEach((dream) => {
+      const world = dream.world || "Unknown World";
+      if (!groups[world]) {
+        groups[world] = [];
+      }
+      groups[world].push(dream);
+    });
+    return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
   };
 
-  // Add handlers
-  const handleAddWorld = async () => {
-    if (!newWorld.name.trim()) {
-      toast.error("กรุณาใส่ชื่อโลก");
-      return;
-    }
-    const result = await addWorld(newWorld);
-    if (result) {
-      setWorlds((prev) => [...prev, result]);
-      setNewWorld({ name: "", type: "transient", stability: 3, description: "" });
-      setShowAddWorld(false);
-      toast.success("เพิ่มโลกใหม่แล้ว");
-    }
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
   };
 
-  const handleAddEntity = async () => {
-    if (!newEntity.name.trim()) {
-      toast.error("กรุณาใส่ชื่อ Entity");
-      return;
-    }
-    const result = await addEntity(newEntity);
-    if (result) {
-      setEntities((prev) => [...prev, result]);
-      setNewEntity({ name: "", role: "observer", description: "" });
-      setShowAddEntity(false);
-      toast.success("เพิ่ม Entity ใหม่แล้ว");
-    }
+  const toggleAllInGroup = (worldName: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [worldName]: !prev[worldName],
+    }));
   };
-
-  const handleAddModule = async () => {
-    if (!newModule.name.trim()) {
-      toast.error("กรุณาใส่ชื่อ Module");
-      return;
-    }
-    const result = await addModule(newModule);
-    if (result) {
-      setModules((prev) => [...prev, result]);
-      setNewModule({ name: "", type: "other", description: "" });
-      setShowAddModule(false);
-      toast.success("เพิ่ม Module ใหม่แล้ว");
-    }
-  };
-
-  const handleAddThreat = async () => {
-    if (!newThreat.name.trim()) {
-      toast.error("กรุณาใส่ชื่อภัยคุกคาม");
-      return;
-    }
-    const result = await addThreat(newThreat);
-    if (result) {
-      setThreats((prev) => [...prev, result]);
-      setNewThreat({ name: "", level: 1, response: "" });
-      setShowAddThreat(false);
-      toast.success("เพิ่มภัยคุกคามใหม่แล้ว");
-    }
-  };
-
-  // Delete handlers
-  const handleDelete = async (type: CategoryType, id: string) => {
-    let success = false;
-    switch (type) {
-      case "worlds":
-        success = await deleteWorld(id);
-        if (success) setWorlds((prev) => prev.filter((w) => w.id !== id));
-        break;
-      case "entities":
-        success = await deleteEntity(id);
-        if (success) setEntities((prev) => prev.filter((e) => e.id !== id));
-        break;
-      case "modules":
-        success = await deleteModule(id);
-        if (success) setModules((prev) => prev.filter((m) => m.id !== id));
-        break;
-      case "threats":
-        success = await deleteThreat(id);
-        if (success) setThreats((prev) => prev.filter((t) => t.id !== id));
-        break;
-    }
-    if (success) {
-      toast.success("ลบแล้ว");
-      setSelectedItem(null);
-    }
-  };
-
-  // Get selected item details
-  const getSelectedDetails = () => {
-    if (!selectedItem) return null;
-    switch (selectedItem.type) {
-      case "worlds":
-        return worlds.find((w) => w.id === selectedItem.id);
-      case "entities":
-        return entities.find((e) => e.id === selectedItem.id);
-      case "modules":
-        return modules.find((m) => m.id === selectedItem.id);
-      case "threats":
-        return threats.find((t) => t.id === selectedItem.id);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>
-    );
-  }
-
-  const selected = getSelectedDetails();
-  const selectedStyle = selectedItem ? categoryStyles[selectedItem.type] : null;
 
   return (
-    <div className="py-4 min-h-screen">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <BookOpen className="w-6 h-6 text-primary" />
-        <div>
-          <h1 className="text-xl font-semibold">Dream Library</h1>
-          <p className="text-xs text-muted-foreground">ห้องสมุดความฝัน</p>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="ค้นหาในห้องสมุด..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-9"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setSearchQuery("")}
-          >
-            <X className="w-3 h-3" />
-          </Button>
-        )}
-      </div>
-
-      {/* Bookshelves - Main View or Detail View */}
-      {!selected ? (
-        <div className="space-y-6">
-          {/* Bookcase frame */}
-          <div className="relative bg-gradient-to-b from-amber-950/20 to-amber-900/30 rounded-lg p-4 border border-amber-800/30">
-            {/* Bookcase sides */}
-            <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-amber-800 to-amber-900 rounded-l-lg" />
-            <div className="absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-l from-amber-800 to-amber-900 rounded-r-lg" />
-            
-            <div className="space-y-6 px-2">
-              <BookshelfSection
-                category="worlds"
-                items={filterItems(worlds)}
-                selectedId={selectedItem?.type === "worlds" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "worlds", id })}
-                onAdd={() => setShowAddWorld(true)}
-              />
-              
-              <BookshelfSection
-                category="entities"
-                items={filterItems(entities)}
-                selectedId={selectedItem?.type === "entities" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "entities", id })}
-                onAdd={() => setShowAddEntity(true)}
-              />
-              
-              <BookshelfSection
-                category="modules"
-                items={filterItems(modules)}
-                selectedId={selectedItem?.type === "modules" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "modules", id })}
-                onAdd={() => setShowAddModule(true)}
-              />
-              
-              <BookshelfSection
-                category="threats"
-                items={filterItems(threats)}
-                selectedId={selectedItem?.type === "threats" ? selectedItem.id : null}
-                onSelect={(id) => setSelectedItem({ type: "threats", id })}
-                onAdd={() => setShowAddThreat(true)}
-              />
+      <header className="sticky top-0 z-10 bg-background border-b">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-semibold">Dream Library</h1>
+            <div className="text-sm text-muted-foreground">
+              {filteredDreams.length} ความฝัน
             </div>
           </div>
-        </div>
-      ) : (
-        // Detail View - Open Book
-        <div className="space-y-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedItem(null)}
-            className="mb-2"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            กลับไปชั้นหนังสือ
-          </Button>
 
-          {/* Open book design */}
-          <div className={cn(
-            "relative rounded-lg overflow-hidden shadow-xl",
-            "bg-gradient-to-br",
-            selectedStyle?.gradient
-          )}>
-            {/* Book cover texture */}
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,white_1px,transparent_1px)] bg-[length:20px_20px]" />
-            
-            {/* Content */}
-            <div className="relative p-6 text-white">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    {selectedStyle && <selectedStyle.icon className="w-5 h-5 opacity-80" />}
-                    <span className="text-xs uppercase tracking-wider opacity-70">
-                      {selectedStyle?.labelEn}
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-bold">{selected.name}</h2>
-                  
-                  {/* Type badges */}
-                  {selectedItem?.type === "worlds" && (
-                    <div className="flex gap-2 mt-2">
-                      <span className="text-xs px-2 py-1 rounded bg-white/20 backdrop-blur">
-                        {(selected as World).type === "persistent" ? "🌟 Persistent" : "✨ Transient"}
-                      </span>
-                      <span className="text-xs px-2 py-1 rounded bg-white/20 backdrop-blur">
-                        Stability: {"●".repeat((selected as World).stability)}{"○".repeat(5 - (selected as World).stability)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {selectedItem?.type === "entities" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      {(selected as Entity).role === "protector" ? "🛡️" : 
-                       (selected as Entity).role === "guide" ? "🧭" :
-                       (selected as Entity).role === "intruder" ? "⚠️" : "👁️"} {(selected as Entity).role}
-                    </span>
-                  )}
-                  
-                  {selectedItem?.type === "modules" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      ⚙️ {(selected as SystemModule).type.replace("_", " ")}
-                    </span>
-                  )}
-                  
-                  {selectedItem?.type === "threats" && (
-                    <span className="inline-block text-xs px-2 py-1 rounded bg-white/20 backdrop-blur mt-2">
-                      ⚡ Level {(selected as ThreatEntry).level}/5
-                    </span>
-                  )}
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/20"
-                  onClick={() => selectedItem && handleDelete(selectedItem.type, selectedItem.id)}
+          {/* Search Bar */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="ค้นหาในห้องสมุดความฝัน..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Group By Tabs */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setGroupBy("date")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                groupBy === "date"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Calendar className="w-4 h-4" />
+              ตามวันที่
+            </button>
+            <button
+              onClick={() => setGroupBy("world")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                groupBy === "world"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Globe className="w-4 h-4" />
+              ตามโลก
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 overflow-y-auto pb-20">
+        {filteredDreams.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground px-4">
+            <LibraryIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>ไม่พบความฝัน</p>
+          </div>
+        ) : groupBy === "date" ? (
+          <div className="space-y-4 p-4">
+            {/* Today */}
+            {groupedByDate().today.length > 0 && (
+              <section className="bg-card rounded-lg border">
+                <button
+                  onClick={() => toggleSection("today")}
+                  className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Description */}
-              {selectedItem?.type !== "threats" && "description" in selected && selected.description && (
-                <div className="mb-6">
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    คำอธิบาย
-                  </label>
-                  <p className="text-sm leading-relaxed bg-white/10 rounded-lg p-4 backdrop-blur">
-                    {selected.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Response for threats */}
-              {selectedItem?.type === "threats" && (selected as ThreatEntry).response && (
-                <div className="mb-6">
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    วิธีตอบสนอง
-                  </label>
-                  <p className="text-sm leading-relaxed bg-white/10 rounded-lg p-4 backdrop-blur">
-                    {(selected as ThreatEntry).response}
-                  </p>
-                </div>
-              )}
-
-              {/* Related Dreams */}
-              {selected.dreamIds && selected.dreamIds.length > 0 && (
-                <div>
-                  <label className="text-xs uppercase tracking-wider opacity-70 block mb-2">
-                    ความฝันที่เกี่ยวข้อง ({selected.dreamIds.length})
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {selected.dreamIds.map((id) => (
-                      <Link
-                        key={id}
-                        to={`/logs/${id}`}
-                        className="text-xs font-mono bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition-colors backdrop-blur"
-                      >
-                        {id}
-                      </Link>
-                    ))}
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-8 bg-primary rounded-full" />
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">วันนี้</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {groupedByDate().today.length} ความฝัน
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                  {expandedSections.today ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedSections.today && (
+                  <div className="p-4 pt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {groupedByDate().today.map((dream) => (
+                        <DreamCard key={dream.id} dream={dream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* This Week */}
+            {groupedByDate().thisWeek.length > 0 && (
+              <section className="bg-card rounded-lg border">
+                <button
+                  onClick={() => toggleSection("thisWeek")}
+                  className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-8 bg-blue-500 rounded-full" />
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">สัปดาห์นี้</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {groupedByDate().thisWeek.length} ความฝัน
+                      </p>
+                    </div>
+                  </div>
+                  {expandedSections.thisWeek ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedSections.thisWeek && (
+                  <div className="p-4 pt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {groupedByDate().thisWeek.map((dream) => (
+                        <DreamCard key={dream.id} dream={dream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* This Month */}
+            {groupedByDate().thisMonth.length > 0 && (
+              <section className="bg-card rounded-lg border">
+                <button
+                  onClick={() => toggleSection("thisMonth")}
+                  className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-8 bg-emerald-500 rounded-full" />
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">เดือนนี้</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {groupedByDate().thisMonth.length} ความฝัน
+                      </p>
+                    </div>
+                  </div>
+                  {expandedSections.thisMonth ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedSections.thisMonth && (
+                  <div className="p-4 pt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {groupedByDate().thisMonth.map((dream) => (
+                        <DreamCard key={dream.id} dream={dream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Older */}
+            {groupedByDate().older.length > 0 && (
+              <section className="bg-card rounded-lg border">
+                <button
+                  onClick={() => toggleSection("older")}
+                  className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-8 bg-muted-foreground/50 rounded-full" />
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">ก่อนหน้านี้</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {groupedByDate().older.length} ความฝัน
+                      </p>
+                    </div>
+                  </div>
+                  {expandedSections.older ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedSections.older && (
+                  <div className="p-4 pt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {groupedByDate().older.map((dream) => (
+                        <DreamCard key={dream.id} dream={dream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4 p-4">
+            {groupedByWorld().map(([world, dreams]) => (
+              <section key={world} className="bg-card rounded-lg border">
+                <button
+                  onClick={() => toggleAllInGroup(world)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-5 h-5 text-primary" />
+                    <div className="text-left">
+                      <h2 className="text-sm font-semibold">{world}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {dreams.length} ความฝัน
+                      </p>
+                    </div>
+                  </div>
+                  {expandedSections[world] ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedSections[world] && (
+                  <div className="p-4 pt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {dreams.map((dream) => (
+                        <DreamCard key={dream.id} dream={dream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-background border-t z-20">
+        <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+          {navItems.map(({ path, icon: Icon, label }) => {
+            const isActive =
+              location.pathname === path ||
+              (path !== "/" && location.pathname.startsWith(path));
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors min-w-[60px]",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-xs font-medium">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+// Dream Card Component with AI-generated cover
+function DreamCard({ dream }: { dream: DreamLog }) {
+  const gradientClass = generateCoverImage(dream);
+
+  return (
+    <Link to={`/logs/${dream.id}`} className="group">
+      <div className="aspect-[2/3] rounded-lg overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-500 group-hover:scale-[1.03]">
+        {/* Main Gradient Background */}
+        <div className={cn("absolute inset-0 bg-gradient-to-b", gradientClass)}>
+          {/* Light rays effect */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-1/4 w-32 h-full bg-gradient-to-b from-white/40 to-transparent blur-2xl transform -skew-x-12" />
+            <div className="absolute top-0 right-1/3 w-24 h-full bg-gradient-to-b from-white/30 to-transparent blur-xl transform skew-x-12" />
+          </div>
+
+          {/* Gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+        </div>
+
+        {/* Content Container - Typography Only */}
+        <div className="absolute inset-0 flex flex-col justify-center p-6">
+          {/* Center Area - Main Title */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-2 max-w-full px-2">
+              <h3 className="font-bold text-2xl sm:text-3xl leading-tight text-white drop-shadow-2xl uppercase tracking-wider line-clamp-3">
+                {dream.world || "Unknown"}
+              </h3>
+            </div>
+          </div>
+
+          {/* Bottom Area - Date */}
+          <div className="space-y-3">
+            {/* Separator Line */}
+            <div className="flex items-center justify-center gap-2 opacity-60">
+              <div className="h-px w-12 bg-white/50" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+              <div className="h-px w-12 bg-white/50" />
+            </div>
+
+            {/* Info */}
+            <div className="text-center">
+              <p className="text-xs text-white/70 font-light tracking-widest uppercase">
+                {format(new Date(dream.date), "d MMMM yyyy", { locale: th })}
+              </p>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Add Dialogs */}
-      <Dialog open={showAddWorld} onOpenChange={setShowAddWorld}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-500" />
-              เพิ่มโลกใหม่
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="ชื่อโลก"
-              value={newWorld.name}
-              onChange={(e) => setNewWorld((prev) => ({ ...prev, name: e.target.value }))}
-            />
-            <Select
-              value={newWorld.type}
-              onValueChange={(v: "persistent" | "transient") =>
-                setNewWorld((prev) => ({ ...prev, type: v }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="persistent">🌟 Persistent (ถาวร)</SelectItem>
-                <SelectItem value="transient">✨ Transient (ชั่วคราว)</SelectItem>
-              </SelectContent>
-            </Select>
-            <div>
-              <label className="text-sm">Stability: {newWorld.stability}/5</label>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={newWorld.stability}
-                onChange={(e) =>
-                  setNewWorld((prev) => ({ ...prev, stability: parseInt(e.target.value) }))
-                }
-                className="w-full"
-              />
-            </div>
-            <Textarea
-              placeholder="คำอธิบาย (optional)"
-              value={newWorld.description}
-              onChange={(e) => setNewWorld((prev) => ({ ...prev, description: e.target.value }))}
-            />
-            <Button onClick={handleAddWorld} className="w-full">
-              บันทึก
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAddEntity} onOpenChange={setShowAddEntity}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-emerald-500" />
-              เพิ่ม Entity ใหม่
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="ชื่อ Entity"
-              value={newEntity.name}
-              onChange={(e) => setNewEntity((prev) => ({ ...prev, name: e.target.value }))}
-            />
-            <Select
-              value={newEntity.role}
-              onValueChange={(v: "observer" | "protector" | "guide" | "intruder") =>
-                setNewEntity((prev) => ({ ...prev, role: v }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="observer">👁️ Observer (ผู้สังเกต)</SelectItem>
-                <SelectItem value="protector">🛡️ Protector (ผู้ปกป้อง)</SelectItem>
-                <SelectItem value="guide">🧭 Guide (ผู้นำทาง)</SelectItem>
-                <SelectItem value="intruder">⚠️ Intruder (ผู้บุกรุก)</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              placeholder="คำอธิบาย (optional)"
-              value={newEntity.description}
-              onChange={(e) => setNewEntity((prev) => ({ ...prev, description: e.target.value }))}
-            />
-            <Button onClick={handleAddEntity} className="w-full">
-              บันทึก
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAddModule} onOpenChange={setShowAddModule}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Cog className="w-5 h-5 text-purple-500" />
-              เพิ่ม System Module ใหม่
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="ชื่อ Module"
-              value={newModule.name}
-              onChange={(e) => setNewModule((prev) => ({ ...prev, name: e.target.value }))}
-            />
-            <Select
-              value={newModule.type}
-              onValueChange={(v: "time_activation" | "safety_override" | "distance_expansion" | "other") =>
-                setNewModule((prev) => ({ ...prev, type: v }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="time_activation">⏰ Time Activation</SelectItem>
-                <SelectItem value="safety_override">🛡️ Safety Override</SelectItem>
-                <SelectItem value="distance_expansion">🌌 Distance Expansion</SelectItem>
-                <SelectItem value="other">📦 Other</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              placeholder="คำอธิบาย (optional)"
-              value={newModule.description}
-              onChange={(e) => setNewModule((prev) => ({ ...prev, description: e.target.value }))}
-            />
-            <Button onClick={handleAddModule} className="w-full">
-              บันทึก
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAddThreat} onOpenChange={setShowAddThreat}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              เพิ่มภัยคุกคามใหม่
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="ชื่อภัยคุกคาม"
-              value={newThreat.name}
-              onChange={(e) => setNewThreat((prev) => ({ ...prev, name: e.target.value }))}
-            />
-            <div>
-              <label className="text-sm">Level: {newThreat.level}/5</label>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={newThreat.level}
-                onChange={(e) =>
-                  setNewThreat((prev) => ({
-                    ...prev,
-                    level: parseInt(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5,
-                  }))
-                }
-                className="w-full"
-              />
-            </div>
-            <Textarea
-              placeholder="วิธีตอบสนอง (optional)"
-              value={newThreat.response}
-              onChange={(e) => setNewThreat((prev) => ({ ...prev, response: e.target.value }))}
-            />
-            <Button onClick={handleAddThreat} className="w-full">
-              บันทึก
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* Hover Shine Effect */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/0 to-transparent group-hover:via-white/10 transition-all duration-500 transform translate-x-full group-hover:translate-x-0" />
+      </div>
+    </Link>
   );
 }

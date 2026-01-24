@@ -25,18 +25,30 @@ const App = () => (
           import.meta.env.MODE === "production" ? "/dream-weaver-log" : "/"
         }
       >
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/logs" element={<DreamLogs />} />
-            <Route path="/logs/new" element={<NewDreamLog />} />
-            <Route path="/logs/:id" element={<DreamDetail />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/statistics" element={<Statistics />} />
-            <Route path="/about" element={<About />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          {/* Home page without Layout for full-screen hero */}
+          <Route path="/" element={<Home />} />
+
+          {/* Library page without Layout for full-screen experience */}
+          <Route path="/library" element={<Library />} />
+
+          {/* Other pages with Layout */}
+          <Route
+            path="/*"
+            element={
+              <Layout>
+                <Routes>
+                  <Route path="/logs" element={<DreamLogs />} />
+                  <Route path="/logs/new" element={<NewDreamLog />} />
+                  <Route path="/logs/:id" element={<DreamDetail />} />
+                  <Route path="/statistics" element={<Statistics />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

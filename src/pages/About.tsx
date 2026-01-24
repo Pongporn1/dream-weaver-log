@@ -20,23 +20,7 @@ export default function About() {
           </p>
         </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-primary" />
-            <h2 className="text-lg font-medium">ข้อควรระวัง</h2>
-          </div>
-          <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-            <li>นี่ไม่ใช่เครื่องมือทำนายอนาคตหรือตีความทางจิตวิทยา</li>
-            <li>
-              ความฝันเป็นประสบการณ์ส่วนตัว
-              ข้อมูลไม่ได้บ่งบอกถึงสิ่งเหนือธรรมชาติ
-            </li>
-            <li>การบันทึกเป็นเพียงการจดจำและจัดระบบเท่านั้น</li>
-            <li>
-              หากมีความกังวลเกี่ยวกับการนอนหรือสุขภาพจิต ควรปรึกษาผู้เชี่ยวชาญ
-            </li>
-          </ul>
-        </section>
+
 
 
         <section className="card-minimal text-center">

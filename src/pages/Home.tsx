@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Plus,
   Library,
@@ -9,12 +9,17 @@ import {
   Edit2,
   Check,
   X,
+  Home as HomeIcon,
+  Book,
+  BarChart3,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DreamCard } from "@/components/DreamCard";
+import { HeroWallpaper } from "@/components/HeroWallpaper";
 import {
   getDreamLogs,
   getWorlds,
@@ -25,8 +30,17 @@ import {
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
 
+const navItems = [
+  { path: "/", icon: HomeIcon, label: "Home" },
+  { path: "/logs", icon: Book, label: "Logs" },
+  { path: "/library", icon: Library, label: "Library" },
+  { path: "/statistics", icon: BarChart3, label: "Stats" },
+  { path: "/about", icon: Info, label: "About" },
+];
+
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [recentDreams, setRecentDreams] = useState<DreamLog[]>([]);
   const [quickNote, setQuickNote] = useState("");
   const [loading, setLoading] = useState(true);
@@ -154,7 +168,17 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-8 py-4">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Hero Wallpaper - Full Screen */}
+      <HeroWallpaper
+        mediaUrl="/hero-wallpaper.png"
+        title="Dream book"
+        subtitle="วันนี้อยากเล่าเรื่องอะไรหรอ"
+      />
+
+      {/* Main Content */}
+      <div className="flex-1">
+      <div className="space-y-8 py-4 container-app">
       {/* Greeting */}
       <div className="space-y-2">
         <h1 className="text-2xl">สวัสดีบอน</h1>
@@ -358,6 +382,33 @@ export default function Home() {
           </Button>
         </div>
       )}
+      </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <nav className="border-t border-border sticky bottom-0 bg-background z-20">
+        <div className="flex justify-around py-2">
+          {navItems.map(({ path, icon: Icon, label }) => {
+            const isActive =
+              location.pathname === path ||
+              (path !== "/" && location.pathname.startsWith(path));
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px]">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
