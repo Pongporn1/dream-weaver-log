@@ -2,6 +2,31 @@ import { useEffect, useRef, useState } from "react";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { adjustBrightness } from "@/utils/colorUtils";
 import { applyMoonTheme } from "@/utils/moonTheme";
+import { PhenomenonTransition } from "@/utils/transitionUtils";
+import {
+  initMoonFlashes,
+  spawnMoonFlash,
+  drawMoonFlashes,
+  initOrbitingParticles,
+  drawOrbitingParticles,
+  initSparkles,
+  drawSparkles,
+  initAuroraWaves,
+  drawAurora,
+  initFireflies,
+  drawFireflies,
+  initSnowflakes,
+  drawSnowflakes,
+  initFogLayers,
+  drawFog,
+  type MoonFlash,
+  type OrbitingParticle,
+  type Sparkle,
+  type AuroraWave,
+  type Firefly,
+  type Snowflake,
+  type FogLayer,
+} from "@/utils/particleEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
 interface Star {
@@ -42,9 +67,21 @@ export function AnimatedProfileHeader() {
   const animationFrameRef = useRef<number>();
   const moonPositionRef = useRef({ x: 0, y: 0, phase: 0 });
   const shootingStarTimerRef = useRef<number>(0);
+  
+  // Particle system refs for mythic phenomena
+  const moonFlashesRef = useRef<MoonFlash[]>([]);
+  const orbitingParticlesRef = useRef<OrbitingParticle[]>([]);
+  const sparklesRef = useRef<Sparkle[]>([]);
+  
+  // Advanced particle system refs
+  const auroraWavesRef = useRef<AuroraWave[]>([]);
+  const firefliesRef = useRef<Firefly[]>([]);
+  const snowflakesRef = useRef<Snowflake[]>([]);
+  const fogLayersRef = useRef<FogLayer[]>([]);
 
   // Get moon phenomenon for this session
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
+  const transitionManagerRef = useRef<PhenomenonTransition>(new PhenomenonTransition());
 
   useEffect(() => {
     const sessionPhenomenon = getSessionPhenomenon();
@@ -149,6 +186,28 @@ export function AnimatedProfileHeader() {
     };
     initShootingStars();
 
+    // Initialize particles for mythic phenomena
+    const moon = moonPositionRef.current;
+    
+    if (phenomenon.id === "lunarTransientPhenomena") {
+      moonFlashesRef.current = initMoonFlashes(moon.x, moon.y);
+    } else if (phenomenon.id === "superBlueBloodMoon") {
+      orbitingParticlesRef.current = initOrbitingParticles(20);
+    } else if (phenomenon.id === "crystalMoon") {
+      sparklesRef.current = initSparkles(moon.x, moon.y, 40);
+    }
+    
+    // Initialize advanced particle effects
+    if (phenomenon.id === "polarMoon" || phenomenon.id === "arcticMoon") {
+      auroraWavesRef.current = initAuroraWaves(rect.height);
+    } else if (phenomenon.id === "harvestMoon" || phenomenon.id === "warmMoon") {
+      firefliesRef.current = initFireflies(rect.width, rect.height, 20);
+    } else if (phenomenon.id === "coldMoon" || phenomenon.id === "snowMoon" || phenomenon.id === "longNightMoon") {
+      snowflakesRef.current = initSnowflakes(rect.width, 50);
+    } else if (phenomenon.id === "veiledMoon" || phenomenon.id === "mistyMoon") {
+      fogLayersRef.current = initFogLayers(rect.width, rect.height);
+    }
+
     // Initialize moon
     moonPositionRef.current = {
       x: rect.width * 0.7,
@@ -197,6 +256,10 @@ export function AnimatedProfileHeader() {
       moon.phase += 0.005;
       const offsetY = Math.sin(moon.phase) * 3;
 
+      // Dynamic moon size based on phenomenon (default 40, supermoons larger)
+      const baseMoonRadius = 40;
+      const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+
       // Outer glow - uses phenomenon moonTint with very low opacity
       const glowColor = phenomenon.moonTint;
       const outerGlow = ctx.createRadialGradient(
@@ -205,22 +268,22 @@ export function AnimatedProfileHeader() {
         0,
         moon.x,
         moon.y + offsetY,
-        60,
+        moonRadius * 1.5,
       );
       outerGlow.addColorStop(0, `${glowColor}50`); // 30% opacity
       outerGlow.addColorStop(0.5, `${glowColor}26`); // 15% opacity
       outerGlow.addColorStop(1, `${glowColor}00`); // transparent
       ctx.fillStyle = outerGlow;
       ctx.beginPath();
-      ctx.arc(moon.x, moon.y + offsetY, 60, 0, Math.PI * 2);
+      ctx.arc(moon.x, moon.y + offsetY, moonRadius * 1.5, 0, Math.PI * 2);
       ctx.fill();
 
       // Main moon body with phenomenon-specific tint
       const moonGradient = ctx.createLinearGradient(
-        moon.x - 40,
-        moon.y + offsetY - 40,
-        moon.x + 40,
-        moon.y + offsetY + 40,
+        moon.x - moonRadius,
+        moon.y + offsetY - moonRadius,
+        moon.x + moonRadius,
+        moon.y + offsetY + moonRadius,
       );
       moonGradient.addColorStop(0, phenomenon.moonTint);
       moonGradient.addColorStop(
@@ -234,14 +297,14 @@ export function AnimatedProfileHeader() {
       moonGradient.addColorStop(1, adjustBrightness(phenomenon.moonTint, 0.7));
       ctx.fillStyle = moonGradient;
       ctx.beginPath();
-      ctx.arc(moon.x, moon.y + offsetY, 40, 0, Math.PI * 2);
+      ctx.arc(moon.x, moon.y + offsetY, moonRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // Crescent shadow for depth - uses darker version of moonTint
       const shadowColor = adjustBrightness(phenomenon.moonTint, 0.5);
       ctx.fillStyle = `${shadowColor}66`; // 40% opacity
       ctx.beginPath();
-      ctx.arc(moon.x + 15, moon.y + offsetY, 38, 0, Math.PI * 2);
+      ctx.arc(moon.x + moonRadius * 0.375, moon.y + offsetY, moonRadius * 0.95, 0, Math.PI * 2);
       ctx.fill();
     };
 

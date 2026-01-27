@@ -24,6 +24,9 @@ export interface MoonPhenomenon {
   // Narrative
   emotionTag: string;
   subtitle: string; // poetic subtitle
+  
+  // Moon size (optional, default 1.0 = 40px radius)
+  moonSize?: number; // 1.0 = normal, 1.5 = supermoon
 }
 
 // Complete Moon Phenomena Collection (50+ types)
@@ -234,6 +237,58 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     shootingStarChance: 0.50,
     emotionTag: 'dramatic',
     subtitle: 'ปรากฏการณ์อันยิ่งใหญ่',
+  },
+
+  superBlueBloodMoon: {
+    id: 'superBlueBloodMoon',
+    name: 'ซูเปอร์บลูบลัดมูน',
+    nameEn: 'Super Blue Blood Moon',
+    rarity: 'mythic',
+    moonTint: '#B84060',
+    skyPalette: ['#1a0510', '#2a1520', '#3a2530'],
+    uiAccent: '#d85080',
+    transitionSpeed: 60,
+    starDensity: 0.95,
+    cloudOpacity: 0.35,
+    cloudSpeed: 1.4,
+    shootingStarChance: 0.60,
+    emotionTag: 'once_in_lifetime',
+    subtitle: 'ปรากฏการณ์หายากที่สุดในชีวิต',
+    moonSize: 1.5, // Supermoon - 50% larger
+  },
+
+  lunarTransientPhenomena: {
+    id: 'lunarTransientPhenomena',
+    name: 'แสงวาบลึกลับ',
+    nameEn: 'Lunar Transient Phenomena',
+    rarity: 'mythic',
+    moonTint: '#E8D8FF',
+    skyPalette: ['#0e0a1e', '#1e1a2e', '#2e2a3e'],
+    uiAccent: '#c8a8f8',
+    transitionSpeed: 55,
+    starDensity: 0.9,
+    cloudOpacity: 0.2,
+    cloudSpeed: 0.9,
+    shootingStarChance: 0.45,
+    emotionTag: 'mysterious_flash',
+    subtitle: 'แสงพริบตาที่ไม่มีใครเข้าใจ',
+  },
+
+  hybridEclipse: {
+    id: 'hybridEclipse',
+    name: 'อุปราคาผสม',
+    nameEn: 'Hybrid Eclipse',
+    rarity: 'mythic',
+    moonTint: '#D8A860',
+    skyPalette: ['#1a1008', '#2a2018', '#3a3028'],
+    uiAccent: '#e8b870',
+    transitionSpeed: 58,
+    starDensity: 0.7,
+    cloudOpacity: 0.3,
+    cloudSpeed: 1.1,
+    shootingStarChance: 0.35,
+    emotionTag: 'dual_nature',
+    subtitle: 'เต็มดวงและวงแหวนในคราวเดียว',
   },
 
   // Distance & Position (Rare - 4 types)
