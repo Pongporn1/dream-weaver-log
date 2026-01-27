@@ -67,12 +67,12 @@ export function AnimatedProfileHeader() {
   const animationFrameRef = useRef<number>();
   const moonPositionRef = useRef({ x: 0, y: 0, phase: 0 });
   const shootingStarTimerRef = useRef<number>(0);
-  
+
   // Particle system refs for mythic phenomena
   const moonFlashesRef = useRef<MoonFlash[]>([]);
   const orbitingParticlesRef = useRef<OrbitingParticle[]>([]);
   const sparklesRef = useRef<Sparkle[]>([]);
-  
+
   // Advanced particle system refs
   const auroraWavesRef = useRef<AuroraWave[]>([]);
   const firefliesRef = useRef<Firefly[]>([]);
@@ -81,7 +81,9 @@ export function AnimatedProfileHeader() {
 
   // Get moon phenomenon for this session
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
-  const transitionManagerRef = useRef<PhenomenonTransition>(new PhenomenonTransition());
+  const transitionManagerRef = useRef<PhenomenonTransition>(
+    new PhenomenonTransition(),
+  );
 
   useEffect(() => {
     const sessionPhenomenon = getSessionPhenomenon();
@@ -188,7 +190,7 @@ export function AnimatedProfileHeader() {
 
     // Initialize particles for mythic phenomena
     const moon = moonPositionRef.current;
-    
+
     if (phenomenon.id === "lunarTransientPhenomena") {
       moonFlashesRef.current = initMoonFlashes(moon.x, moon.y);
     } else if (phenomenon.id === "superBlueBloodMoon") {
@@ -196,15 +198,19 @@ export function AnimatedProfileHeader() {
     } else if (phenomenon.id === "crystalMoon") {
       sparklesRef.current = initSparkles(moon.x, moon.y, 40);
     }
-    
-    // Initialize advanced particle effects
-    if (phenomenon.id === "polarMoon" || phenomenon.id === "arcticMoon") {
+
+    // Initialize advanced particle effects based on specialEffect
+    const intensity = phenomenon.effectIntensity || 0.5;
+
+    if (phenomenon.specialEffect === "aurora") {
       auroraWavesRef.current = initAuroraWaves(rect.height);
-    } else if (phenomenon.id === "harvestMoon" || phenomenon.id === "warmMoon") {
-      firefliesRef.current = initFireflies(rect.width, rect.height, 20);
-    } else if (phenomenon.id === "coldMoon" || phenomenon.id === "snowMoon" || phenomenon.id === "longNightMoon") {
-      snowflakesRef.current = initSnowflakes(rect.width, 50);
-    } else if (phenomenon.id === "veiledMoon" || phenomenon.id === "mistyMoon") {
+    } else if (phenomenon.specialEffect === "fireflies") {
+      const count = Math.floor(20 + intensity * 30); // 20-50 fireflies
+      firefliesRef.current = initFireflies(rect.width, rect.height, count);
+    } else if (phenomenon.specialEffect === "snow") {
+      const count = Math.floor(50 + intensity * 100); // 50-150 snowflakes
+      snowflakesRef.current = initSnowflakes(rect.width, count);
+    } else if (phenomenon.specialEffect === "fog") {
       fogLayersRef.current = initFogLayers(rect.width, rect.height);
     }
 
@@ -304,7 +310,13 @@ export function AnimatedProfileHeader() {
       const shadowColor = adjustBrightness(phenomenon.moonTint, 0.5);
       ctx.fillStyle = `${shadowColor}66`; // 40% opacity
       ctx.beginPath();
-      ctx.arc(moon.x + moonRadius * 0.375, moon.y + offsetY, moonRadius * 0.95, 0, Math.PI * 2);
+      ctx.arc(
+        moon.x + moonRadius * 0.375,
+        moon.y + offsetY,
+        moonRadius * 0.95,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
     };
 
@@ -537,10 +549,71 @@ export function AnimatedProfileHeader() {
     const animate = () => {
       ctx.clearRect(0, 0, rect.width, rect.height);
       drawSky();
+
+      // Draw advanced particle effects based on phenomenon
+      if (
+        phenomenon.specialEffect === "aurora" &&
+        auroraWavesRef.current.length > 0
+      ) {
+        drawAurora(ctx, auroraWavesRef.current, rect.width);
+      }
+
+      if (
+        phenomenon.specialEffect === "fog" &&
+        fogLayersRef.current.length > 0
+      ) {
+        drawFog(ctx, fogLayersRef.current, rect.width);
+      }
+
       drawStars();
+
+      if (
+        phenomenon.specialEffect === "fireflies" &&
+        firefliesRef.current.length > 0
+      ) {
+        drawFireflies(ctx, firefliesRef.current, rect.width, rect.height);
+      }
+
       drawMoon();
+
+      // Draw mythic phenomena particles
+      if (phenomenon.id === "crystalMoon" && sparklesRef.current.length > 0) {
+        drawSparkles(ctx, sparklesRef.current);
+      }
+
+      if (
+        phenomenon.id === "superBlueBloodMoon" &&
+        orbitingParticlesRef.current.length > 0
+      ) {
+        const moon = moonPositionRef.current;
+        drawOrbitingParticles(
+          ctx,
+          orbitingParticlesRef.current,
+          moon.x,
+          moon.y,
+        );
+      }
+
+      if (phenomenon.id === "lunarTransientPhenomena") {
+        const moon = moonPositionRef.current;
+        // Spawn random flashes
+        if (Math.random() < 0.02) {
+          moonFlashesRef.current.push(spawnMoonFlash(moon.x, moon.y, 40));
+        }
+        moonFlashesRef.current = drawMoonFlashes(ctx, moonFlashesRef.current);
+      }
+
       drawClouds();
+
+      if (
+        phenomenon.specialEffect === "snow" &&
+        snowflakesRef.current.length > 0
+      ) {
+        drawSnowflakes(ctx, snowflakesRef.current, rect.width, rect.height);
+      }
+
       drawShootingStars();
+
       animationFrameRef.current = requestAnimationFrame(animate);
     };
     animate();
