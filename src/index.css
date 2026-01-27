@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Moon Theme System */
+@import './styles/moonTheme.css';
+
 /* Dream book by Bon - Minimal Design System */
 
 @layer base {

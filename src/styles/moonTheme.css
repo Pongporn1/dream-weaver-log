@@ -1,0 +1,32 @@
+/* Moon Phenomenon Theme Variables */
+:root {
+  /* Default moon theme colors (will be overridden by JavaScript) */
+  --moon-accent: #9090c0;
+  --moon-text: #b0b0d0;
+  --moon-placeholder: #606080;
+  --moon-divider: rgba(144, 144, 192, 0.2);
+  --moon-caret: #9090c0;
+  --moon-selection: rgba(144, 144, 192, 0.3);
+  --moon-button-hover: #a0a0d0;
+
+  /* Multi-layer transition timing (sky → moon → ui) */
+  --sky-transition-duration: 30s; /* Sky changes first (fast) */
+  --moon-transition-duration: 40s; /* Moon changes second (medium) */
+  --ui-transition-duration: 60s; /* UI changes last (slowest) */
+  --ui-transition-easing: cubic-bezier(0.4, 0, 0.2, 1); /* Smooth easing */
+}
+
+/* Apply smooth transitions to UI theme-dependent elements */
+/* UI changes slowest to avoid disrupting user experience */
+*:not(canvas) {
+  transition:
+    color var(--ui-transition-duration) var(--ui-transition-easing),
+    background-color var(--ui-transition-duration) var(--ui-transition-easing),
+    border-color var(--ui-transition-duration) var(--ui-transition-easing),
+    caret-color var(--ui-transition-duration) var(--ui-transition-easing);
+}
+
+/* Prevent transition on page load */
+.no-transition * {
+  transition: none !important;
+}

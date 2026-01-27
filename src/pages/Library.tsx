@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Shuffle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,12 @@ import { format, isToday, isThisWeek, isThisMonth, startOfDay } from "date-fns";
 import { th } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AnimatedBookCover } from "@/components/AnimatedBookCover";
+import {
+  getSessionPhenomenon,
+  clearSessionPhenomenon,
+} from "@/utils/raritySystem";
+import { applyMoonTheme } from "@/utils/moonTheme";
+import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -121,6 +128,22 @@ export default function Library() {
     thisMonth: true,
     older: false,
   });
+  const [currentPhenomenon, setCurrentPhenomenon] =
+    useState<MoonPhenomenon | null>(null);
+
+  // Load phenomenon on mount
+  useEffect(() => {
+    const phenomenon = getSessionPhenomenon();
+    setCurrentPhenomenon(phenomenon);
+  }, []);
+
+  // Function to change phenomenon (for testing)
+  const changePhenomenon = () => {
+    clearSessionPhenomenon();
+    const newPhenomenon = getSessionPhenomenon();
+    setCurrentPhenomenon(newPhenomenon);
+    applyMoonTheme(newPhenomenon);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -201,9 +224,36 @@ export default function Library() {
       <header className="sticky top-0 z-10 bg-background border-b">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-semibold">Dream Library</h1>
-            <div className="text-sm text-muted-foreground">
-              {filteredDreams.length} ความฝัน
+            <div>
+              <h1 className="text-xl font-semibold">Dream Library</h1>
+              {currentPhenomenon && (
+                <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: currentPhenomenon.uiAccent }}
+                    />
+                    {currentPhenomenon.name}
+                  </span>
+                  <span className="opacity-60">
+                    ({currentPhenomenon.rarity})
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={changePhenomenon}
+                className="h-8 px-2"
+                title="เปลี่ยนปรากฏการณ์ดวงจันทร์"
+              >
+                <Shuffle className="w-4 h-4" />
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                {filteredDreams.length} ความฝัน
+              </div>
             </div>
           </div>
 
@@ -459,5 +509,3 @@ export default function Library() {
     </div>
   );
 }
-
-
