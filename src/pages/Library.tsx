@@ -20,6 +20,7 @@ import { Link, useLocation } from "react-router-dom";
 import { format, isToday, isThisWeek, isThisMonth, startOfDay } from "date-fns";
 import { th } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { AnimatedBookCover } from "@/components/AnimatedBookCover";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -282,7 +283,7 @@ export default function Library() {
                   <div className="p-4 pt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {groupedByDate().today.map((dream) => (
-                        <DreamCard key={dream.id} dream={dream} />
+                        <AnimatedBookCover key={dream.id} dream={dream} />
                       ))}
                     </div>
                   </div>
@@ -316,7 +317,7 @@ export default function Library() {
                   <div className="p-4 pt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {groupedByDate().thisWeek.map((dream) => (
-                        <DreamCard key={dream.id} dream={dream} />
+                        <AnimatedBookCover key={dream.id} dream={dream} />
                       ))}
                     </div>
                   </div>
@@ -350,7 +351,7 @@ export default function Library() {
                   <div className="p-4 pt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {groupedByDate().thisMonth.map((dream) => (
-                        <DreamCard key={dream.id} dream={dream} />
+                        <AnimatedBookCover key={dream.id} dream={dream} />
                       ))}
                     </div>
                   </div>
@@ -384,7 +385,7 @@ export default function Library() {
                   <div className="p-4 pt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {groupedByDate().older.map((dream) => (
-                        <DreamCard key={dream.id} dream={dream} />
+                        <AnimatedBookCover key={dream.id} dream={dream} />
                       ))}
                     </div>
                   </div>
@@ -419,7 +420,7 @@ export default function Library() {
                   <div className="p-4 pt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {dreams.map((dream) => (
-                        <DreamCard key={dream.id} dream={dream} />
+                        <AnimatedBookCover key={dream.id} dream={dream} />
                       ))}
                     </div>
                   </div>
@@ -459,57 +460,4 @@ export default function Library() {
   );
 }
 
-// Dream Card Component with AI-generated cover
-function DreamCard({ dream }: { dream: DreamLog }) {
-  const gradientClass = generateCoverImage(dream);
 
-  return (
-    <Link to={`/logs/${dream.id}`} className="group">
-      <div className="aspect-[2/3] rounded-lg overflow-hidden relative shadow-lg hover:shadow-2xl transition-all duration-500 group-hover:scale-[1.03]">
-        {/* Main Gradient Background */}
-        <div className={cn("absolute inset-0 bg-gradient-to-b", gradientClass)}>
-          {/* Light rays effect */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-1/4 w-32 h-full bg-gradient-to-b from-white/40 to-transparent blur-2xl transform -skew-x-12" />
-            <div className="absolute top-0 right-1/3 w-24 h-full bg-gradient-to-b from-white/30 to-transparent blur-xl transform skew-x-12" />
-          </div>
-
-          {/* Gradient overlay for depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-        </div>
-
-        {/* Content Container - Typography Only */}
-        <div className="absolute inset-0 flex flex-col justify-center p-6">
-          {/* Center Area - Main Title */}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-2 max-w-full px-2">
-              <h3 className="font-bold text-2xl sm:text-3xl leading-tight text-white drop-shadow-2xl uppercase tracking-wider line-clamp-3">
-                {dream.world || "Unknown"}
-              </h3>
-            </div>
-          </div>
-
-          {/* Bottom Area - Date */}
-          <div className="space-y-3">
-            {/* Separator Line */}
-            <div className="flex items-center justify-center gap-2 opacity-60">
-              <div className="h-px w-12 bg-white/50" />
-              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
-              <div className="h-px w-12 bg-white/50" />
-            </div>
-
-            {/* Info */}
-            <div className="text-center">
-              <p className="text-xs text-white/70 font-light tracking-widest uppercase">
-                {format(new Date(dream.date), "d MMMM yyyy", { locale: th })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Hover Shine Effect */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/0 to-transparent group-hover:via-white/10 transition-all duration-500 transform translate-x-full group-hover:translate-x-0" />
-      </div>
-    </Link>
-  );
-}

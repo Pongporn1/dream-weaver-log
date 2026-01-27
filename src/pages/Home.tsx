@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DreamCard } from "@/components/DreamCard";
-import { HeroWallpaper } from "@/components/HeroWallpaper";
+import { AnimatedProfileHeader } from "@/components/AnimatedProfileHeader";
 import {
   getDreamLogs,
   getWorlds,
@@ -169,12 +169,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Hero Wallpaper - Full Screen */}
-      <HeroWallpaper
-        mediaUrl="/hero-wallpaper.png"
-        title="Dream book"
-        subtitle="วันนี้อยากเล่าเรื่องอะไรหรอ"
-      />
+      {/* Animated Header */}
+      <AnimatedProfileHeader />
 
       {/* Main Content */}
       <div className="flex-1">

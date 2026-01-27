@@ -1,8 +1,8 @@
-import { Shield, Info, Bot } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function About() {
   return (
-    <div className="py-4 space-y-8">
+    <div className="py-4 space-y-8 pb-20">
       <h1>About / Safety</h1>
 
       <div className="space-y-6">
@@ -19,9 +19,6 @@ export default function About() {
             ในความฝัน
           </p>
         </section>
-
-
-
 
         <section className="card-minimal text-center">
           <p className="text-sm text-muted-foreground">
