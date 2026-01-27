@@ -119,43 +119,27 @@ export function AnimatedProfileHeader() {
 
     const rect = canvas.getBoundingClientRect();
 
-    // Initialize stars with dynamic density
-    const initStars = () => {
-      const baseStarCount = 120;
-      const starCount = Math.floor(baseStarCount * phenomenon.starDensity);
-      const stars: Star[] = [];
-      for (let i = 0; i < starCount; i++) {
-        stars.push({
-          x: Math.random() * rect.width,
-          y: Math.random() * rect.height * 0.6, // Upper 60% of canvas
-          size: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: Math.random() * 0.02 + 0.01,
-          twinklePhase: Math.random() * Math.PI * 2,
-        });
-      }
-      starsRef.current = stars;
-    };
-    initStars();
+    starsRef.current = Array.from(
+      { length: Math.floor(120 * phenomenon.starDensity) },
+      () => ({
+        x: Math.random() * rect.width,
+        y: Math.random() * rect.height * 0.6,
+        size: Math.random() * 2 + 0.5,
+        opacity: Math.random() * 0.8 + 0.2,
+        twinkleSpeed: Math.random() * 0.02 + 0.01,
+        twinklePhase: Math.random() * Math.PI * 2,
+      }),
+    );
 
-    // Initialize clouds with dynamic properties
-    const initClouds = () => {
-      const clouds: Cloud[] = [];
-      for (let i = 0; i < 5; i++) {
-        clouds.push({
-          x: Math.random() * rect.width,
-          y: rect.height * 0.2 + Math.random() * rect.height * 0.3,
-          width: Math.random() * 100 + 80,
-          height: Math.random() * 40 + 30,
-          speed: (Math.random() * 0.15 + 0.05) * phenomenon.cloudSpeed,
-          opacity: Math.random() * 0.15 + 0.1 * phenomenon.cloudOpacity,
-        });
-      }
-      cloudsRef.current = clouds;
-    };
-    initClouds();
+    cloudsRef.current = Array.from({ length: 5 }, () => ({
+      x: Math.random() * rect.width,
+      y: rect.height * 0.2 + Math.random() * rect.height * 0.3,
+      width: Math.random() * 100 + 80,
+      height: Math.random() * 40 + 30,
+      speed: (Math.random() * 0.15 + 0.05) * phenomenon.cloudSpeed,
+      opacity: (Math.random() * 0.15 + 0.1) * phenomenon.cloudOpacity,
+    }));
 
-    // Initialize shooting stars (10 total)
     const shootingStarColors = [
       "#FFFFFF",
       "#FFE4B5",
@@ -168,89 +152,73 @@ export function AnimatedProfileHeader() {
       "#FFDAB9",
       "#E6E6FA",
     ];
+    shootingStarsRef.current = Array.from({ length: 10 }, (_, i) => ({
+      x: rect.width + Math.random() * 100,
+      y: Math.random() * rect.height * 0.6,
+      length: Math.random() * 60 + 40,
+      speed: Math.random() * 1.5 + 1,
+      angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+      color: shootingStarColors[i],
+      opacity: Math.random() * 0.3 + 0.7,
+      isActive: false,
+      trailLength: Math.random() * 80 + 60,
+    }));
 
-    const initShootingStars = () => {
-      const stars: ShootingStar[] = [];
-      for (let i = 0; i < 10; i++) {
-        stars.push({
-          x: rect.width + Math.random() * 100,
-          y: Math.random() * rect.height * 0.6,
-          length: Math.random() * 60 + 40,
-          speed: Math.random() * 1.5 + 1, // Slower speed: 1-2.5
-          angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3, // Roughly 45 degrees
-          color: shootingStarColors[i],
-          opacity: Math.random() * 0.3 + 0.7,
-          isActive: false,
-          trailLength: Math.random() * 80 + 60,
-        });
-      }
-      shootingStarsRef.current = stars;
-    };
-    initShootingStars();
-
-    // Initialize particles for mythic phenomena
-    const moon = moonPositionRef.current;
-
-    if (phenomenon.id === "lunarTransientPhenomena") {
-      moonFlashesRef.current = initMoonFlashes(moon.x, moon.y);
-    } else if (phenomenon.id === "superBlueBloodMoon") {
-      orbitingParticlesRef.current = initOrbitingParticles(20);
-    } else if (phenomenon.id === "crystalMoon") {
-      sparklesRef.current = initSparkles(moon.x, moon.y, 40);
-    }
-
-    // Initialize advanced particle effects based on specialEffect
-    const intensity = phenomenon.effectIntensity || 0.5;
-
-    if (phenomenon.specialEffect === "aurora") {
-      auroraWavesRef.current = initAuroraWaves(rect.height);
-    } else if (phenomenon.specialEffect === "fireflies") {
-      const count = Math.floor(20 + intensity * 30); // 20-50 fireflies
-      firefliesRef.current = initFireflies(rect.width, rect.height, count);
-    } else if (phenomenon.specialEffect === "snow") {
-      const count = Math.floor(50 + intensity * 100); // 50-150 snowflakes
-      snowflakesRef.current = initSnowflakes(rect.width, count);
-    } else if (phenomenon.specialEffect === "fog") {
-      fogLayersRef.current = initFogLayers(rect.width, rect.height);
-    }
-
-    // Initialize moon
+    // Initialize moon position FIRST
     moonPositionRef.current = {
       x: rect.width * 0.7,
       y: rect.height * 0.25,
       phase: 0,
     };
 
-    // Draw dynamic sky gradient based on phenomenon
+    // Then init particles at moon position
+    const moon = moonPositionRef.current;
+    if (phenomenon.id === "lunarTransientPhenomena")
+      moonFlashesRef.current = initMoonFlashes();
+    else if (phenomenon.id === "superBlueBloodMoon")
+      orbitingParticlesRef.current = initOrbitingParticles(20);
+    else if (phenomenon.id === "crystalMoon")
+      sparklesRef.current = initSparkles(moon.x, moon.y, 40);
+
+    const intensity = phenomenon.effectIntensity || 0.5;
+    if (phenomenon.specialEffect === "aurora")
+      auroraWavesRef.current = initAuroraWaves(rect.height);
+    else if (phenomenon.specialEffect === "fireflies")
+      firefliesRef.current = initFireflies(
+        rect.width,
+        rect.height,
+        Math.floor(20 + intensity * 30),
+      );
+    else if (phenomenon.specialEffect === "snow")
+      snowflakesRef.current = initSnowflakes(
+        rect.width,
+        Math.floor(50 + intensity * 100),
+      );
+    else if (phenomenon.specialEffect === "fog")
+      fogLayersRef.current = initFogLayers(rect.width, rect.height);
+
     const drawSky = () => {
-      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
-      gradient.addColorStop(0, phenomenon.skyPalette[0]);
-      gradient.addColorStop(0.5, phenomenon.skyPalette[1]);
-      gradient.addColorStop(1, phenomenon.skyPalette[2]);
-      ctx.fillStyle = gradient;
+      const g = ctx.createLinearGradient(0, 0, 0, rect.height);
+      g.addColorStop(0, phenomenon.skyPalette[0]);
+      g.addColorStop(0.5, phenomenon.skyPalette[1]);
+      g.addColorStop(1, phenomenon.skyPalette[2]);
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
-    // Draw twinkling stars
     const drawStars = () => {
-      // Skip drawing stars if density is 0 (e.g., Empty Sky, Silent Moon)
       if (phenomenon.starDensity === 0) return;
-
-      starsRef.current.forEach((star) => {
-        star.twinklePhase += star.twinkleSpeed;
-        const twinkle = Math.sin(star.twinklePhase) * 0.5 + 0.5;
-        const currentOpacity = star.opacity * twinkle;
-
+      starsRef.current.forEach((s) => {
+        s.twinklePhase += s.twinkleSpeed;
+        const o = s.opacity * (Math.sin(s.twinklePhase) * 0.5 + 0.5);
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity})`;
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${o})`;
         ctx.fill();
-
-        // Add glow for larger stars
-        if (star.size > 1.5) {
+        if (s.size > 1.5) {
           ctx.beginPath();
-          ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity * 0.2})`;
+          ctx.arc(s.x, s.y, s.size * 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${o * 0.2})`;
           ctx.fill();
         }
       });
@@ -320,98 +288,64 @@ export function AnimatedProfileHeader() {
       ctx.fill();
     };
 
-    // Draw realistic soft clouds with depth
     const drawClouds = () => {
-      // Skip drawing clouds if opacity is 0 (e.g., Empty Sky)
       if (phenomenon.cloudOpacity === 0) return;
-
-      cloudsRef.current.forEach((cloud) => {
-        // Only move clouds if cloudSpeed > 0 (Still Moon has speed 0.1)
+      cloudsRef.current.forEach((c) => {
         if (phenomenon.cloudSpeed > 0.2) {
-          cloud.x += cloud.speed;
-          if (cloud.x > rect.width + cloud.width) {
-            cloud.x = -cloud.width;
-          }
+          c.x += c.speed;
+          if (c.x > rect.width + c.width) c.x = -c.width;
         }
-
-        // Cloud shadow/depth layer
-        ctx.fillStyle = `rgba(150, 150, 180, ${cloud.opacity * 0.6})`;
+        ctx.fillStyle = `rgba(150,150,180,${c.opacity * 0.6})`;
         ctx.beginPath();
         ctx.ellipse(
-          cloud.x + 5,
-          cloud.y + 5,
-          cloud.width / 2,
-          cloud.height / 2,
+          c.x + 5,
+          c.y + 5,
+          c.width / 2,
+          c.height / 2,
           0,
           0,
           Math.PI * 2,
         );
         ctx.fill();
-
-        // Main cloud body with gradient
-        const cloudGradient = ctx.createRadialGradient(
-          cloud.x,
-          cloud.y - cloud.height * 0.3,
+        const g = ctx.createRadialGradient(
+          c.x,
+          c.y - c.height * 0.3,
           0,
-          cloud.x,
-          cloud.y,
-          cloud.width / 2,
+          c.x,
+          c.y,
+          c.width / 2,
         );
-        cloudGradient.addColorStop(0, `rgba(230, 230, 250, ${cloud.opacity})`);
-        cloudGradient.addColorStop(
-          0.6,
-          `rgba(200, 200, 230, ${cloud.opacity * 0.8})`,
-        );
-        cloudGradient.addColorStop(
-          1,
-          `rgba(180, 180, 210, ${cloud.opacity * 0.5})`,
-        );
-        ctx.fillStyle = cloudGradient;
+        g.addColorStop(0, `rgba(230,230,250,${c.opacity})`);
+        g.addColorStop(0.6, `rgba(200,200,230,${c.opacity * 0.8})`);
+        g.addColorStop(1, `rgba(180,180,210,${c.opacity * 0.5})`);
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.ellipse(
-          cloud.x,
-          cloud.y,
-          cloud.width / 2,
-          cloud.height / 2,
-          0,
-          0,
-          Math.PI * 2,
-        );
+        ctx.ellipse(c.x, c.y, c.width / 2, c.height / 2, 0, 0, Math.PI * 2);
         ctx.fill();
-
-        // Cloud puffs with varying sizes
-        const puffs = [
+        [
           { x: -0.4, y: -0.3, w: 0.35, h: 0.5 },
           { x: -0.2, y: -0.4, w: 0.3, h: 0.45 },
           { x: 0.2, y: -0.35, w: 0.32, h: 0.48 },
           { x: 0.4, y: -0.25, w: 0.3, h: 0.45 },
-        ];
-
-        puffs.forEach((puff) => {
-          const puffGradient = ctx.createRadialGradient(
-            cloud.x + cloud.width * puff.x,
-            cloud.y + cloud.height * puff.y,
+        ].forEach((p) => {
+          const pg = ctx.createRadialGradient(
+            c.x + c.width * p.x,
+            c.y + c.height * p.y,
             0,
-            cloud.x + cloud.width * puff.x,
-            cloud.y + cloud.height * puff.y,
-            cloud.width * puff.w,
+            c.x + c.width * p.x,
+            c.y + c.height * p.y,
+            c.width * p.w,
           );
-          puffGradient.addColorStop(0, `rgba(240, 240, 255, ${cloud.opacity})`);
-          puffGradient.addColorStop(
-            0.7,
-            `rgba(210, 210, 240, ${cloud.opacity * 0.7})`,
-          );
-          puffGradient.addColorStop(
-            1,
-            `rgba(190, 190, 220, ${cloud.opacity * 0.3})`,
-          );
-          ctx.fillStyle = puffGradient;
+          pg.addColorStop(0, `rgba(240,240,255,${c.opacity})`);
+          pg.addColorStop(0.7, `rgba(210,210,240,${c.opacity * 0.7})`);
+          pg.addColorStop(1, `rgba(190,190,220,${c.opacity * 0.3})`);
+          ctx.fillStyle = pg;
           ctx.beginPath();
           ctx.ellipse(
-            cloud.x + cloud.width * puff.x,
-            cloud.y + cloud.height * puff.y,
-            cloud.width * puff.w,
-            cloud.height * puff.h,
+            c.x + c.width * p.x,
+            c.y + c.height * p.y,
+            c.width * p.w,
+            c.height * p.h,
             0,
             0,
             Math.PI * 2,
@@ -421,125 +355,76 @@ export function AnimatedProfileHeader() {
       });
     };
 
-    // Draw shooting stars
     const drawShootingStars = () => {
-      // Skip shooting stars if chance is 0 (e.g., Still Moon, Empty Sky)
       if (phenomenon.shootingStarChance === 0) return;
-
-      shootingStarsRef.current.forEach((star) => {
-        if (!star.isActive) return;
-
-        // Update position
-        star.x -= Math.cos(star.angle) * star.speed;
-        star.y += Math.sin(star.angle) * star.speed;
-
-        // Deactivate when off screen
-        if (
-          star.x < -star.trailLength ||
-          star.y > rect.height + star.trailLength
-        ) {
-          star.isActive = false;
+      shootingStarsRef.current.forEach((s) => {
+        if (!s.isActive) return;
+        s.x -= Math.cos(s.angle) * s.speed;
+        s.y += Math.sin(s.angle) * s.speed;
+        if (s.x < -s.trailLength || s.y > rect.height + s.trailLength) {
+          s.isActive = false;
           return;
         }
-
         ctx.save();
-
-        // Draw trail with gradient
-        const gradient = ctx.createLinearGradient(
-          star.x,
-          star.y,
-          star.x + Math.cos(star.angle) * star.trailLength,
-          star.y - Math.sin(star.angle) * star.trailLength,
+        const g = ctx.createLinearGradient(
+          s.x,
+          s.y,
+          s.x + Math.cos(s.angle) * s.trailLength,
+          s.y - Math.sin(s.angle) * s.trailLength,
         );
-        gradient.addColorStop(0, star.color);
-        gradient.addColorStop(0.5, `${star.color}88`);
-        gradient.addColorStop(1, `${star.color}00`);
-
-        ctx.strokeStyle = gradient;
+        g.addColorStop(0, s.color);
+        g.addColorStop(0.5, `${s.color}88`);
+        g.addColorStop(1, `${s.color}00`);
+        ctx.strokeStyle = g;
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
-        ctx.globalAlpha = star.opacity;
-
+        ctx.globalAlpha = s.opacity;
         ctx.beginPath();
-        ctx.moveTo(star.x, star.y);
+        ctx.moveTo(s.x, s.y);
         ctx.lineTo(
-          star.x + Math.cos(star.angle) * star.trailLength,
-          star.y - Math.sin(star.angle) * star.trailLength,
+          s.x + Math.cos(s.angle) * s.trailLength,
+          s.y - Math.sin(s.angle) * s.trailLength,
         );
         ctx.stroke();
-
-        // Draw bright head with glow
-        const glowGradient = ctx.createRadialGradient(
-          star.x,
-          star.y,
-          0,
-          star.x,
-          star.y,
-          8,
-        );
-        glowGradient.addColorStop(0, "#FFFFFF");
-        glowGradient.addColorStop(0.3, star.color);
-        glowGradient.addColorStop(1, `${star.color}00`);
-
-        ctx.fillStyle = glowGradient;
+        const gg = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 8);
+        gg.addColorStop(0, "#FFFFFF");
+        gg.addColorStop(0.3, s.color);
+        gg.addColorStop(1, `${s.color}00`);
+        ctx.fillStyle = gg;
         ctx.beginPath();
-        ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
         ctx.fill();
-
-        // Bright core
         ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
-        ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.restore();
       });
 
-      // Shooting star activation logic with meteor shower chance
-      // Skip activation if chance is 0
-      if (phenomenon.shootingStarChance === 0) return;
-
       shootingStarTimerRef.current++;
-      const randomInterval = 3600 + Math.random() * 3600; // 1-2 minutes at 60fps
-      const meteorShowerChance = phenomenon.shootingStarChance; // Use phenomenon's chance
-      if (shootingStarTimerRef.current > randomInterval) {
+      if (shootingStarTimerRef.current > 3600 + Math.random() * 3600) {
         shootingStarTimerRef.current = 0;
-        const inactiveStars: number[] = [];
-        shootingStarsRef.current.forEach((s, index) => {
-          if (!s.isActive) inactiveStars.push(index);
-        });
-
-        if (inactiveStars.length > 0) {
-          // Check for meteor shower (10% chance)
-          const isMeteorShower = Math.random() < meteorShowerChance;
-
-          if (isMeteorShower && inactiveStars.length >= 3) {
-            // Meteor shower! Activate 3-5 shooting stars
-            const showerCount = Math.min(
-              Math.floor(Math.random() * 3) + 3, // 3-5 stars
-              inactiveStars.length,
-            );
-
-            for (let i = 0; i < showerCount; i++) {
-              const randomIndex =
-                inactiveStars[Math.floor(Math.random() * inactiveStars.length)];
-              const star = shootingStarsRef.current[randomIndex];
-              star.isActive = true;
-              // Start from top-right area with slight variation
-              star.x = rect.width * 0.6 + Math.random() * rect.width * 0.4;
-              star.y = Math.random() * rect.height * 0.4;
-              // Remove from inactive list
-              inactiveStars.splice(inactiveStars.indexOf(randomIndex), 1);
-            }
-          } else {
-            // Single shooting star
-            const randomIndex =
-              inactiveStars[Math.floor(Math.random() * inactiveStars.length)];
-            const star = shootingStarsRef.current[randomIndex];
-            star.isActive = true;
-            // Start from top-right area
-            star.x = rect.width * 0.7 + Math.random() * rect.width * 0.3;
-            star.y = Math.random() * rect.height * 0.3;
+        const inactive = shootingStarsRef.current
+          .map((s, i) => (!s.isActive ? i : -1))
+          .filter((i) => i !== -1);
+        if (inactive.length > 0) {
+          const shower =
+            Math.random() < phenomenon.shootingStarChance &&
+            inactive.length >= 3;
+          const count = shower
+            ? Math.min(Math.floor(Math.random() * 3) + 3, inactive.length)
+            : 1;
+          for (let i = 0; i < count; i++) {
+            const idx = inactive.splice(
+              Math.floor(Math.random() * inactive.length),
+              1,
+            )[0];
+            const s = shootingStarsRef.current[idx];
+            s.isActive = true;
+            s.x =
+              rect.width * (shower ? 0.6 : 0.7) +
+              Math.random() * rect.width * (shower ? 0.4 : 0.3);
+            s.y = Math.random() * rect.height * (shower ? 0.4 : 0.3);
           }
         }
       }
