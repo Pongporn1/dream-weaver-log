@@ -1753,7 +1753,7 @@ export const drawEchoMoons = (
 // Blood Ring Effect
 export const initBloodRings = (moonRadius: number): BloodRing[] => {
   return Array.from({ length: 3 }, (_, i) => ({
-    radius: moonRadius * (1.3 + i * 0.3),
+    radius: moonRadius * (1.15 + i * 0.2),
     opacity: 0.6 - i * 0.15,
     pulsePhase: (Math.PI * 2 * i) / 3,
     thickness: 3 - i * 0.5,
@@ -1863,7 +1863,7 @@ export const drawSilenceWaves = (
   return waves
     .map((wave) => {
       wave.lifetime++;
-      wave.radius += 1.5;
+      wave.radius += 1.0;
       wave.opacity = (1 - wave.lifetime / wave.maxLifetime) * 0.6;
 
       if (wave.lifetime < wave.maxLifetime && wave.opacity > 0.05) {
@@ -2053,7 +2053,7 @@ export const initAncientRunes = (
     pulsePhase: (Math.PI * 2 * i) / 6,
     orbitAngle: (Math.PI * 2 * i) / 6,
     orbitSpeed: 0.005 + Math.random() * 0.003,
-    orbitRadius: moonRadius * (1.8 + Math.random() * 0.4),
+    orbitRadius: moonRadius * (1.4 + Math.random() * 0.3),
   }));
 };
 
@@ -2099,7 +2099,7 @@ export const drawAncientRunes = (
 export const initLightRays = (count = 12): LightRay[] => {
   return Array.from({ length: count }, (_, i) => ({
     angle: (Math.PI * 2 * i) / count,
-    length: 80 + Math.random() * 40,
+    length: 50 + Math.random() * 30,
     opacity: 0.3 + Math.random() * 0.4,
     width: 2 + Math.random() * 3,
     pulsePhase: Math.random() * Math.PI * 2,
