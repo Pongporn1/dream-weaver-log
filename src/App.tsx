@@ -11,6 +11,7 @@ import NewDreamLog from "./pages/NewDreamLog";
 import DreamDetail from "./pages/DreamDetail";
 import Library from "./pages/Library";
 import Statistics from "./pages/Statistics";
+import StoryModePage from "./pages/StoryModePage";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
@@ -42,6 +43,9 @@ const App = () => {
 
             {/* Library page without Layout for full-screen experience */}
             <Route path="/library" element={<Library />} />
+
+            {/* Story Mode page without Layout for full-screen experience */}
+            <Route path="/story" element={<StoryModePage />} />
 
             {/* Other pages with Layout */}
             <Route

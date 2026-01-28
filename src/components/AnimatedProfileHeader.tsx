@@ -268,18 +268,23 @@ export function AnimatedProfileHeader() {
       ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
-    const drawStars = () => {
+    const drawStars = (gyroOffsetX: number = 0, gyroOffsetY: number = 0) => {
       if (phenomenon.starDensity === 0) return;
       starsRef.current.forEach((s) => {
         s.twinklePhase += s.twinkleSpeed;
         const o = s.opacity * (Math.sin(s.twinklePhase) * 0.5 + 0.5);
+
+        // Apply gyro offset for parallax (stars move more than background)
+        const starX = s.x + gyroOffsetX;
+        const starY = s.y + gyroOffsetY;
+
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.arc(starX, starY, s.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${o})`;
         ctx.fill();
         if (s.size > 1.5) {
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.size * 2, 0, Math.PI * 2);
+          ctx.arc(starX, starY, s.size * 2, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255,255,255,${o * 0.2})`;
           ctx.fill();
         }
@@ -287,10 +292,14 @@ export function AnimatedProfileHeader() {
     };
 
     // Draw beautiful crescent moon with phenomenon-specific colors
-    const drawMoon = () => {
+    const drawMoon = (gyroOffsetX: number = 0, gyroOffsetY: number = 0) => {
       const moon = moonPositionRef.current;
       moon.phase += 0.005;
       const offsetY = Math.sin(moon.phase) * 3;
+
+      // Apply gyro offset for parallax (moon moves less than stars)
+      const moonX = moon.x + gyroOffsetX;
+      const moonY = moon.y + gyroOffsetY;
 
       // Dynamic moon size based on phenomenon (default 40, supermoons larger)
       const baseMoonRadius = 40;
@@ -299,11 +308,11 @@ export function AnimatedProfileHeader() {
       // Outer glow - uses phenomenon moonTint with very low opacity
       const glowColor = phenomenon.moonTint;
       const outerGlow = ctx.createRadialGradient(
-        moon.x,
-        moon.y + offsetY,
+        moonX,
+        moonY + offsetY,
         0,
-        moon.x,
-        moon.y + offsetY,
+        moonX,
+        moonY + offsetY,
         moonRadius * 1.5,
       );
       outerGlow.addColorStop(0, `${glowColor}50`); // 30% opacity
@@ -311,15 +320,15 @@ export function AnimatedProfileHeader() {
       outerGlow.addColorStop(1, `${glowColor}00`); // transparent
       ctx.fillStyle = outerGlow;
       ctx.beginPath();
-      ctx.arc(moon.x, moon.y + offsetY, moonRadius * 1.5, 0, Math.PI * 2);
+      ctx.arc(moonX, moonY + offsetY, moonRadius * 1.5, 0, Math.PI * 2);
       ctx.fill();
 
       // Main moon body with phenomenon-specific tint
       const moonGradient = ctx.createLinearGradient(
-        moon.x - moonRadius,
-        moon.y + offsetY - moonRadius,
-        moon.x + moonRadius,
-        moon.y + offsetY + moonRadius,
+        moonX - moonRadius,
+        moonY + offsetY - moonRadius,
+        moonX + moonRadius,
+        moonY + offsetY + moonRadius,
       );
       moonGradient.addColorStop(0, phenomenon.moonTint);
       moonGradient.addColorStop(
@@ -333,18 +342,18 @@ export function AnimatedProfileHeader() {
       moonGradient.addColorStop(1, adjustBrightness(phenomenon.moonTint, 0.7));
       ctx.fillStyle = moonGradient;
       ctx.beginPath();
-      ctx.arc(moon.x, moon.y + offsetY, moonRadius, 0, Math.PI * 2);
+      ctx.arc(moonX, moonY + offsetY, moonRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // MYTHIC EXCLUSIVE: Enhanced glow layers and rim light
       if (phenomenon.rarity === "mythic") {
         // Multi-layer ethereal glow
         const innerGlow = ctx.createRadialGradient(
-          moon.x,
-          moon.y + offsetY,
+          moonX,
+          moonY + offsetY,
           moonRadius * 0.7,
-          moon.x,
-          moon.y + offsetY,
+          moonX,
+          moonY + offsetY,
           moonRadius * 1.8,
         );
         innerGlow.addColorStop(0, `${phenomenon.uiAccent}00`);
@@ -353,14 +362,14 @@ export function AnimatedProfileHeader() {
         innerGlow.addColorStop(1, `${phenomenon.uiAccent}00`);
         ctx.fillStyle = innerGlow;
         ctx.beginPath();
-        ctx.arc(moon.x, moon.y + offsetY, moonRadius * 1.8, 0, Math.PI * 2);
+        ctx.arc(moonX, moonY + offsetY, moonRadius * 1.8, 0, Math.PI * 2);
         ctx.fill();
 
         // Rim light on edge
         ctx.strokeStyle = `${phenomenon.uiAccent}60`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(moon.x, moon.y + offsetY, moonRadius - 1, 0, Math.PI * 2);
+        ctx.arc(moonX, moonY + offsetY, moonRadius - 1, 0, Math.PI * 2);
         ctx.stroke();
 
         // Subtle pulsing highlight
@@ -368,19 +377,115 @@ export function AnimatedProfileHeader() {
         const pulseOpacity = (Math.sin(pulsePhase) * 0.15 + 0.25) * 255;
         const pulseHex = Math.floor(pulseOpacity).toString(16).padStart(2, "0");
         const highlight = ctx.createRadialGradient(
-          moon.x - moonRadius * 0.3,
-          moon.y + offsetY - moonRadius * 0.3,
+          moonX - moonRadius * 0.3,
+          moonY + offsetY - moonRadius * 0.3,
           0,
-          moon.x - moonRadius * 0.3,
-          moon.y + offsetY - moonRadius * 0.3,
+          moonX - moonRadius * 0.3,
+          moonY + offsetY - moonRadius * 0.3,
           moonRadius * 0.6,
         );
         highlight.addColorStop(0, `#ffffff${pulseHex}`);
         highlight.addColorStop(1, `#ffffff00`);
         ctx.fillStyle = highlight;
         ctx.beginPath();
-        ctx.arc(moon.x, moon.y + offsetY, moonRadius, 0, Math.PI * 2);
+        ctx.arc(moonX, moonY + offsetY, moonRadius, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      // LUNAR TRANSIENT PHENOMENA EXCLUSIVE: Spectacular flash effects
+      if (phenomenon.id === "lunarTransientPhenomena") {
+        // Intense pulsing outer glow
+        const flashPhase = moon.phase * 3;
+        const flashIntensity = Math.sin(flashPhase) * 0.3 + 0.7; // 0.4 to 1.0
+
+        // Massive outer glow (3x normal size)
+        const massiveGlow = ctx.createRadialGradient(
+          moonX,
+          moonY + offsetY,
+          moonRadius * 0.5,
+          moonX,
+          moonY + offsetY,
+          moonRadius * 3,
+        );
+        massiveGlow.addColorStop(
+          0,
+          `${phenomenon.uiAccent}${Math.floor(flashIntensity * 120)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        massiveGlow.addColorStop(
+          0.3,
+          `${phenomenon.uiAccent}${Math.floor(flashIntensity * 80)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        massiveGlow.addColorStop(
+          0.6,
+          `${phenomenon.uiAccent}${Math.floor(flashIntensity * 40)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        massiveGlow.addColorStop(1, `${phenomenon.uiAccent}00`);
+        ctx.fillStyle = massiveGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY + offsetY, moonRadius * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Color shifting rim (purple to pink to blue)
+        const colorPhase = moon.phase * 4;
+        const hue = (Math.sin(colorPhase) * 60 + 280) % 360; // 220-340 degrees
+        ctx.strokeStyle = `hsla(${hue}, 80%, 70%, ${flashIntensity * 0.8})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY + offsetY, moonRadius + 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner bright flash
+        const innerFlash = ctx.createRadialGradient(
+          moonX,
+          moonY + offsetY,
+          0,
+          moonX,
+          moonY + offsetY,
+          moonRadius * 0.8,
+        );
+        innerFlash.addColorStop(
+          0,
+          `rgba(255, 255, 255, ${flashIntensity * 0.4})`,
+        );
+        innerFlash.addColorStop(
+          0.5,
+          `${phenomenon.uiAccent}${Math.floor(flashIntensity * 100)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        innerFlash.addColorStop(1, `${phenomenon.uiAccent}00`);
+        ctx.fillStyle = innerFlash;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY + offsetY, moonRadius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Particle ring effect
+        const particleCount = 12;
+        const ringRadius = moonRadius * 2;
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + moon.phase;
+          const px = moonX + Math.cos(angle) * ringRadius;
+          const py = moonY + offsetY + Math.sin(angle) * ringRadius;
+
+          const particleGlow = ctx.createRadialGradient(px, py, 0, px, py, 4);
+          particleGlow.addColorStop(
+            0,
+            `${phenomenon.uiAccent}${Math.floor(flashIntensity * 200)
+              .toString(16)
+              .padStart(2, "0")}`,
+          );
+          particleGlow.addColorStop(1, `${phenomenon.uiAccent}00`);
+          ctx.fillStyle = particleGlow;
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       // Crescent shadow for depth - uses darker version of moonTint
@@ -388,8 +493,8 @@ export function AnimatedProfileHeader() {
       ctx.fillStyle = `${shadowColor}66`; // 40% opacity
       ctx.beginPath();
       ctx.arc(
-        moon.x + moonRadius * 0.375,
-        moon.y + offsetY,
+        moonX + moonRadius * 0.375,
+        moonY + offsetY,
         moonRadius * 0.95,
         0,
         Math.PI * 2,
@@ -542,6 +647,7 @@ export function AnimatedProfileHeader() {
     // Animation loop
     const animate = () => {
       ctx.clearRect(0, 0, rect.width, rect.height);
+
       drawSky();
 
       // Draw advanced particle effects based on phenomenon
@@ -559,7 +665,7 @@ export function AnimatedProfileHeader() {
         drawFog(ctx, fogLayersRef.current, rect.width);
       }
 
-      drawStars();
+      drawStars(0, 0);
 
       if (
         phenomenon.specialEffect === "fireflies" &&
@@ -568,7 +674,8 @@ export function AnimatedProfileHeader() {
         drawFireflies(ctx, firefliesRef.current, rect.width, rect.height);
       }
 
-      drawMoon();
+      // Always draw main moon (fragments are drawn on top for shattered effect)
+      drawMoon(0, 0);
 
       // Draw Shattered Moon fragments and dust
       if (phenomenon.specialEffect === "shattered") {
@@ -689,7 +796,7 @@ export function AnimatedProfileHeader() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [phenomenon]); // Re-run when phenomenon changes
+  }, [phenomenon]);
 
   return (
     <div className="relative w-full h-80 overflow-hidden">

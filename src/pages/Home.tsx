@@ -13,6 +13,7 @@ import {
   Book,
   BarChart3,
   Info,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +35,7 @@ const navItems = [
   { path: "/", icon: HomeIcon, label: "Home" },
   { path: "/logs", icon: Book, label: "Logs" },
   { path: "/library", icon: Library, label: "Library" },
+  { path: "/story", icon: BookOpen, label: "Story" },
   { path: "/statistics", icon: BarChart3, label: "Stats" },
   { path: "/about", icon: Info, label: "About" },
 ];
@@ -174,211 +176,226 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1">
-      <div className="space-y-8 py-4 container-app">
-      {/* Greeting */}
-      <div className="space-y-2">
-        <h1 className="text-2xl">สวัสดีบอน</h1>
-        <p className="text-muted-foreground">วันนี้อยากเล่าเรื่องอะไรหรอ</p>
-      </div>
+        <div className="space-y-8 py-4 container-app">
+          {/* Greeting */}
+          <div className="space-y-2">
+            <h1 className="text-2xl">สวัสดีบอน</h1>
+            <p className="text-muted-foreground">วันนี้อยากเล่าเรื่องอะไรหรอ</p>
+          </div>
 
-      {/* Quick Entry */}
-      <div className="space-y-3">
-        <Textarea
-          placeholder="เล่าความฝันสั้นๆ... "
-          value={quickNote}
-          onChange={(e) => setQuickNote(e.target.value)}
-          className="min-h-[120px] resize-none"
-          disabled={showSuggestions}
-        />
+          {/* Quick Entry */}
+          <div className="space-y-3">
+            <Textarea
+              placeholder="เล่าความฝันสั้นๆ... "
+              value={quickNote}
+              onChange={(e) => setQuickNote(e.target.value)}
+              className="min-h-[120px] resize-none"
+              disabled={showSuggestions}
+            />
 
-        {/* AI Suggestions Preview */}
-        {showSuggestions && aiSuggestions && (
-          <div className="card-minimal space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">AI วิเคราะห์แล้ว</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingSuggestions(!editingSuggestions)}
-              >
-                {editingSuggestions ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Edit2 className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">โลก: </span>
-                {editingSuggestions ? (
-                  <Input
-                    value={aiSuggestions.world}
-                    onChange={(e) => updateSuggestion("world", e.target.value)}
-                    className="mt-1 h-8"
-                  />
-                ) : (
-                  <Badge variant="secondary">{aiSuggestions.world}</Badge>
-                )}
-              </div>
-
-              <div>
-                <span className="text-muted-foreground">ระดับภัย: </span>
-                <Badge
-                  variant={
-                    aiSuggestions.threatLevel >= 3 ? "destructive" : "secondary"
-                  }
-                >
-                  Level {aiSuggestions.threatLevel}
-                </Badge>
-              </div>
-
-              {aiSuggestions.entities?.length > 0 && (
-                <div>
-                  <span className="text-muted-foreground">Entities: </span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {aiSuggestions.entities.map((e: string, i: number) => (
-                      <Badge key={i} variant="outline">
-                        {e}
-                      </Badge>
-                    ))}
+            {/* AI Suggestions Preview */}
+            {showSuggestions && aiSuggestions && (
+              <div className="card-minimal space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">
+                      AI วิเคราะห์แล้ว
+                    </span>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingSuggestions(!editingSuggestions)}
+                  >
+                    {editingSuggestions ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Edit2 className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
-              )}
 
-              {aiSuggestions.environments?.length > 0 && (
-                <div>
-                  <span className="text-muted-foreground">Environments: </span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {aiSuggestions.environments.map((e: string, i: number) => (
-                      <Badge key={i} variant="outline">
-                        {e}
-                      </Badge>
-                    ))}
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">โลก: </span>
+                    {editingSuggestions ? (
+                      <Input
+                        value={aiSuggestions.world}
+                        onChange={(e) =>
+                          updateSuggestion("world", e.target.value)
+                        }
+                        className="mt-1 h-8"
+                      />
+                    ) : (
+                      <Badge variant="secondary">{aiSuggestions.world}</Badge>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
 
-            <div className="flex gap-2">
+                  <div>
+                    <span className="text-muted-foreground">ระดับภัย: </span>
+                    <Badge
+                      variant={
+                        aiSuggestions.threatLevel >= 3
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      Level {aiSuggestions.threatLevel}
+                    </Badge>
+                  </div>
+
+                  {aiSuggestions.entities?.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Entities: </span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {aiSuggestions.entities.map((e: string, i: number) => (
+                          <Badge key={i} variant="outline">
+                            {e}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {aiSuggestions.environments?.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">
+                        Environments:{" "}
+                      </span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {aiSuggestions.environments.map(
+                          (e: string, i: number) => (
+                            <Badge key={i} variant="outline">
+                              {e}
+                            </Badge>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleConfirmSave}
+                    disabled={analyzing}
+                    className="flex-1 gap-2"
+                  >
+                    {analyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        กำลังบันทึก...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        บันทึกเลย
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowSuggestions(false);
+                      setAiSuggestions(null);
+                      setEditingSuggestions(false);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!showSuggestions && (
               <Button
-                onClick={handleConfirmSave}
-                disabled={analyzing}
-                className="flex-1 gap-2"
+                onClick={handleAnalyze}
+                disabled={analyzing || !quickNote.trim()}
+                className="w-full gap-2"
               >
                 {analyzing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    กำลังบันทึก...
+                    กำลังวิเคราะห์...
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" />
-                    บันทึกเลย
+                    <Sparkles className="w-4 h-4" />
+                    วิเคราะห์
                   </>
                 )}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowSuggestions(false);
-                  setAiSuggestions(null);
-                  setEditingSuggestions(false);
-                }}
-              >
-                <X className="w-4 h-4" />
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              asChild
+              variant="outline"
+              className="w-full justify-start gap-2 h-12"
+            >
+              <Link to="/logs/new">
+                <Plus className="w-5 h-5" />
+                <span className="flex-1 text-left">
+                  บันทึกฝันใหม่ (กรอกเอง)
+                </span>
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full justify-start gap-2 h-12"
+            >
+              <Link to="/library">
+                <Library className="w-5 h-5" />
+                <span className="flex-1 text-left">ห้องสมุดความฝัน</span>
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full justify-start gap-2 h-12"
+            >
+              <Link to="/logs">
+                <Moon className="w-5 h-5" />
+                <span className="flex-1 text-left">ดูบันทึกทั้งหมด</span>
+              </Link>
+            </Button>
+          </div>
+
+          {/* Recent Dreams */}
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              กำลังโหลด...
+            </div>
+          ) : recentDreams.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">บันทึกล่าสุด</h2>
+                <Link
+                  to="/logs"
+                  className="text-sm text-primary hover:underline"
+                >
+                  ดูทั้งหมด
+                </Link>
+              </div>
+              <div className="space-y-2">
+                {recentDreams.map((dream) => (
+                  <DreamCard key={dream.id} dream={dream} compact />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>ยังไม่มีบันทึก</p>
+              <Button asChild variant="link" className="mt-2">
+                <Link to="/logs/new">สร้างบันทึกแรก</Link>
               </Button>
             </div>
-          </div>
-        )}
-
-        {!showSuggestions && (
-          <Button
-            onClick={handleAnalyze}
-            disabled={analyzing || !quickNote.trim()}
-            className="w-full gap-2"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                กำลังวิเคราะห์...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                วิเคราะห์
-              </>
-            )}
-          </Button>
-        )}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 gap-3">
-        <Button
-          asChild
-          variant="outline"
-          className="w-full justify-start gap-2 h-12"
-        >
-          <Link to="/logs/new">
-            <Plus className="w-5 h-5" />
-            <span className="flex-1 text-left">บันทึกฝันใหม่ (กรอกเอง)</span>
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="outline"
-          className="w-full justify-start gap-2 h-12"
-        >
-          <Link to="/library">
-            <Library className="w-5 h-5" />
-            <span className="flex-1 text-left">ห้องสมุดความฝัน</span>
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="outline"
-          className="w-full justify-start gap-2 h-12"
-        >
-          <Link to="/logs">
-            <Moon className="w-5 h-5" />
-            <span className="flex-1 text-left">ดูบันทึกทั้งหมด</span>
-          </Link>
-        </Button>
-      </div>
-
-      {/* Recent Dreams */}
-      {loading ? (
-        <div className="text-center py-8 text-muted-foreground">
-          กำลังโหลด...
+          )}
         </div>
-      ) : recentDreams.length > 0 ? (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">บันทึกล่าสุด</h2>
-            <Link to="/logs" className="text-sm text-primary hover:underline">
-              ดูทั้งหมด
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {recentDreams.map((dream) => (
-              <DreamCard key={dream.id} dream={dream} compact />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>ยังไม่มีบันทึก</p>
-          <Button asChild variant="link" className="mt-2">
-            <Link to="/logs/new">สร้างบันทึกแรก</Link>
-          </Button>
-        </div>
-      )}
-      </div>
       </div>
 
       {/* Bottom Navigation */}
