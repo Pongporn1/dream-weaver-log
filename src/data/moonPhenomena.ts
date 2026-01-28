@@ -12,6 +12,8 @@ export type SpecialEffect =
   | "snow"
   | "fog"
   | "meteorShower"
+  | "frozenTime"
+  | "voidRipples"
   | null;
 
 export interface MoonPhenomenon {
@@ -252,6 +254,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.45,
     cloudSpeed: 1.3,
     shootingStarChance: 0.5,
+    specialEffect: "meteorShower",
+    effectIntensity: 0.9,
     emotionTag: "dramatic",
     subtitle: "ปรากฏการณ์อันยิ่งใหญ่",
     moonSize: 1.5, // Super Blood Moon - 50% larger
@@ -290,6 +294,7 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     shootingStarChance: 0.45,
     emotionTag: "mysterious_flash",
     subtitle: "แสงพริบตาที่ไม่มีใครเข้าใจ",
+    moonSize: 1.4,
   },
 
   hybridEclipse: {
@@ -305,8 +310,11 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.3,
     cloudSpeed: 1.1,
     shootingStarChance: 0.35,
+    specialEffect: "fog",
+    effectIntensity: 0.7,
     emotionTag: "dual_nature",
     subtitle: "เต็มดวงและวงแหวนในคราวเดียว",
+    moonSize: 1.4,
   },
 
   // Distance & Position (Rare - 4 types)
@@ -621,8 +629,11 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.5,
     cloudSpeed: 0.1,
     shootingStarChance: 0.0,
+    specialEffect: "frozenTime",
+    effectIntensity: 0.75,
     emotionTag: "frozen",
     subtitle: "เวลาหยุดนิ่ง",
+    moonSize: 1.4,
   },
 
   fadingMoon: {
@@ -674,8 +685,11 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.35,
     cloudSpeed: 0.9,
     shootingStarChance: 0.25,
+    specialEffect: "fireflies",
+    effectIntensity: 0.75,
     emotionTag: "repeating",
     subtitle: "เฟสซ้อนกัน",
+    moonSize: 1.4,
   },
 
   silentMoon: {
@@ -710,6 +724,7 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     shootingStarChance: 0.2,
     emotionTag: "fractured",
     subtitle: "เงาแตกเป็นชั้น",
+    moonSize: 1.4,
   },
 
   emptySky: {
@@ -725,8 +740,11 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.0,
     cloudSpeed: 0.0,
     shootingStarChance: 0.0,
+    specialEffect: "voidRipples",
+    effectIntensity: 0.6,
     emotionTag: "void",
     subtitle: "ความว่างเปล่าพูด",
+    moonSize: 1.4,
   },
 
   dreamMoon: {
@@ -846,6 +864,7 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     shootingStarChance: 0.4,
     emotionTag: "crystalline",
     subtitle: "ใสดุจคริสตัล",
+    moonSize: 1.4,
   },
 
   shadowMoon: {
@@ -899,6 +918,7 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     effectIntensity: 0.85,
     emotionTag: "ethereal",
     subtitle: "แสงเหนือเต้นระบำ",
+    moonSize: 1.4,
   },
 
   meteorShowerMoon: {

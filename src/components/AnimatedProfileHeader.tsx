@@ -19,6 +19,13 @@ import {
   drawSnowflakes,
   initFogLayers,
   drawFog,
+  initMeteorShower,
+  drawMeteorShower,
+  initFrozenTime,
+  drawFrozenTime,
+  initVoidRipples,
+  spawnVoidRipple,
+  drawVoidRipples,
   type MoonFlash,
   type OrbitingParticle,
   type Sparkle,
@@ -26,6 +33,9 @@ import {
   type Firefly,
   type Snowflake,
   type FogLayer,
+  type MeteorShowerParticle,
+  type FrozenTimeParticle,
+  type VoidRipple,
 } from "@/utils/particleEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
@@ -78,6 +88,9 @@ export function AnimatedProfileHeader() {
   const firefliesRef = useRef<Firefly[]>([]);
   const snowflakesRef = useRef<Snowflake[]>([]);
   const fogLayersRef = useRef<FogLayer[]>([]);
+  const meteorShowerRef = useRef<MeteorShowerParticle[]>([]);
+  const frozenTimeRef = useRef<FrozenTimeParticle[]>([]);
+  const voidRipplesRef = useRef<VoidRipple[]>([]);
 
   // Get moon phenomenon for this session
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
@@ -176,7 +189,27 @@ export function AnimatedProfileHeader() {
     if (phenomenon.id === "lunarTransientPhenomena")
       moonFlashesRef.current = initMoonFlashes();
     else if (phenomenon.id === "superBlueBloodMoon")
-      orbitingParticlesRef.current = initOrbitingParticles(20);
+      orbitingParticlesRef.current = initOrbitingParticles(
+        20,
+        "#B84060",
+        "#d85080",
+      );
+    else if (phenomenon.id === "brokenMoon")
+      orbitingParticlesRef.current = initOrbitingParticles(
+        25,
+        "#9898B8",
+        "#6868a8",
+        0.008,
+        0.015,
+      );
+    else if (phenomenon.id === "emptySky")
+      orbitingParticlesRef.current = initOrbitingParticles(
+        18,
+        "#404050",
+        "#505070",
+        0.005,
+        0.01,
+      );
     else if (phenomenon.id === "crystalMoon")
       sparklesRef.current = initSparkles(moon.x, moon.y, 40);
 
@@ -196,6 +229,20 @@ export function AnimatedProfileHeader() {
       );
     else if (phenomenon.specialEffect === "fog")
       fogLayersRef.current = initFogLayers(rect.width, rect.height);
+    else if (phenomenon.specialEffect === "meteorShower")
+      meteorShowerRef.current = initMeteorShower(
+        rect.width,
+        rect.height,
+        Math.floor(15 + intensity * 20),
+      );
+    else if (phenomenon.specialEffect === "frozenTime")
+      frozenTimeRef.current = initFrozenTime(
+        rect.width,
+        rect.height,
+        Math.floor(30 + intensity * 30),
+      );
+    else if (phenomenon.specialEffect === "voidRipples")
+      voidRipplesRef.current = initVoidRipples();
 
     const drawSky = () => {
       const g = ctx.createLinearGradient(0, 0, 0, rect.height);
@@ -273,6 +320,53 @@ export function AnimatedProfileHeader() {
       ctx.beginPath();
       ctx.arc(moon.x, moon.y + offsetY, moonRadius, 0, Math.PI * 2);
       ctx.fill();
+
+      // MYTHIC EXCLUSIVE: Enhanced glow layers and rim light
+      if (phenomenon.rarity === "mythic") {
+        // Multi-layer ethereal glow
+        const innerGlow = ctx.createRadialGradient(
+          moon.x,
+          moon.y + offsetY,
+          moonRadius * 0.7,
+          moon.x,
+          moon.y + offsetY,
+          moonRadius * 1.8,
+        );
+        innerGlow.addColorStop(0, `${phenomenon.uiAccent}00`);
+        innerGlow.addColorStop(0.3, `${phenomenon.uiAccent}40`);
+        innerGlow.addColorStop(0.6, `${phenomenon.uiAccent}20`);
+        innerGlow.addColorStop(1, `${phenomenon.uiAccent}00`);
+        ctx.fillStyle = innerGlow;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y + offsetY, moonRadius * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rim light on edge
+        ctx.strokeStyle = `${phenomenon.uiAccent}60`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y + offsetY, moonRadius - 1, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Subtle pulsing highlight
+        const pulsePhase = moon.phase * 2;
+        const pulseOpacity = (Math.sin(pulsePhase) * 0.15 + 0.25) * 255;
+        const pulseHex = Math.floor(pulseOpacity).toString(16).padStart(2, "0");
+        const highlight = ctx.createRadialGradient(
+          moon.x - moonRadius * 0.3,
+          moon.y + offsetY - moonRadius * 0.3,
+          0,
+          moon.x - moonRadius * 0.3,
+          moon.y + offsetY - moonRadius * 0.3,
+          moonRadius * 0.6,
+        );
+        highlight.addColorStop(0, `#ffffff${pulseHex}`);
+        highlight.addColorStop(1, `#ffffff00`);
+        ctx.fillStyle = highlight;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y + offsetY, moonRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Crescent shadow for depth - uses darker version of moonTint
       const shadowColor = adjustBrightness(phenomenon.moonTint, 0.5);
@@ -467,7 +561,9 @@ export function AnimatedProfileHeader() {
       }
 
       if (
-        phenomenon.id === "superBlueBloodMoon" &&
+        (phenomenon.id === "superBlueBloodMoon" ||
+          phenomenon.id === "brokenMoon" ||
+          phenomenon.id === "emptySky") &&
         orbitingParticlesRef.current.length > 0
       ) {
         const moon = moonPositionRef.current;
@@ -495,6 +591,44 @@ export function AnimatedProfileHeader() {
         snowflakesRef.current.length > 0
       ) {
         drawSnowflakes(ctx, snowflakesRef.current, rect.width, rect.height);
+      }
+
+      if (
+        phenomenon.specialEffect === "meteorShower" &&
+        meteorShowerRef.current.length > 0
+      ) {
+        drawMeteorShower(ctx, meteorShowerRef.current, rect.width, rect.height);
+      }
+
+      if (
+        phenomenon.specialEffect === "frozenTime" &&
+        frozenTimeRef.current.length > 0
+      ) {
+        drawFrozenTime(ctx, frozenTimeRef.current);
+      }
+
+      if (phenomenon.specialEffect === "voidRipples") {
+        const moon = moonPositionRef.current;
+        const baseMoonRadius = 40;
+        const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+
+        // Spawn void ripples periodically
+        if (Math.random() < 0.015) {
+          voidRipplesRef.current.push(
+            spawnVoidRipple(
+              moon.x,
+              moon.y + Math.sin(moon.phase) * 3,
+              moonRadius,
+            ),
+          );
+        }
+
+        voidRipplesRef.current = drawVoidRipples(
+          ctx,
+          voidRipplesRef.current,
+          moon.x,
+          moon.y,
+        );
       }
 
       drawShootingStars();
