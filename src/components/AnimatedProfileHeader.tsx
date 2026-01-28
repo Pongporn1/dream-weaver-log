@@ -26,6 +26,10 @@ import {
   initVoidRipples,
   spawnVoidRipple,
   drawVoidRipples,
+  initMoonFragments,
+  drawMoonFragments,
+  initShatterDust,
+  drawShatterDust,
   type MoonFlash,
   type OrbitingParticle,
   type Sparkle,
@@ -36,6 +40,8 @@ import {
   type MeteorShowerParticle,
   type FrozenTimeParticle,
   type VoidRipple,
+  type MoonFragment,
+  type ShatterDust,
 } from "@/utils/particleEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
@@ -88,9 +94,14 @@ export function AnimatedProfileHeader() {
   const firefliesRef = useRef<Firefly[]>([]);
   const snowflakesRef = useRef<Snowflake[]>([]);
   const fogLayersRef = useRef<FogLayer[]>([]);
+  const moonFragmentsRef = useRef<MoonFragment[]>([]);
+  const shatterDustRef = useRef<ShatterDust[]>([]);
   const meteorShowerRef = useRef<MeteorShowerParticle[]>([]);
   const frozenTimeRef = useRef<FrozenTimeParticle[]>([]);
   const voidRipplesRef = useRef<VoidRipple[]>([]);
+
+  // Timer for resetting shatter dust every 10 seconds
+  const lastShatterResetRef = useRef<number>(Date.now());
 
   // Get moon phenomenon for this session
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
@@ -243,6 +254,10 @@ export function AnimatedProfileHeader() {
       );
     else if (phenomenon.specialEffect === "voidRipples")
       voidRipplesRef.current = initVoidRipples();
+    else if (phenomenon.specialEffect === "shattered") {
+      moonFragmentsRef.current = initMoonFragments(moon.x, moon.y, 12);
+      shatterDustRef.current = initShatterDust(moon.x, moon.y, 25);
+    }
 
     const drawSky = () => {
       const g = ctx.createLinearGradient(0, 0, 0, rect.height);
@@ -554,6 +569,37 @@ export function AnimatedProfileHeader() {
       }
 
       drawMoon();
+
+      // Draw Shattered Moon fragments and dust
+      if (phenomenon.specialEffect === "shattered") {
+        const moon = moonPositionRef.current;
+
+        // Reset shatter dust every 10 seconds (10000ms)
+        const currentTime = Date.now();
+        if (currentTime - lastShatterResetRef.current > 10000) {
+          shatterDustRef.current = initShatterDust(moon.x, moon.y, 25);
+          lastShatterResetRef.current = currentTime;
+        }
+
+        if (shatterDustRef.current.length > 0) {
+          drawShatterDust(
+            ctx,
+            shatterDustRef.current,
+            phenomenon.moonTint,
+            moon.x,
+            moon.y,
+          );
+        }
+        if (moonFragmentsRef.current.length > 0) {
+          drawMoonFragments(
+            ctx,
+            moonFragmentsRef.current,
+            moon.x,
+            moon.y,
+            phenomenon.moonTint,
+          );
+        }
+      }
 
       // Draw mythic phenomena particles
       if (phenomenon.id === "crystalMoon" && sparklesRef.current.length > 0) {

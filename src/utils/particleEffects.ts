@@ -64,6 +64,39 @@ export interface FogLayer {
   wave: number;
   waveSpeed: number;
 }
+
+// Shattered Moon effect interfaces
+export interface MoonCrack {
+  startAngle: number;
+  length: number;
+  width: number;
+  branches: { angle: number; length: number }[];
+  opacity: number;
+}
+
+export interface MoonFragment {
+  x: number;
+  y: number;
+  size: number;
+  angle: number;
+  distance: number;
+  orbitSpeed: number;
+  rotation: number;
+  rotationSpeed: number;
+  opacity: number;
+}
+
+export interface ShatterDust {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  life: number;
+  maxLife: number;
+}
+
 export interface MeteorShowerParticle {
   x: number;
   y: number;
@@ -236,15 +269,16 @@ export const drawSparkles = (
 };
 
 export const initAuroraWaves = (canvasHeight: number): AuroraWave[] => {
-  const colors = ["#40E0D0", "#00CED1", "#48D1CC", "#20B2AA", "#5F9EA0"];
-  return Array.from({ length: 5 }, (_, i) => ({
-    y: canvasHeight * 0.15 + i * 35,
-    amplitude: 40 + Math.random() * 60,
-    frequency: 0.006 + Math.random() * 0.008,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.012 + Math.random() * 0.015,
+  // Authentic aurora colors - only green/teal tones
+  const colors = ["#00ff88", "#00ddaa", "#00ccbb"];
+  return Array.from({ length: 3 }, (_, i) => ({
+    y: canvasHeight * 0.3 + i * 80, // Spread vertically across middle-top area
+    amplitude: 25 + Math.random() * 20,
+    frequency: 0.003 + Math.random() * 0.004,
+    phase: Math.random() * Math.PI * 2, // Random starting phase for variety
+    speed: 0.004 + Math.random() * 0.005, // Slower
     color: colors[i],
-    opacity: 0.12 + Math.random() * 0.12,
+    opacity: 0.08 + Math.random() * 0.06, // Much more subtle
   }));
 };
 
@@ -272,23 +306,19 @@ export const drawAurora = (
       ctx.lineTo(x, baseY + secondaryWave + tertiary + flutter);
     }
 
-    // Multi-layer gradient for depth
-    const g = ctx.createLinearGradient(
-      0,
-      w.y - w.amplitude * 1.8,
-      0,
-      w.y + w.amplitude * 1.8,
-    );
-    g.addColorStop(0, `${w.color}00`);
+    // Horizontal gradient spanning full width for even distribution
+    const g = ctx.createLinearGradient(0, w.y, canvasWidth, w.y);
+
+    // Smooth fade across entire width
     g.addColorStop(
-      0.15,
-      `${w.color}${Math.floor(pulseOpacity * 0.2 * 255)
+      0,
+      `${w.color}${Math.floor(pulseOpacity * 0.4 * 255)
         .toString(16)
         .padStart(2, "0")}`,
     );
     g.addColorStop(
-      0.35,
-      `${w.color}${Math.floor(pulseOpacity * 0.6 * 255)
+      0.25,
+      `${w.color}${Math.floor(pulseOpacity * 0.7 * 255)
         .toString(16)
         .padStart(2, "0")}`,
     );
@@ -299,125 +329,94 @@ export const drawAurora = (
         .padStart(2, "0")}`,
     );
     g.addColorStop(
-      0.65,
-      `${w.color}${Math.floor(pulseOpacity * 0.6 * 255)
+      0.75,
+      `${w.color}${Math.floor(pulseOpacity * 0.7 * 255)
         .toString(16)
         .padStart(2, "0")}`,
     );
     g.addColorStop(
-      0.85,
-      `${w.color}${Math.floor(pulseOpacity * 0.2 * 255)
+      1,
+      `${w.color}${Math.floor(pulseOpacity * 0.4 * 255)
         .toString(16)
         .padStart(2, "0")}`,
     );
-    g.addColorStop(1, `${w.color}00`);
 
-    // Draw main curtain with glow
+    // Draw main curtain with soft glow
     ctx.strokeStyle = g;
-    ctx.lineWidth = 90;
+    ctx.lineWidth = 70;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.shadowBlur = 50;
+    ctx.shadowBlur = 40;
     ctx.shadowColor = w.color;
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Add inner detail layer with different opacity
+    // Add vertical gradient overlay for curtain effect
+    const verticalGradient = ctx.createLinearGradient(
+      0,
+      w.y - w.amplitude * 2,
+      0,
+      w.y + w.amplitude * 3,
+    );
+    verticalGradient.addColorStop(0, `${w.color}00`); // Transparent top
+    verticalGradient.addColorStop(
+      0.2,
+      `${w.color}${Math.floor(pulseOpacity * 0.5 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    verticalGradient.addColorStop(
+      0.5,
+      `${w.color}${Math.floor(pulseOpacity * 0.8 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    verticalGradient.addColorStop(
+      0.8,
+      `${w.color}${Math.floor(pulseOpacity * 0.4 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    verticalGradient.addColorStop(1, `${w.color}00`); // Transparent bottom
+
+    // Second layer with vertical gradient
+    ctx.strokeStyle = verticalGradient;
     ctx.lineWidth = 50;
     ctx.globalAlpha = 0.6;
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // Dancing light particles along the aurora
-    for (let particleIdx = 0; particleIdx < 8; particleIdx++) {
-      if (Math.random() < 0.4) {
-        const particleX =
-          (canvasWidth / 8) * particleIdx +
-          Math.sin(w.phase * 2 + particleIdx) * 30;
-        const particleY =
-          w.y + Math.sin(particleX * w.frequency + w.phase) * w.amplitude;
-        const particleSize = 8 + Math.random() * 12;
+    // Add subtle shimmer particles along the wave
+    if (Math.random() < 0.3) {
+      for (let i = 0; i < 3; i++) {
+        const shimmerX = Math.random() * canvasWidth;
+        const shimmerY =
+          w.y + Math.sin(shimmerX * w.frequency + w.phase) * w.amplitude;
+        const shimmerSize = 2 + Math.random() * 3;
 
-        const particleGrad = ctx.createRadialGradient(
-          particleX,
-          particleY,
+        const shimmerGrad = ctx.createRadialGradient(
+          shimmerX,
+          shimmerY,
           0,
-          particleX,
-          particleY,
-          particleSize,
+          shimmerX,
+          shimmerY,
+          shimmerSize * 3,
         );
-        const particleOpacity = pulseOpacity * (0.8 + Math.random() * 0.4);
-        particleGrad.addColorStop(0, `rgba(255, 255, 255, ${particleOpacity})`);
-        particleGrad.addColorStop(
-          0.3,
-          `${w.color}${Math.floor(particleOpacity * 200)
-            .toString(16)
-            .padStart(2, "0")}`,
+        shimmerGrad.addColorStop(
+          0,
+          `rgba(255, 255, 255, ${pulseOpacity * 0.6})`,
         );
-        particleGrad.addColorStop(1, `${w.color}00`);
-
-        ctx.fillStyle = particleGrad;
-        ctx.beginPath();
-        ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Vertical light rays (aurora pillars)
-    if (Math.random() < 0.15) {
-      const rayCount = 2 + Math.floor(Math.random() * 3);
-      for (let r = 0; r < rayCount; r++) {
-        const rayX = Math.random() * canvasWidth;
-        const rayBaseY =
-          w.y + Math.sin(rayX * w.frequency + w.phase) * w.amplitude;
-        const rayHeight = 150 + Math.random() * 200;
-        const rayWidth = 12 + Math.random() * 18;
-
-        const rayGrad = ctx.createLinearGradient(
-          rayX,
-          rayBaseY - rayHeight * 0.7,
-          rayX,
-          rayBaseY + rayHeight * 0.3,
-        );
-        rayGrad.addColorStop(0, `${w.color}00`);
-        rayGrad.addColorStop(
-          0.3,
+        shimmerGrad.addColorStop(
+          0.5,
           `${w.color}${Math.floor(pulseOpacity * 0.4 * 255)
             .toString(16)
             .padStart(2, "0")}`,
         );
-        rayGrad.addColorStop(
-          0.6,
-          `${w.color}${Math.floor(pulseOpacity * 0.6 * 255)
-            .toString(16)
-            .padStart(2, "0")}`,
-        );
-        rayGrad.addColorStop(1, `${w.color}00`);
+        shimmerGrad.addColorStop(1, `${w.color}00`);
 
-        ctx.fillStyle = rayGrad;
-        ctx.globalAlpha = 0.7;
-        ctx.fillRect(
-          rayX - rayWidth / 2,
-          rayBaseY - rayHeight * 0.7,
-          rayWidth,
-          rayHeight,
-        );
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // Shimmering edge highlights
-    if (index === 0 || index === waves.length - 1) {
-      for (let shimmer = 0; shimmer < 5; shimmer++) {
-        const shimmerPhase = w.phase + shimmer * 0.5;
-        const shimmerX =
-          (canvasWidth / 5) * shimmer + Math.sin(shimmerPhase) * 40;
-        const shimmerY =
-          w.y + Math.sin(shimmerX * w.frequency + w.phase) * w.amplitude;
-
-        ctx.fillStyle = `rgba(255, 255, 255, ${pulseOpacity * 0.3})`;
+        ctx.fillStyle = shimmerGrad;
         ctx.beginPath();
-        ctx.arc(shimmerX, shimmerY, 3, 0, Math.PI * 2);
+        ctx.arc(shimmerX, shimmerY, shimmerSize * 3, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -915,4 +914,428 @@ export const drawVoidRipples = (
       return r;
     })
     .filter((r) => r.lifetime < r.maxLifetime);
+};
+
+/**
+ * ========================================
+ * SHATTERED MOON EFFECTS
+ * ========================================
+ */
+
+/**
+ * Initialize Moon Cracks for Shattered Moon
+ */
+export const initMoonCracks = (count = 5): MoonCrack[] => {
+  const cracks: MoonCrack[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const startAngle =
+      ((Math.PI * 2) / count) * i + (Math.random() - 0.5) * 0.4;
+    // สร้างรอยแตกที่มีความยาวแตกต่างกัน - ดูเป็นธรรมชาติ
+    const crackType = Math.random();
+    let length, width;
+
+    if (crackType < 0.3) {
+      // รอยแตกยาวมาก (30%)
+      length = 50 + Math.random() * 40;
+      width = 2 + Math.random() * 1.5;
+    } else if (crackType < 0.7) {
+      // รอยแตกปานกลาง (40%)
+      length = 35 + Math.random() * 25;
+      width = 1.8 + Math.random() * 1.2;
+    } else {
+      // รอยแตกสั้น (30%)
+      length = 20 + Math.random() * 20;
+      width = 1.5 + Math.random() * 1;
+    }
+
+    const crack: MoonCrack = {
+      startAngle,
+      length,
+      width,
+      branches: [],
+      opacity: 0.7 + Math.random() * 0.3,
+    };
+
+    // กิ่งแตกที่หลากหลาย - รอยยาวมีกิ่งเยอะ รอยสั้นมีกิ่งน้อย
+    const branchCount =
+      crackType < 0.3
+        ? 2 + Math.floor(Math.random() * 3)
+        : crackType < 0.7
+          ? 1 + Math.floor(Math.random() * 2)
+          : Math.floor(Math.random() * 2);
+
+    for (let j = 0; j < branchCount; j++) {
+      crack.branches.push({
+        angle: (Math.random() - 0.5) * 0.7,
+        length: 10 + Math.random() * (length * 0.4),
+      });
+    }
+
+    cracks.push(crack);
+  }
+
+  return cracks;
+};
+
+/**
+ * Initialize Floating Moon Fragments
+ */
+export const initMoonFragments = (
+  moonX: number,
+  moonY: number,
+  count = 12,
+): MoonFragment[] => {
+  const fragments: MoonFragment[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const angle = ((Math.PI * 2) / count) * i + (Math.random() - 0.5) * 0.4;
+    const distance = 60 + Math.random() * 45; // ลอยออกไปไกลขึ้น
+
+    fragments.push({
+      x: moonX + Math.cos(angle) * distance,
+      y: moonY + Math.sin(angle) * distance,
+      size: 5 + Math.random() * 8, // ใหญ่ขึ้น
+      angle,
+      distance,
+      orbitSpeed: 0.0008 + Math.random() * 0.0015, // ช้าลงนิดหน่อย
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.025,
+      opacity: 0.7 + Math.random() * 0.3, // โปร่งใสน้อยลง
+    });
+  }
+
+  return fragments;
+};
+
+/**
+ * Initialize Shatter Dust Particles
+ */
+export const initShatterDust = (
+  moonX: number,
+  moonY: number,
+  count = 25,
+): ShatterDust[] => {
+  const dust: ShatterDust[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.15 + Math.random() * 0.3; // Slower movement
+
+    dust.push({
+      x: moonX + (Math.random() - 0.5) * 90,
+      y: moonY + (Math.random() - 0.5) * 90,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 0.8 + Math.random() * 1.5, // Smaller particles
+      opacity: 0.2 + Math.random() * 0.3, // More subtle
+      life: 0,
+      maxLife: 120 + Math.random() * 120, // Longer life
+    });
+  }
+
+  return dust;
+};
+
+/**
+ * Draw Moon Cracks on the moon surface
+ */
+export const drawMoonCracks = (
+  ctx: CanvasRenderingContext2D,
+  cracks: MoonCrack[],
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+  moonColor: string,
+) => {
+  ctx.save();
+
+  cracks.forEach((crack) => {
+    // เริ่มรอยแตกจากใกล้ขอบดวงจันทร์
+    const startRadius = moonRadius * (0.3 + Math.random() * 0.4);
+    const startX = moonX + Math.cos(crack.startAngle) * startRadius;
+    const startY = moonY + Math.sin(crack.startAngle) * startRadius;
+    const endX =
+      moonX + Math.cos(crack.startAngle) * (startRadius + crack.length);
+    const endY =
+      moonY + Math.sin(crack.startAngle) * (startRadius + crack.length);
+
+    // Layer 1: เงาลึกของรอยแตก (ดูเหมือนรอยแตกจริงๆ)
+    ctx.strokeStyle = `rgba(10, 10, 20, ${crack.opacity * 0.95})`;
+    ctx.lineWidth = crack.width + 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Layer 2: รอยแตกหลัก
+    ctx.strokeStyle = `rgba(25, 25, 40, ${crack.opacity})`;
+    ctx.lineWidth = crack.width;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+
+    // Layer 3: แสงส่องผ่านรอยแตก (inner glow) - สีน้ำเงินอมม่วงนุ่มนวล
+    const innerGlow = ctx.createLinearGradient(startX, startY, endX, endY);
+    innerGlow.addColorStop(0, `rgba(200, 220, 255, ${crack.opacity * 0.25})`);
+    innerGlow.addColorStop(0.5, `rgba(180, 200, 255, ${crack.opacity * 0.4})`);
+    innerGlow.addColorStop(1, `rgba(160, 180, 255, ${crack.opacity * 0.2})`);
+    ctx.strokeStyle = innerGlow;
+    ctx.lineWidth = crack.width * 0.6;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = `rgba(180, 200, 255, ${crack.opacity * 0.6})`;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Layer 4: ขอบรอยแตกเรืองแสงเล็กน้อย
+    ctx.strokeStyle = `rgba(220, 230, 255, ${crack.opacity * 0.15})`;
+    ctx.lineWidth = crack.width + 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `rgba(200, 220, 255, ${crack.opacity * 0.3})`;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // เพิ่ม sparkle particles ตามรอยแตก
+    const sparkleCount = Math.floor(crack.length / 15);
+    for (let i = 0; i < sparkleCount; i++) {
+      const ratio = (i + 0.5) / sparkleCount;
+      const sparkleX = startX + (endX - startX) * ratio;
+      const sparkleY = startY + (endY - startY) * ratio;
+
+      if (Math.random() < 0.4) {
+        const sparkleGrad = ctx.createRadialGradient(
+          sparkleX,
+          sparkleY,
+          0,
+          sparkleX,
+          sparkleY,
+          2.5,
+        );
+        sparkleGrad.addColorStop(
+          0,
+          `rgba(255, 255, 255, ${crack.opacity * 0.5})`,
+        );
+        sparkleGrad.addColorStop(
+          0.5,
+          `rgba(200, 220, 255, ${crack.opacity * 0.3})`,
+        );
+        sparkleGrad.addColorStop(1, "rgba(200, 220, 255, 0)");
+        ctx.fillStyle = sparkleGrad;
+        ctx.beginPath();
+        ctx.arc(sparkleX, sparkleY, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // วาดกิ่งแยก
+    crack.branches.forEach((branch) => {
+      const branchStartRatio = 0.25 + Math.random() * 0.5;
+      const branchStartX = startX + (endX - startX) * branchStartRatio;
+      const branchStartY = startY + (endY - startY) * branchStartRatio;
+
+      const branchAngle = crack.startAngle + branch.angle;
+      const branchEndX = branchStartX + Math.cos(branchAngle) * branch.length;
+      const branchEndY = branchStartY + Math.sin(branchAngle) * branch.length;
+
+      // เงากิ่ง
+      ctx.strokeStyle = `rgba(10, 10, 20, ${crack.opacity * 0.8})`;
+      ctx.lineWidth = crack.width * 0.8 + 2;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.beginPath();
+      ctx.moveTo(branchStartX, branchStartY);
+      ctx.lineTo(branchEndX, branchEndY);
+      ctx.stroke();
+
+      // กิ่งหลัก
+      ctx.strokeStyle = `rgba(25, 25, 40, ${crack.opacity * 0.85})`;
+      ctx.lineWidth = crack.width * 0.7;
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+
+      // แสงในกิ่ง
+      ctx.strokeStyle = `rgba(180, 200, 255, ${crack.opacity * 0.3})`;
+      ctx.lineWidth = crack.width * 0.5;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = `rgba(180, 200, 255, ${crack.opacity * 0.4})`;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // ขอบเรืองแสงกิ่ง
+      ctx.strokeStyle = `rgba(220, 230, 255, ${crack.opacity * 0.12})`;
+      ctx.lineWidth = crack.width * 0.8 + 1.5;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = `rgba(200, 220, 255, ${crack.opacity * 0.25})`;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+  });
+
+  ctx.restore();
+};
+
+/**
+ * Draw and update Floating Moon Fragments
+ */
+export const drawMoonFragments = (
+  ctx: CanvasRenderingContext2D,
+  fragments: MoonFragment[],
+  moonX: number,
+  moonY: number,
+  moonColor: string,
+) => {
+  fragments.forEach((frag) => {
+    // Update orbit
+    frag.angle += frag.orbitSpeed;
+    frag.rotation += frag.rotationSpeed;
+
+    // Calculate position
+    frag.x = moonX + Math.cos(frag.angle) * frag.distance;
+    frag.y = moonY + Math.sin(frag.angle) * frag.distance;
+
+    ctx.save();
+    ctx.translate(frag.x, frag.y);
+    ctx.rotate(frag.rotation);
+
+    // วาดเงาของเศษดวงจันทร์
+    ctx.fillStyle = `rgba(0, 0, 0, ${frag.opacity * 0.4})`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+    ctx.beginPath();
+    const sides = 5 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < sides; i++) {
+      const angle = ((Math.PI * 2) / sides) * i;
+      const radius = frag.size * (0.8 + Math.random() * 0.5);
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // วาดเศษดวงจันทร์หลัก
+    ctx.fillStyle = `${moonColor}${Math.floor(frag.opacity * 255)
+      .toString(16)
+      .padStart(2, "0")}`;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = moonColor;
+    ctx.fill();
+
+    // เพิ่มขอบเรืองแสง
+    ctx.strokeStyle = `rgba(255, 255, 255, ${frag.opacity * 0.6})`;
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+    ctx.stroke();
+
+    // วาดไฮไลท์ตรงกลาง
+    const highlightGrad = ctx.createRadialGradient(
+      0,
+      0,
+      0,
+      0,
+      0,
+      frag.size * 0.6,
+    );
+    highlightGrad.addColorStop(0, `rgba(255, 255, 255, ${frag.opacity * 0.4})`);
+    highlightGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = highlightGrad;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(0, 0, frag.size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  });
+};
+
+/**
+ * Draw and update Shatter Dust
+ */
+export const drawShatterDust = (
+  ctx: CanvasRenderingContext2D,
+  dust: ShatterDust[],
+  moonColor: string,
+  moonX?: number,
+  moonY?: number,
+) => {
+  dust.forEach((particle) => {
+    // Update position
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+    particle.life++;
+
+    // Fade out over time
+    const lifeFactor = 1 - particle.life / particle.maxLife;
+    const currentOpacity = particle.opacity * lifeFactor;
+
+    if (particle.life < particle.maxLife && currentOpacity > 0.01) {
+      // วาดเรืองแสงรอบๆ ละออง
+      const glowGrad = ctx.createRadialGradient(
+        particle.x,
+        particle.y,
+        0,
+        particle.x,
+        particle.y,
+        particle.size * 4,
+      );
+      glowGrad.addColorStop(
+        0,
+        `${moonColor}${Math.floor(currentOpacity * 0.8 * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
+      );
+      glowGrad.addColorStop(
+        0.5,
+        `${moonColor}${Math.floor(currentOpacity * 0.3 * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
+      );
+      glowGrad.addColorStop(1, `${moonColor}00`);
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // วาดละอองหลัก
+      ctx.fillStyle = `${moonColor}${Math.floor(currentOpacity * 255)
+        .toString(16)
+        .padStart(2, "0")}`;
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = moonColor;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // เพิ่มประกายเล็กๆ
+      if (Math.random() < 0.15) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Reset particle when it dies - สร้างตำแหน่งใหม่รอบๆ ดวงจันทร์
+    if (particle.life >= particle.maxLife) {
+      if (moonX !== undefined && moonY !== undefined) {
+        const resetAngle = Math.random() * Math.PI * 2;
+        const resetDistance = 70 + Math.random() * 30;
+        particle.x = moonX + Math.cos(resetAngle) * resetDistance;
+        particle.y = moonY + Math.sin(resetAngle) * resetDistance;
+
+        const speed = 0.15 + Math.random() * 0.35;
+        const moveAngle = Math.random() * Math.PI * 2;
+        particle.vx = Math.cos(moveAngle) * speed;
+        particle.vy = Math.sin(moveAngle) * speed;
+      }
+      particle.life = 0;
+      particle.opacity = 0.35 + Math.random() * 0.45;
+    }
+  });
 };

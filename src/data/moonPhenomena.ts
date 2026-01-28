@@ -14,6 +14,7 @@ export type SpecialEffect =
   | "meteorShower"
   | "frozenTime"
   | "voidRipples"
+  | "shattered"
   | null;
 
 export interface MoonPhenomenon {
@@ -938,6 +939,26 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     effectIntensity: 0.9,
     emotionTag: "spectacular",
     subtitle: "ดาวตกหลั่งไหลราวสายฝน",
+  },
+
+  shatteredMoon: {
+    id: "shatteredMoon",
+    name: "ดวงจันทร์แตกร้าว",
+    nameEn: "Shattered Moon",
+    rarity: "mythic",
+    moonTint: "#E8E8F8",
+    skyPalette: ["#0a0a1f", "#141428", "#1e1e38"],
+    uiAccent: "#9898c8",
+    transitionSpeed: 52,
+    starDensity: 0.85,
+    cloudOpacity: 0.15,
+    cloudSpeed: 0.4,
+    shootingStarChance: 0.22,
+    moonSize: 1.6,
+    specialEffect: "shattered",
+    effectIntensity: 1.0,
+    emotionTag: "broken",
+    subtitle: "ชิ้นส่วนที่กระจัดกระจาย",
   },
 };
 
