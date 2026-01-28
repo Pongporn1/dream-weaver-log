@@ -47,7 +47,11 @@ import {
   initLightRays,
   drawLightRays,
   initShootingStars,
-  drawShootingStars,
+  drawShootingStars as drawShootingStarsLegendary,
+  initStarfield,
+  drawStarfield,
+  initNebula,
+  drawNebula,
   type MoonFlash,
   type OrbitingParticle,
   type Sparkle,
@@ -69,8 +73,83 @@ import {
   type AncientRune,
   type LightRay,
   type ShootingStar as ShootingStarParticle,
+  type StarfieldParticle,
+  type NebulaCloud,
 } from "@/utils/particleEffects";
+import { getMoonPhase, drawMoonWithPhase } from "@/utils/moonPhases";
+import {
+  getGlowIntensity,
+  applyTimeBasedGlow,
+} from "@/utils/timeBasedEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
+
+// Helper function to draw realistic moon phase shadow with gradient
+const drawMoonPhaseShadow = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  phase: number,
+) => {
+  // phase is 0-1 (0 = new moon, 0.5 = full moon, 1 = new moon)
+  if (Math.abs(phase - 0.5) < 0.01) return; // Full moon, no shadow
+
+  ctx.save();
+  
+  // Create clipping path for the moon circle
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Shadow color - Deep blue-black for better blending with sky
+  const deepShadow = "rgba(5, 10, 25, 0.85)";
+  const midShadow = "rgba(5, 10, 25, 0.5)";
+  const lightShadow = "rgba(5, 10, 25, 0.1)";
+
+  // Draw shadow with spherical-like gradient for 3D effect
+  if (phase < 0.5) {
+    // Waxing (shadow on left side)
+    const illumination = phase * 2; // 0 to 1
+    const shadowWidth = radius * (1 - illumination);
+    
+    // Gradient simulating spherical curvature
+    const gradient = ctx.createLinearGradient(
+      x - radius,
+      y,
+      x - radius + shadowWidth * 2.2, // Extend slightly for soft terminator
+      y
+    );
+    gradient.addColorStop(0, deepShadow);     // Darkest at edge
+    gradient.addColorStop(0.4, deepShadow);   // Stay dark longer for volume
+    gradient.addColorStop(0.7, midShadow);    // Mid-tone transition
+    gradient.addColorStop(1, "rgba(5, 10, 25, 0)"); // Fade to transparent
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x - radius, y - radius, shadowWidth * 2.2, radius * 2);
+    
+  } else if (phase > 0.5) {
+    // Waning (shadow on right side)
+    const illumination = 1 - ((phase - 0.5) * 2); // 1 to 0
+    const shadowWidth = radius * (1 - illumination);
+    
+    // Gradient simulating spherical curvature
+    const gradient = ctx.createLinearGradient(
+      x + radius - shadowWidth * 2.2,
+      y,
+      x + radius,
+      y
+    );
+    gradient.addColorStop(0, "rgba(5, 10, 25, 0)"); // Fade from transparent
+    gradient.addColorStop(0.3, midShadow);    // Mid-tone transition
+    gradient.addColorStop(0.6, deepShadow);   // Start getting dark
+    gradient.addColorStop(1, deepShadow);     // Darkest at edge
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x + radius - shadowWidth * 2.2, y - radius, shadowWidth * 2.2, radius * 2);
+  }
+
+  ctx.restore();
+};
 
 interface Star {
   x: number;
@@ -137,6 +216,13 @@ export function AnimatedProfileHeader() {
   const ancientRunesRef = useRef<AncientRune[]>([]);
   const lightRaysRef = useRef<LightRay[]>([]);
   const shootingStarsLegendaryRef = useRef<ShootingStarParticle[]>([]);
+
+  // New visual enhancement refs
+  const starfieldRef = useRef<StarfieldParticle[]>([]);
+  const nebulaRef = useRef<NebulaCloud[]>([]);
+  const moonPhaseRef = useRef(getMoonPhase());
+  const scrollOffsetRef = useRef({ x: 0, y: 0 });
+  const currentHourRef = useRef(new Date().getHours());
 
   // Timer for resetting shatter dust every 10 seconds
   const lastShatterResetRef = useRef<number>(Date.now());
@@ -315,30 +401,50 @@ export function AnimatedProfileHeader() {
         moonFragmentsRef.current = initMoonFragments(moon.x, moon.y, 12);
         shatterDustRef.current = initShatterDust(moon.x, moon.y, 25);
       } else if (phenomenon.specialEffect === "bloodRing")
-        bloodRingsRef.current = initBloodRings(moon.x, moon.y, moonRadius);
+        bloodRingsRef.current = initBloodRings(moonRadius);
       else if (phenomenon.specialEffect === "fadeParticles")
         fadeParticlesRef.current = initFadeParticles(
-          moon.x,
-          moon.y,
-          moonRadius,
+          rect.width,
+          rect.height,
         );
       else if (phenomenon.specialEffect === "silence")
         silenceWavesRef.current = initSilenceWaves();
       else if (phenomenon.specialEffect === "dreamDust")
-        dreamDustRef.current = initDreamDust(moon.x, moon.y, moonRadius);
+        dreamDustRef.current = initDreamDust(rect.width, rect.height);
       else if (phenomenon.specialEffect === "memoryFragments")
         memoryFragmentsRef.current = initMemoryFragments(
-          moon.x,
-          moon.y,
-          moonRadius,
+          rect.width,
+          rect.height,
         );
       else if (phenomenon.specialEffect === "ancientRunes")
         ancientRunesRef.current = initAncientRunes(moon.x, moon.y, moonRadius);
       else if (phenomenon.specialEffect === "lightRays")
-        lightRaysRef.current = initLightRays(moon.x, moon.y);
+        lightRaysRef.current = initLightRays();
       else if (phenomenon.specialEffect === "shootingStars")
         shootingStarsLegendaryRef.current = initShootingStars();
+      else if (phenomenon.specialEffect === "starfield")
+        starfieldRef.current = initStarfield(150);
+      else if (phenomenon.specialEffect === "nebula")
+        nebulaRef.current = initNebula(rect.width, rect.height, 5);
     }
+
+    // Initialize moon phase
+    moonPhaseRef.current = getMoonPhase();
+    console.log(
+      "🌙 Moon Phase:",
+      moonPhaseRef.current.phaseNameTh,
+      `(${Math.round(moonPhaseRef.current.illumination * 100)}% illuminated)`,
+    );
+
+    // Setup scroll listener for parallax effect
+    const handleScroll = () => {
+      scrollOffsetRef.current = {
+        x: window.scrollX,
+        y: window.scrollY,
+      };
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
 
     const drawSky = () => {
       const g = ctx.createLinearGradient(0, 0, 0, rect.height);
@@ -576,18 +682,14 @@ export function AnimatedProfileHeader() {
         }
       }
 
-      // Crescent shadow for depth - uses darker version of moonTint
-      const shadowColor = adjustBrightness(phenomenon.moonTint, 0.5);
-      ctx.fillStyle = `${shadowColor}66`; // 40% opacity
-      ctx.beginPath();
-      ctx.arc(
-        moonX + moonRadius * 0.375,
+      // Draw realistic moon phase shadow
+      drawMoonPhaseShadow(
+        ctx,
+        moonX,
         moonY + offsetY,
-        moonRadius * 0.95,
-        0,
-        Math.PI * 2,
+        moonRadius,
+        moonPhaseRef.current.phase,
       );
-      ctx.fill();
     };
 
     const drawClouds = () => {
@@ -723,10 +825,10 @@ export function AnimatedProfileHeader() {
             )[0];
             const s = shootingStarsRef.current[idx];
             s.isActive = true;
+            // Start from outside the screen (top-right area)
             s.x =
-              rect.width * (shower ? 0.6 : 0.7) +
-              Math.random() * rect.width * (shower ? 0.4 : 0.3);
-            s.y = Math.random() * rect.height * (shower ? 0.4 : 0.3);
+              rect.width + Math.random() * 100; // Start from right edge + offset
+            s.y = -50 - Math.random() * 100; // Start from above the screen
           }
         }
       }
@@ -737,6 +839,34 @@ export function AnimatedProfileHeader() {
       ctx.clearRect(0, 0, rect.width, rect.height);
 
       drawSky();
+
+      // Draw nebula first (background layer)
+      if (
+        phenomenon.specialEffect === "nebula" &&
+        nebulaRef.current.length > 0
+      ) {
+        nebulaRef.current = drawNebula(
+          ctx,
+          nebulaRef.current,
+          rect.width,
+          rect.height,
+          scrollOffsetRef.current.x,
+          scrollOffsetRef.current.y,
+        );
+      }
+
+      // Draw starfield (behind regular stars)
+      if (
+        phenomenon.specialEffect === "starfield" &&
+        starfieldRef.current.length > 0
+      ) {
+        starfieldRef.current = drawStarfield(
+          ctx,
+          starfieldRef.current,
+          rect.width,
+          rect.height,
+        );
+      }
 
       // Draw advanced particle effects based on phenomenon (rare and above)
       if (phenomenon.specialEffect) {
@@ -863,7 +993,7 @@ export function AnimatedProfileHeader() {
           const moon = moonPositionRef.current;
           const baseMoonRadius = 40;
           const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
-          drawSilenceWaves(
+          silenceWavesRef.current = drawSilenceWaves(
             ctx,
             silenceWavesRef.current,
             moon.x,
@@ -899,7 +1029,17 @@ export function AnimatedProfileHeader() {
           lightRaysRef.current.length > 0
         ) {
           const moon = moonPositionRef.current;
-          drawLightRays(ctx, lightRaysRef.current, moon.x, moon.y);
+          const baseMoonRadius = 40;
+          const rarityMoonScale = {
+            normal: 1.0,
+            rare: 1.05,
+            very_rare: 1.1,
+            legendary: 1.15,
+            mythic: 1.2,
+          }[phenomenon.rarity];
+          const moonRadius =
+            baseMoonRadius * (phenomenon.moonSize || 1.0) * rarityMoonScale;
+          drawLightRays(ctx, lightRaysRef.current, moon.x, moon.y, moonRadius);
         }
 
         if (
@@ -909,12 +1049,9 @@ export function AnimatedProfileHeader() {
           const moon = moonPositionRef.current;
           const baseMoonRadius = 40;
           const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
-          drawShootingStars(
+          shootingStarsLegendaryRef.current = drawShootingStarsLegendary(
             ctx,
             shootingStarsLegendaryRef.current,
-            moon.x,
-            moon.y,
-            moonRadius,
             rect.width,
             rect.height,
           );
@@ -1001,6 +1138,7 @@ export function AnimatedProfileHeader() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [phenomenon]);
 

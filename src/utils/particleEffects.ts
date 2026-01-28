@@ -230,6 +230,29 @@ export interface ShootingStar {
   color: string;
 }
 
+// =================== NEW VISUAL EFFECTS INTERFACES ===================
+
+export interface StarfieldParticle {
+  x: number; // -1 to 1 (normalized)
+  y: number; // -1 to 1 (normalized)
+  z: number; // depth: 0 (far) to 1 (near)
+  speed: number;
+  size: number;
+  brightness: number;
+}
+
+export interface NebulaCloud {
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+  rotationSpeed: number;
+  colors: string[]; // array of colors to blend
+  opacity: number;
+  pulsePhase: number;
+  pulseSpeed: number;
+}
+
 export const initMoonFlashes = () => [];
 
 export const spawnMoonFlash = (
@@ -2114,6 +2137,12 @@ export const drawLightRays = (
   moonY: number,
   moonRadius: number,
 ) => {
+  // Validate inputs to prevent NaN errors
+  if (!isFinite(moonX) || !isFinite(moonY) || !isFinite(moonRadius)) {
+    console.warn("Invalid moon parameters in drawLightRays:", { moonX, moonY, moonRadius });
+    return;
+  }
+
   rays.forEach((ray) => {
     ray.pulsePhase += ray.speed;
     ray.angle += 0.003;
@@ -2124,6 +2153,11 @@ export const drawLightRays = (
     const startY = moonY + Math.sin(ray.angle) * moonRadius;
     const endX = moonX + Math.cos(ray.angle) * (moonRadius + ray.length);
     const endY = moonY + Math.sin(ray.angle) * (moonRadius + ray.length);
+
+    // Additional validation before creating gradient
+    if (!isFinite(startX) || !isFinite(startY) || !isFinite(endX) || !isFinite(endY)) {
+      return;
+    }
 
     const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
     gradient.addColorStop(0, `rgba(248, 248, 255, ${currentOpacity})`);
@@ -2156,8 +2190,8 @@ export const drawShootingStars = (
     const angle = Math.PI / 4 + Math.random() * (Math.PI / 4);
     const speed = 5 + Math.random() * 5;
     stars.push({
-      x: Math.random() * canvasWidth,
-      y: Math.random() * canvasHeight * 0.3,
+      x: canvasWidth + Math.random() * 100, // Start from right edge + offset
+      y: -50 - Math.random() * 100, // Start from above the screen
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       length: 20 + Math.random() * 30,
@@ -2221,3 +2255,176 @@ export const drawShootingStars = (
         star.y < canvasHeight + 50,
     );
 };
+
+// =================== STARFIELD EFFECT ===================
+
+export const initStarfield = (count = 120): StarfieldParticle[] => {
+  return Array.from({ length: count }, () => ({
+    x: (Math.random() - 0.5) * 2, // -1 to 1
+    y: (Math.random() - 0.5) * 2, // -1 to 1
+    z: Math.random(), // 0 to 1 (depth)
+    speed: 0.001 + Math.random() * 0.002,
+    size: 1 + Math.random() * 2,
+    brightness: 0.3 + Math.random() * 0.7,
+  }));
+};
+
+export const drawStarfield = (
+  ctx: CanvasRenderingContext2D,
+  particles: StarfieldParticle[],
+  canvasWidth: number,
+  canvasHeight: number,
+): StarfieldParticle[] => {
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+
+  return particles.map((particle) => {
+    // Move particle toward viewer (increase z)
+    particle.z += particle.speed;
+
+    // Reset particle when it gets too close
+    if (particle.z >= 1) {
+      particle.x = (Math.random() - 0.5) * 2;
+      particle.y = (Math.random() - 0.5) * 2;
+      particle.z = 0;
+    }
+
+    // Calculate screen position with perspective
+    const scale = particle.z * 2; // Perspective scaling
+    const screenX = centerX + particle.x * centerX * scale;
+    const screenY = centerY + particle.y * centerY * scale;
+
+    // Calculate size and opacity based on depth
+    const size = particle.size * (0.5 + particle.z * 1.5);
+    const opacity = particle.brightness * particle.z;
+
+    // Draw star trail (motion blur)
+    const prevZ = particle.z - particle.speed;
+    const prevScale = prevZ * 2;
+    const prevX = centerX + particle.x * centerX * prevScale;
+    const prevY = centerY + particle.y * centerY * prevScale;
+
+    if (prevZ > 0) {
+      const gradient = ctx.createLinearGradient(prevX, prevY, screenX, screenY);
+      gradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+      gradient.addColorStop(1, `rgba(255, 255, 255, ${opacity * 0.6})`);
+
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = size * 0.5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(screenX, screenY);
+      ctx.stroke();
+    }
+
+    // Draw star core
+    const coreGradient = ctx.createRadialGradient(
+      screenX,
+      screenY,
+      0,
+      screenX,
+      screenY,
+      size * 2,
+    );
+    coreGradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
+    coreGradient.addColorStop(0.5, `rgba(200, 220, 255, ${opacity * 0.5})`);
+    coreGradient.addColorStop(1, `rgba(200, 220, 255, 0)`);
+
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, size * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    return particle;
+  });
+};
+
+// =================== NEBULA EFFECT ===================
+
+export const initNebula = (
+  canvasWidth: number,
+  canvasHeight: number,
+  count = 4,
+): NebulaCloud[] => {
+  const colorPalettes = [
+    ["#FF6B9D", "#C44569", "#8B3A62"], // Pink/Purple
+    ["#4A90E2", "#7B68EE", "#9370DB"], // Blue/Purple
+    ["#00D9FF", "#0099CC", "#006699"], // Cyan
+    ["#FF8C42", "#FF6B35", "#C44536"], // Orange/Red
+    ["#6BCF7F", "#4ECDC4", "#44A08D"], // Green/Teal
+  ];
+
+  return Array.from({ length: count }, () => {
+    const palette =
+      colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+    return {
+      x: Math.random() * canvasWidth,
+      y: Math.random() * canvasHeight,
+      size: 150 + Math.random() * 250,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.0005,
+      colors: palette,
+      opacity: 0.15 + Math.random() * 0.15,
+      pulsePhase: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.01 + Math.random() * 0.01,
+    };
+  });
+};
+
+export const drawNebula = (
+  ctx: CanvasRenderingContext2D,
+  clouds: NebulaCloud[],
+  canvasWidth: number,
+  canvasHeight: number,
+  parallaxOffsetX: number = 0,
+  parallaxOffsetY: number = 0,
+): NebulaCloud[] => {
+  return clouds.map((cloud) => {
+    // Update rotation and pulse
+    cloud.rotation += cloud.rotationSpeed;
+    cloud.pulsePhase += cloud.pulseSpeed;
+
+    const pulse = Math.sin(cloud.pulsePhase) * 0.2 + 0.8;
+    const currentSize = cloud.size * pulse;
+    const currentOpacity = cloud.opacity * pulse;
+
+    // Apply parallax offset (nebula moves slower than foreground)
+    const x = cloud.x + parallaxOffsetX * 0.1;
+    const y = cloud.y + parallaxOffsetY * 0.1;
+
+    // Wrap around screen edges
+    const wrappedX = ((x % canvasWidth) + canvasWidth) % canvasWidth;
+    const wrappedY = ((y % canvasHeight) + canvasHeight) % canvasHeight;
+
+    ctx.save();
+    ctx.translate(wrappedX, wrappedY);
+    ctx.rotate(cloud.rotation);
+
+    // Draw multiple layers for depth
+    cloud.colors.forEach((color, index) => {
+      const layerSize = currentSize * (1 - index * 0.2);
+      const layerOpacity = currentOpacity * (1 - index * 0.3);
+
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, layerSize);
+      gradient.addColorStop(0, `${color}${Math.floor(layerOpacity * 255).toString(16).padStart(2, "0")}`);
+      gradient.addColorStop(
+        0.4,
+        `${color}${Math.floor(layerOpacity * 0.6 * 255).toString(16).padStart(2, "0")}`,
+      );
+      gradient.addColorStop(
+        0.7,
+        `${color}${Math.floor(layerOpacity * 0.3 * 255).toString(16).padStart(2, "0")}`,
+      );
+      gradient.addColorStop(1, `${color}00`);
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(-layerSize, -layerSize, layerSize * 2, layerSize * 2);
+    });
+
+    ctx.restore();
+
+    return cloud;
+  });
+};
+

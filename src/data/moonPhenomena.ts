@@ -26,6 +26,8 @@ export type SpecialEffect =
   | "ancientRunes"
   | "lightRays"
   | "shootingStars"
+  | "starfield"
+  | "nebula"
   | null;
 
 export interface MoonPhenomenon {
@@ -888,8 +890,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.15,
     cloudSpeed: 0.8,
     shootingStarChance: 0.4,
-    specialEffect: "sparkle",
-    effectIntensity: 0.9,
+    specialEffect: "lightRays",
+    effectIntensity: 0.85,
     emotionTag: "crystalline",
     subtitle: "ใสดุจคริสตัล",
     moonSize: 1.5,
@@ -988,6 +990,46 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     effectIntensity: 1.0,
     emotionTag: "broken",
     subtitle: "ชิ้นส่วนที่กระจัดกระจาย",
+  },
+
+  cosmicVoyageMoon: {
+    id: "cosmicVoyageMoon",
+    name: "ดวงจันทร์เดินทางสู่จักรวาล",
+    nameEn: "Cosmic Voyage Moon",
+    rarity: "mythic",
+    moonTint: "#E0E8FF",
+    skyPalette: ["#000510", "#001020", "#001530"],
+    uiAccent: "#8090C0",
+    transitionSpeed: 55,
+    starDensity: 0.95,
+    cloudOpacity: 0.05,
+    cloudSpeed: 0.3,
+    shootingStarChance: 0.25,
+    moonSize: 1.3,
+    specialEffect: "starfield",
+    effectIntensity: 1.0,
+    emotionTag: "cosmic",
+    subtitle: "เดินทางผ่านห้วงอวกาศอันไกลโพ้น",
+  },
+
+  nebulaDreamMoon: {
+    id: "nebulaDreamMoon",
+    name: "ดวงจันทร์แห่งเนบิวลา",
+    nameEn: "Nebula Dream Moon",
+    rarity: "mythic",
+    moonTint: "#F0D8FF",
+    skyPalette: ["#0a0515", "#150a25", "#200f35"],
+    uiAccent: "#B888D8",
+    transitionSpeed: 58,
+    starDensity: 0.9,
+    cloudOpacity: 0.1,
+    cloudSpeed: 0.4,
+    shootingStarChance: 0.2,
+    moonSize: 1.5,
+    specialEffect: "nebula",
+    effectIntensity: 0.9,
+    emotionTag: "dreamy",
+    subtitle: "ล่องลอยในเมฆก๊าซแห่งความฝัน",
   },
 };
 
