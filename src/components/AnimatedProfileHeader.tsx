@@ -268,15 +268,14 @@ export function AnimatedProfileHeader() {
       ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
-    const drawStars = (gyroOffsetX: number = 0, gyroOffsetY: number = 0) => {
+    const drawStars = () => {
       if (phenomenon.starDensity === 0) return;
       starsRef.current.forEach((s) => {
         s.twinklePhase += s.twinkleSpeed;
         const o = s.opacity * (Math.sin(s.twinklePhase) * 0.5 + 0.5);
 
-        // Apply gyro offset for parallax (stars move more than background)
-        const starX = s.x + gyroOffsetX;
-        const starY = s.y + gyroOffsetY;
+        const starX = s.x;
+        const starY = s.y;
 
         ctx.beginPath();
         ctx.arc(starX, starY, s.size, 0, Math.PI * 2);
@@ -292,14 +291,13 @@ export function AnimatedProfileHeader() {
     };
 
     // Draw beautiful crescent moon with phenomenon-specific colors
-    const drawMoon = (gyroOffsetX: number = 0, gyroOffsetY: number = 0) => {
+    const drawMoon = () => {
       const moon = moonPositionRef.current;
       moon.phase += 0.005;
       const offsetY = Math.sin(moon.phase) * 3;
 
-      // Apply gyro offset for parallax (moon moves less than stars)
-      const moonX = moon.x + gyroOffsetX;
-      const moonY = moon.y + gyroOffsetY;
+      const moonX = moon.x;
+      const moonY = moon.y;
 
       // Dynamic moon size based on phenomenon (default 40, supermoons larger)
       const baseMoonRadius = 40;
@@ -665,7 +663,7 @@ export function AnimatedProfileHeader() {
         drawFog(ctx, fogLayersRef.current, rect.width);
       }
 
-      drawStars(0, 0);
+      drawStars();
 
       if (
         phenomenon.specialEffect === "fireflies" &&
@@ -675,7 +673,7 @@ export function AnimatedProfileHeader() {
       }
 
       // Always draw main moon (fragments are drawn on top for shattered effect)
-      drawMoon(0, 0);
+      drawMoon();
 
       // Draw Shattered Moon fragments and dust
       if (phenomenon.specialEffect === "shattered") {
@@ -799,7 +797,7 @@ export function AnimatedProfileHeader() {
   }, [phenomenon]);
 
   return (
-    <div className="relative w-full h-80 overflow-hidden">
+    <div className="relative w-full h-[60vh] min-h-[400px] overflow-hidden">
       {/* Animated Canvas */}
       <canvas
         ref={canvasRef}
@@ -807,20 +805,109 @@ export function AnimatedProfileHeader() {
         style={{ width: "100%", height: "100%" }}
       />
 
+
       {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-        <h1 className="text-4xl font-bold text-white drop-shadow-2xl mb-2">
+        <h1 
+          className={`font-bold text-white mb-2 tracking-wide transition-all duration-500 ${
+            phenomenon?.rarity === 'mythic' ? 'text-6xl' :
+            phenomenon?.rarity === 'legendary' ? 'text-5xl' :
+            phenomenon?.rarity === 'very_rare' ? 'text-5xl' :
+            phenomenon?.rarity === 'rare' ? 'text-4xl' :
+            'text-4xl'
+          }`}
+          style={{
+            fontFamily: 
+              phenomenon?.rarity === 'mythic'
+                ? // Mythic: แต่ละดวงมีฟอนต์เฉพาะตัว
+                  phenomenon.id === 'superBloodMoon'
+                    ? "'Cinzel', serif"  // ดวงจันทร์เลือดยักษ์: โบราณ ดุดัน
+                  : phenomenon.id === 'superBlueBloodMoon'
+                    ? "'UnifrakturMaguntia', cursive"  // ซูเปอร์บลูบลัดมูน: Gothic เวทมนตร์
+                  : phenomenon.id === 'lunarTransientPhenomena'
+                    ? "'Orbitron', sans-serif"  // แสงวาบลึกลับ: อนาคต เทคโนโลยี
+                  : phenomenon.id === 'hybridEclipse'
+                    ? "'Spectral', serif"  // อุปราคาผสม: สง่างาม ลึกลับ
+                  : phenomenon.id === 'stillMoon'
+                    ? "'Abril Fatface', serif"  // ดวงจันทร์หยุดนิ่ง: หนัก นิ่ง
+                  : phenomenon.id === 'echoMoon'
+                    ? "'Righteous', cursive"  // ดวงจันทร์เสียงสะท้อน: ทันสมัย สะท้อน
+                  : phenomenon.id === 'brokenMoon'
+                    ? "'Creepster', cursive"  // ดวงจันทร์แตกร้าว: แตกหัก สยองขวัญ
+                  : phenomenon.id === 'emptySky'
+                    ? "'Nosifer', cursive"  // ท้องฟ้าว่างเปล่า: ว่างเปล่า น่ากลัว
+                  : phenomenon.id === 'crystalMoon'
+                    ? "'Poiret One', cursive"  // ดวงจันทร์คริสตัล: เรขาคณิต คริสตัล
+                  : phenomenon.id === 'shatteredMoon'
+                    ? "'Creepster', cursive"  // ดวงจันทร์แตกร้าว: แตกหัก
+                  : "'Cinzel', serif"  // Default mythic
+              : phenomenon?.rarity === 'legendary'
+                ? "'Playfair Display', serif"
+              : phenomenon?.rarity === 'very_rare'
+                ? "'Cormorant Garamond', serif"
+              : phenomenon?.rarity === 'rare'
+                ? // Rare: ดวงจันทร์หิมะมีฟอนต์พิเศษ
+                  phenomenon.id === 'snowMoon'
+                    ? "'Mountains of Christmas', cursive"  // ดวงจันทร์หิมะ: ฟอนต์หิมะ
+                  : "'Philosopher', sans-serif"
+              : "'Inter', sans-serif",
+            textShadow: 
+              phenomenon?.rarity === 'mythic' 
+                ? `0 0 30px ${phenomenon.uiAccent}, 0 0 60px ${phenomenon.uiAccent}, 0 0 90px ${phenomenon.uiAccent}80, 0 4px 12px rgba(0, 0, 0, 0.8)`
+              : phenomenon?.rarity === 'legendary'
+                ? `0 0 25px ${phenomenon.uiAccent}, 0 0 50px ${phenomenon.uiAccent}cc, 0 4px 10px rgba(0, 0, 0, 0.7)`
+              : phenomenon?.rarity === 'very_rare'
+                ? `0 0 20px ${phenomenon.uiAccent}aa, 0 0 40px ${phenomenon.uiAccent}66, 0 4px 8px rgba(0, 0, 0, 0.6)`
+              : phenomenon?.rarity === 'rare'
+                ? '0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(0, 0, 0, 0.5)'
+              : '0 0 10px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5)',
+            color: phenomenon?.rarity === 'mythic' || phenomenon?.rarity === 'legendary' 
+              ? phenomenon.uiAccent 
+              : '#ffffff',
+            animation: phenomenon?.rarity === 'mythic' 
+              ? 'pulse 3s ease-in-out infinite' 
+              : phenomenon?.rarity === 'legendary'
+                ? 'pulse 4s ease-in-out infinite'
+              : 'none'
+          }}
+        >
           Dream book
         </h1>
         {phenomenon && (
-          <p className="text-lg text-white/90 drop-shadow-lg italic font-light">
+          <p 
+            className={`italic font-light transition-all duration-500 ${
+              phenomenon.rarity === 'mythic' ? 'text-xl' :
+              phenomenon.rarity === 'legendary' ? 'text-lg' :
+              'text-lg'
+            }`}
+            style={{
+              fontFamily: 
+                phenomenon.rarity === 'mythic' || phenomenon.rarity === 'legendary'
+                  ? "'Cormorant Garamond', serif"
+                : phenomenon.rarity === 'very_rare'
+                  ? "'Philosopher', sans-serif"
+                : "'Inter', sans-serif",
+              textShadow: 
+                phenomenon.rarity === 'mythic'
+                  ? `0 0 20px ${phenomenon.uiAccent}cc, 0 0 40px ${phenomenon.uiAccent}66, 0 2px 6px rgba(0, 0, 0, 0.7)`
+                : phenomenon.rarity === 'legendary'
+                  ? `0 0 15px ${phenomenon.uiAccent}99, 0 2px 5px rgba(0, 0, 0, 0.6)`
+                : phenomenon.rarity === 'very_rare'
+                  ? `0 0 12px ${phenomenon.uiAccent}66, 0 2px 4px rgba(0, 0, 0, 0.5)`
+                : '0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)',
+              color: phenomenon.rarity === 'mythic' || phenomenon.rarity === 'legendary'
+                ? phenomenon.uiAccent
+                : 'rgba(255, 255, 255, 0.95)'
+            }}
+          >
             {phenomenon.subtitle}
           </p>
         )}
       </div>
 
-      {/* Bottom gradient fade - Minimal to keep animation vibrant */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/30 to-transparent" />
+
+      {/* Bottom gradient fade - Smooth transition to background */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
     </div>
   );
 }

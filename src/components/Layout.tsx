@@ -1,18 +1,12 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Library, BarChart3, Info } from "lucide-react";
+import { Home, Book, Library, BookOpen, BarChart3, Info } from "lucide-react";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/logs", icon: Book, label: "Logs" },
-  { path: "/library", icon: Library, label: "Library" },
-  { path: "/statistics", icon: BarChart3, label: "Stats" },
-  { path: "/about", icon: Info, label: "About" },
-];
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
@@ -33,29 +27,7 @@ export function Layout({ children }: LayoutProps) {
       <main className="flex-1 container-app">{children}</main>
 
       {/* Bottom navigation - mobile */}
-      <nav className="border-t border-border sticky bottom-0 bg-background">
-        <div className="flex justify-around py-2">
-          {navItems.map(({ path, icon: Icon, label }) => {
-            const isActive =
-              location.pathname === path ||
-              (path !== "/" && location.pathname.startsWith(path));
-            return (
-              <Link
-                key={path}
-                to={path}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px]">{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <BottomNavigation />
     </div>
   );
 }

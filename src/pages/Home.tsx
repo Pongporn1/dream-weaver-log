@@ -31,14 +31,7 @@ import {
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
 
-const navItems = [
-  { path: "/", icon: HomeIcon, label: "Home" },
-  { path: "/logs", icon: Book, label: "Logs" },
-  { path: "/library", icon: Library, label: "Library" },
-  { path: "/story", icon: BookOpen, label: "Story" },
-  { path: "/statistics", icon: BarChart3, label: "Stats" },
-  { path: "/about", icon: Info, label: "About" },
-];
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -399,29 +392,8 @@ export default function Home() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-border sticky bottom-0 bg-background z-20">
-        <div className="flex justify-around py-2">
-          {navItems.map(({ path, icon: Icon, label }) => {
-            const isActive =
-              location.pathname === path ||
-              (path !== "/" && location.pathname.startsWith(path));
-            return (
-              <Link
-                key={path}
-                to={path}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px]">{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 }

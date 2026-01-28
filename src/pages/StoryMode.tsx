@@ -20,13 +20,7 @@ import { ConnectedDreams } from "@/components/story/ConnectedDreams";
 import { DreamUniverseMap } from "@/components/story/DreamUniverseMap";
 import { CharacterEncyclopedia } from "@/components/story/CharacterEncyclopedia";
 
-const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/logs", icon: Book, label: "Logs" },
-  { path: "/library", icon: LibraryIcon, label: "Library" },
-  { path: "/statistics", icon: BarChart3, label: "Stats" },
-  { path: "/about", icon: Info, label: "About" },
-];
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 interface Props {
   dreams: DreamLog[];
@@ -99,25 +93,7 @@ export function StoryMode({ dreams, worlds, entities }: Props) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="sticky bottom-0 bg-background border-t">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors",
-                item.path === "/story"
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-xs">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <BottomNavigation />
     </div>
   );
 }

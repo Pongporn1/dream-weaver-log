@@ -15,6 +15,7 @@ export type SpecialEffect =
   | "frozenTime"
   | "voidRipples"
   | "shattered"
+  | "sparkle"
   | null;
 
 export interface MoonPhenomenon {
@@ -863,9 +864,11 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.15,
     cloudSpeed: 0.8,
     shootingStarChance: 0.4,
+    specialEffect: "sparkle",
+    effectIntensity: 0.9,
     emotionTag: "crystalline",
     subtitle: "ใสดุจคริสตัล",
-    moonSize: 1.4,
+    moonSize: 1.5,
   },
 
   shadowMoon: {
