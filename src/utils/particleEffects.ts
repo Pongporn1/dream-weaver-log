@@ -118,6 +118,9 @@ export interface FrozenTimeParticle {
   isFrozen: boolean;
   trailLength: number;
   color: string;
+  rotation: number;
+  rotationSpeed: number;
+  frozenIntensity: number;
 }
 export interface VoidRipple {
   radius: number;
@@ -129,6 +132,102 @@ export interface VoidRipple {
   centerY: number;
   speed: number;
   thickness: number;
+}
+
+export interface EchoMoon {
+  x: number;
+  y: number;
+  radius: number;
+  opacity: number;
+  delay: number;
+  scale: number;
+  phaseOffset: number;
+}
+
+// =================== LEGENDARY EFFECTS INTERFACES ===================
+export interface BloodRing {
+  radius: number;
+  opacity: number;
+  pulsePhase: number;
+  thickness: number;
+}
+
+export interface FadeParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  fadeSpeed: number;
+  lifetime: number;
+  maxLifetime: number;
+}
+
+export interface SilenceWave {
+  radius: number;
+  opacity: number;
+  lifetime: number;
+  maxLifetime: number;
+}
+
+export interface DreamDust {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  color: string;
+  floatPhase: number;
+  floatSpeed: number;
+}
+
+export interface MemoryFragment {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  rotation: number;
+  rotationSpeed: number;
+  lifetime: number;
+  maxLifetime: number;
+  fragmentType: number;
+}
+
+export interface AncientRune {
+  x: number;
+  y: number;
+  symbol: string;
+  size: number;
+  opacity: number;
+  rotation: number;
+  pulsePhase: number;
+  orbitAngle: number;
+  orbitSpeed: number;
+  orbitRadius: number;
+}
+
+export interface LightRay {
+  angle: number;
+  length: number;
+  opacity: number;
+  width: number;
+  pulsePhase: number;
+  speed: number;
+}
+
+export interface ShootingStar {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  length: number;
+  opacity: number;
+  trailLength: number;
+  color: string;
 }
 
 export const initMoonFlashes = () => [];
@@ -256,25 +355,54 @@ export const drawSparkles = (
       ctx.rotate(sparkle.twinklePhase * 0.2);
 
       // Outer rainbow refraction glow
-      const rainbowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sparkle.size * 6);
+      const rainbowGradient = ctx.createRadialGradient(
+        0,
+        0,
+        0,
+        0,
+        0,
+        sparkle.size * 6,
+      );
       const hue = (sparkle.twinklePhase * 50) % 360;
-      rainbowGradient.addColorStop(0, `hsla(${hue}, 70%, 85%, ${currentOpacity * 0.4})`);
-      rainbowGradient.addColorStop(0.3, `hsla(${hue + 60}, 60%, 80%, ${currentOpacity * 0.3})`);
-      rainbowGradient.addColorStop(0.6, `hsla(${hue + 120}, 50%, 75%, ${currentOpacity * 0.2})`);
+      rainbowGradient.addColorStop(
+        0,
+        `hsla(${hue}, 70%, 85%, ${currentOpacity * 0.4})`,
+      );
+      rainbowGradient.addColorStop(
+        0.3,
+        `hsla(${hue + 60}, 60%, 80%, ${currentOpacity * 0.3})`,
+      );
+      rainbowGradient.addColorStop(
+        0.6,
+        `hsla(${hue + 120}, 50%, 75%, ${currentOpacity * 0.2})`,
+      );
       rainbowGradient.addColorStop(1, `rgba(176, 192, 224, 0)`);
-      
+
       ctx.fillStyle = rainbowGradient;
       ctx.beginPath();
       ctx.arc(0, 0, sparkle.size * 6, 0, Math.PI * 2);
       ctx.fill();
 
       // Main crystal glow (blue-white)
-      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sparkle.size * 4);
+      const gradient = ctx.createRadialGradient(
+        0,
+        0,
+        0,
+        0,
+        0,
+        sparkle.size * 4,
+      );
       gradient.addColorStop(0, `rgba(240, 248, 255, ${currentOpacity})`);
-      gradient.addColorStop(0.4, `rgba(200, 220, 255, ${currentOpacity * 0.7})`);
-      gradient.addColorStop(0.7, `rgba(176, 192, 224, ${currentOpacity * 0.4})`);
+      gradient.addColorStop(
+        0.4,
+        `rgba(200, 220, 255, ${currentOpacity * 0.7})`,
+      );
+      gradient.addColorStop(
+        0.7,
+        `rgba(176, 192, 224, ${currentOpacity * 0.4})`,
+      );
       gradient.addColorStop(1, `rgba(176, 192, 224, 0)`);
-      
+
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.arc(0, 0, sparkle.size * 4, 0, Math.PI * 2);
@@ -773,14 +901,17 @@ export const initFrozenTime = (
   return Array.from({ length: count }, () => ({
     x: Math.random() * canvasWidth,
     y: Math.random() * canvasHeight,
-    size: Math.random() * 4 + 2,
+    size: Math.random() * 5 + 2,
     opacity: 0,
     lifetime: 0,
-    maxLifetime: 180 + Math.random() * 120,
-    freezePoint: 60 + Math.random() * 40,
+    maxLifetime: 240 + Math.random() * 180,
+    freezePoint: 40 + Math.random() * 30,
     isFrozen: false,
-    trailLength: Math.random() * 20 + 10,
+    trailLength: Math.random() * 30 + 15,
     color: Math.random() > 0.5 ? "#B0C4DE" : "#7090b0",
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: (Math.random() - 0.5) * 0.02,
+    frozenIntensity: Math.random() * 0.5 + 0.5,
   }));
 };
 
@@ -792,22 +923,28 @@ export const drawFrozenTime = (
     p.lifetime++;
 
     // Fade in phase
-    if (p.lifetime < 30) {
-      p.opacity = p.lifetime / 30;
+    if (p.lifetime < 20) {
+      p.opacity = p.lifetime / 20;
+      p.y -= 0.5; // Moving down slowly
     }
-    // Freeze phase - stop and stay visible
-    else if (p.lifetime >= p.freezePoint && p.lifetime < p.freezePoint + 90) {
-      if (!p.isFrozen) p.isFrozen = true;
-      p.opacity = 0.8;
+    // Freeze phase - completely stopped in mid-air
+    else if (p.lifetime >= p.freezePoint && p.lifetime < p.freezePoint + 150) {
+      if (!p.isFrozen) {
+        p.isFrozen = true;
+        p.rotationSpeed = 0; // Stop rotation
+      }
+      p.opacity = 0.9 * p.frozenIntensity;
+      // Particle is completely still
     }
     // Fade out phase
-    else if (p.lifetime >= p.freezePoint + 90) {
-      p.opacity = Math.max(0, 1 - (p.lifetime - p.freezePoint - 90) / 60);
+    else if (p.lifetime >= p.freezePoint + 150) {
+      p.opacity = Math.max(0, 1 - (p.lifetime - p.freezePoint - 150) / 90);
     }
-    // Moving phase
+    // Moving phase before freeze
     else {
-      p.opacity = 0.6;
-      p.y -= 0.3;
+      p.opacity = 0.7;
+      p.y -= 0.4; // Moving upward
+      p.rotation += p.rotationSpeed;
     }
 
     // Reset particle
@@ -815,77 +952,142 @@ export const drawFrozenTime = (
       p.lifetime = 0;
       p.y = Math.random() * ctx.canvas.height;
       p.x = Math.random() * ctx.canvas.width;
-      p.freezePoint = 60 + Math.random() * 40;
+      p.freezePoint = 40 + Math.random() * 30;
       p.isFrozen = false;
+      p.rotation = Math.random() * Math.PI * 2;
+      p.rotationSpeed = (Math.random() - 0.5) * 0.02;
     }
 
     if (p.opacity > 0) {
-      // Draw trail when moving
-      if (!p.isFrozen && p.lifetime >= 30 && p.lifetime < p.freezePoint) {
-        const trailGrad = ctx.createLinearGradient(
-          p.x,
-          p.y,
-          p.x,
-          p.y + p.trailLength,
-        );
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+
+      // Draw trail when moving (before frozen)
+      if (!p.isFrozen && p.lifetime >= 20 && p.lifetime < p.freezePoint) {
+        const trailGrad = ctx.createLinearGradient(0, 0, 0, p.trailLength);
         trailGrad.addColorStop(
           0,
-          `${p.color}${Math.floor(p.opacity * 180)
+          `${p.color}${Math.floor(p.opacity * 200)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        trailGrad.addColorStop(
+          0.5,
+          `${p.color}${Math.floor(p.opacity * 100)
             .toString(16)
             .padStart(2, "0")}`,
         );
         trailGrad.addColorStop(1, `${p.color}00`);
         ctx.strokeStyle = trailGrad;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x, p.y + p.trailLength);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, p.trailLength);
         ctx.stroke();
       }
 
-      // Draw main particle
-      const opacityHex = Math.floor(p.opacity * 255)
-        .toString(16)
-        .padStart(2, "0");
-      const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
-      glow.addColorStop(0, `${p.color}${opacityHex}`);
+      // Outer glow
+      const glowSize = p.isFrozen ? p.size * 4 : p.size * 3;
+      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
       glow.addColorStop(
-        0.4,
-        `${p.color}${Math.floor(p.opacity * 150)
+        0,
+        `${p.color}${Math.floor(p.opacity * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
+      );
+      glow.addColorStop(
+        0.3,
+        `${p.color}${Math.floor(p.opacity * 180)
           .toString(16)
           .padStart(2, "0")}`,
       );
       glow.addColorStop(1, `${p.color}00`);
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+      ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
       ctx.fill();
 
-      // Bright core
-      ctx.fillStyle = `#ffffff${Math.floor(p.opacity * 200)
+      // Main particle body - hexagonal crystal
+      ctx.fillStyle = `${p.color}${Math.floor(p.opacity * 230)
         .toString(16)
         .padStart(2, "0")}`;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const x = Math.cos(angle) * p.size;
+        const y = Math.sin(angle) * p.size;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
       ctx.fill();
 
-      // Frozen state - add crystalline effect
+      // Bright core
+      ctx.fillStyle = `#ffffff${Math.floor(p.opacity * 255)
+        .toString(16)
+        .padStart(2, "0")}`;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Frozen state - ice crystal rays and time-stop effect
       if (p.isFrozen) {
-        ctx.strokeStyle = `${p.color}${Math.floor(p.opacity * 120)
-          .toString(16)
-          .padStart(2, "0")}`;
-        ctx.lineWidth = 1;
+        // Ice crystal rays
+        ctx.strokeStyle = `rgba(176, 196, 222, ${p.opacity * 0.8})`;
+        ctx.lineWidth = 1.5;
         for (let i = 0; i < 6; i++) {
           const angle = (Math.PI / 3) * i;
+          const length = p.size * 3.5;
           ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(
-            p.x + Math.cos(angle) * p.size * 2.5,
-            p.y + Math.sin(angle) * p.size * 2.5,
-          );
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(angle) * length, Math.sin(angle) * length);
           ctx.stroke();
+
+          // Crystal ends
+          ctx.fillStyle = `rgba(220, 235, 255, ${p.opacity * 0.9})`;
+          ctx.beginPath();
+          ctx.arc(
+            Math.cos(angle) * length,
+            Math.sin(angle) * length,
+            2,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        }
+
+        // Time-stop circle effect
+        const pulseSize =
+          p.size * 2.5 + Math.sin(p.lifetime * 0.05) * p.size * 0.3;
+        ctx.strokeStyle = `rgba(176, 196, 222, ${p.opacity * 0.5})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner ring
+        ctx.strokeStyle = `rgba(220, 235, 255, ${p.opacity * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, pulseSize * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Frozen sparkles around the particle
+        for (let i = 0; i < 4; i++) {
+          const sparkleAngle = (Math.PI / 2) * i + p.lifetime * 0.01;
+          const sparkleDistance = pulseSize * 1.2;
+          const sx = Math.cos(sparkleAngle) * sparkleDistance;
+          const sy = Math.sin(sparkleAngle) * sparkleDistance;
+
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity * 0.7})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
+
+      ctx.restore();
     }
   });
 };
@@ -1412,4 +1614,610 @@ export const drawShatterDust = (
       particle.opacity = 0.35 + Math.random() * 0.45;
     }
   });
+};
+
+// =================== ECHO MOON EFFECT ===================
+export const initEchoMoons = (
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+  count = 4,
+): EchoMoon[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    x: moonX,
+    y: moonY,
+    radius: moonRadius,
+    opacity: 0.6 - i * 0.15,
+    delay: i * 15, // Frame delay between echoes
+    scale: 1 + i * 0.15,
+    phaseOffset: 0,
+  }));
+};
+
+export const drawEchoMoons = (
+  ctx: CanvasRenderingContext2D,
+  echoes: EchoMoon[],
+  currentMoonX: number,
+  currentMoonY: number,
+  currentPhase: number,
+  moonTint: string,
+) => {
+  echoes.forEach((echo, index) => {
+    // Update echo position with delay (trail behind current moon)
+    echo.phaseOffset += 0.001;
+
+    // Smoothly follow the current moon position with delay
+    const targetX = currentMoonX;
+    const targetY =
+      currentMoonY + Math.sin(currentPhase - echo.phaseOffset * 50) * 3;
+
+    echo.x += (targetX - echo.x) * (0.05 / (index + 1));
+    echo.y += (targetY - echo.y) * (0.05 / (index + 1));
+
+    // Draw echo moon with fade effect
+    const echoRadius = echo.radius * echo.scale;
+
+    // Outer glow
+    const outerGlow = ctx.createRadialGradient(
+      echo.x,
+      echo.y,
+      echoRadius * 0.3,
+      echo.x,
+      echo.y,
+      echoRadius * 2,
+    );
+    outerGlow.addColorStop(
+      0,
+      `${moonTint}${Math.floor(echo.opacity * 0.4 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    outerGlow.addColorStop(
+      0.5,
+      `${moonTint}${Math.floor(echo.opacity * 0.2 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    outerGlow.addColorStop(1, `${moonTint}00`);
+
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath();
+    ctx.arc(echo.x, echo.y, echoRadius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Echo moon body
+    const gradient = ctx.createRadialGradient(
+      echo.x - echoRadius * 0.25,
+      echo.y - echoRadius * 0.25,
+      0,
+      echo.x,
+      echo.y,
+      echoRadius,
+    );
+    gradient.addColorStop(
+      0,
+      `${moonTint}${Math.floor(echo.opacity * 0.8 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    gradient.addColorStop(
+      0.7,
+      `${moonTint}${Math.floor(echo.opacity * 0.5 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    gradient.addColorStop(
+      1,
+      `${moonTint}${Math.floor(echo.opacity * 0.2 * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(echo.x, echo.y, echoRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rim light for depth
+    ctx.strokeStyle = `rgba(255, 255, 255, ${echo.opacity * 0.3})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(
+      echo.x - echoRadius * 0.3,
+      echo.y - echoRadius * 0.3,
+      echoRadius * 0.6,
+      Math.PI,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+
+    // Sound wave rings
+    const wavePhase = (Date.now() / 1000 + index * 0.5) % 2;
+    for (let i = 0; i < 3; i++) {
+      const waveRadius = echoRadius * (1.2 + wavePhase * 0.5 + i * 0.3);
+      const waveOpacity = echo.opacity * (1 - wavePhase / 2) * 0.4;
+
+      if (waveOpacity > 0.05) {
+        ctx.strokeStyle = `rgba(208, 208, 232, ${waveOpacity})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(echo.x, echo.y, waveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  });
+};
+
+// =================== LEGENDARY EFFECTS ===================
+
+// Blood Ring Effect
+export const initBloodRings = (moonRadius: number): BloodRing[] => {
+  return Array.from({ length: 3 }, (_, i) => ({
+    radius: moonRadius * (1.3 + i * 0.3),
+    opacity: 0.6 - i * 0.15,
+    pulsePhase: (Math.PI * 2 * i) / 3,
+    thickness: 3 - i * 0.5,
+  }));
+};
+
+export const drawBloodRings = (
+  ctx: CanvasRenderingContext2D,
+  rings: BloodRing[],
+  moonX: number,
+  moonY: number,
+) => {
+  rings.forEach((ring) => {
+    ring.pulsePhase += 0.02;
+    const pulse = Math.sin(ring.pulsePhase) * 0.2 + 0.8;
+    const currentOpacity = ring.opacity * pulse;
+
+    ctx.strokeStyle = `rgba(160, 48, 48, ${currentOpacity})`;
+    ctx.lineWidth = ring.thickness;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `rgba(200, 64, 64, ${currentOpacity})`;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, ring.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  });
+};
+
+// Fade Particles Effect
+export const initFadeParticles = (
+  canvasWidth: number,
+  canvasHeight: number,
+  count = 30,
+): FadeParticle[] => {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * canvasWidth,
+    y: Math.random() * canvasHeight,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    size: Math.random() * 4 + 2,
+    opacity: Math.random() * 0.8 + 0.2,
+    fadeSpeed: 0.002 + Math.random() * 0.003,
+    lifetime: 0,
+    maxLifetime: 200 + Math.random() * 200,
+  }));
+};
+
+export const drawFadeParticles = (
+  ctx: CanvasRenderingContext2D,
+  particles: FadeParticle[],
+) => {
+  particles.forEach((p) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.lifetime++;
+    p.opacity -= p.fadeSpeed;
+
+    if (p.lifetime >= p.maxLifetime || p.opacity <= 0) {
+      p.x = Math.random() * ctx.canvas.width;
+      p.y = Math.random() * ctx.canvas.height;
+      p.opacity = Math.random() * 0.8 + 0.2;
+      p.lifetime = 0;
+    }
+
+    if (p.opacity > 0) {
+      const gradient = ctx.createRadialGradient(
+        p.x,
+        p.y,
+        0,
+        p.x,
+        p.y,
+        p.size * 3,
+      );
+      gradient.addColorStop(0, `rgba(160, 160, 176, ${p.opacity})`);
+      gradient.addColorStop(0.5, `rgba(160, 160, 176, ${p.opacity * 0.5})`);
+      gradient.addColorStop(1, `rgba(160, 160, 176, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+};
+
+// Silence Waves Effect
+export const initSilenceWaves = (): SilenceWave[] => {
+  return [];
+};
+
+export const drawSilenceWaves = (
+  ctx: CanvasRenderingContext2D,
+  waves: SilenceWave[],
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+): SilenceWave[] => {
+  // Spawn new wave occasionally
+  if (Math.random() < 0.015) {
+    waves.push({
+      radius: moonRadius,
+      opacity: 0.6,
+      lifetime: 0,
+      maxLifetime: 120,
+    });
+  }
+
+  return waves
+    .map((wave) => {
+      wave.lifetime++;
+      wave.radius += 1.5;
+      wave.opacity = (1 - wave.lifetime / wave.maxLifetime) * 0.6;
+
+      if (wave.lifetime < wave.maxLifetime && wave.opacity > 0.05) {
+        ctx.strokeStyle = `rgba(168, 168, 200, ${wave.opacity})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, wave.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      return wave;
+    })
+    .filter((wave) => wave.lifetime < wave.maxLifetime);
+};
+
+// Dream Dust Effect
+export const initDreamDust = (
+  canvasWidth: number,
+  canvasHeight: number,
+  count = 40,
+): DreamDust[] => {
+  const colors = ["#C8B8D8", "#B8A8C8", "#D8C8E8"];
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * canvasWidth,
+    y: Math.random() * canvasHeight,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: -0.2 - Math.random() * 0.3,
+    size: Math.random() * 3 + 1.5,
+    opacity: Math.random() * 0.7 + 0.3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    floatPhase: Math.random() * Math.PI * 2,
+    floatSpeed: 0.02 + Math.random() * 0.03,
+  }));
+};
+
+export const drawDreamDust = (
+  ctx: CanvasRenderingContext2D,
+  particles: DreamDust[],
+) => {
+  particles.forEach((p) => {
+    p.floatPhase += p.floatSpeed;
+    p.x += p.vx + Math.sin(p.floatPhase) * 0.3;
+    p.y += p.vy;
+
+    if (p.y < -10) {
+      p.y = ctx.canvas.height + 10;
+      p.x = Math.random() * ctx.canvas.width;
+    }
+    if (p.x < -10) p.x = ctx.canvas.width + 10;
+    if (p.x > ctx.canvas.width + 10) p.x = -10;
+
+    const gradient = ctx.createRadialGradient(
+      p.x,
+      p.y,
+      0,
+      p.x,
+      p.y,
+      p.size * 2.5,
+    );
+    gradient.addColorStop(
+      0,
+      `${p.color}${Math.floor(p.opacity * 255)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    gradient.addColorStop(
+      0.5,
+      `${p.color}${Math.floor(p.opacity * 128)
+        .toString(16)
+        .padStart(2, "0")}`,
+    );
+    gradient.addColorStop(1, `${p.color}00`);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Star shape
+    ctx.fillStyle = `${p.color}${Math.floor(p.opacity * 200)
+      .toString(16)
+      .padStart(2, "0")}`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+};
+
+// Memory Fragments Effect
+export const initMemoryFragments = (
+  canvasWidth: number,
+  canvasHeight: number,
+  count = 25,
+): MemoryFragment[] => {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * canvasWidth,
+    y: Math.random() * canvasHeight,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.5,
+    size: Math.random() * 6 + 3,
+    opacity: Math.random() * 0.4 + 0.2,
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: (Math.random() - 0.5) * 0.03,
+    lifetime: 0,
+    maxLifetime: 300 + Math.random() * 300,
+    fragmentType: Math.floor(Math.random() * 3),
+  }));
+};
+
+export const drawMemoryFragments = (
+  ctx: CanvasRenderingContext2D,
+  fragments: MemoryFragment[],
+) => {
+  fragments.forEach((f) => {
+    f.x += f.vx;
+    f.y += f.vy;
+    f.rotation += f.rotationSpeed;
+    f.lifetime++;
+
+    if (f.x < 0) f.x = ctx.canvas.width;
+    if (f.x > ctx.canvas.width) f.x = 0;
+    if (f.y < 0) f.y = ctx.canvas.height;
+    if (f.y > ctx.canvas.height) f.y = 0;
+
+    if (f.lifetime >= f.maxLifetime) {
+      f.lifetime = 0;
+      f.opacity = Math.random() * 0.4 + 0.2;
+    }
+
+    const fadeOpacity =
+      f.lifetime < 60 ? f.lifetime / 60 : (f.maxLifetime - f.lifetime) / 60;
+    const currentOpacity = Math.min(f.opacity, fadeOpacity);
+
+    if (currentOpacity > 0.05) {
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rotation);
+      ctx.globalAlpha = currentOpacity;
+
+      // Different fragment shapes
+      ctx.strokeStyle = "#888898";
+      ctx.fillStyle = "rgba(136, 136, 152, 0.3)";
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      if (f.fragmentType === 0) {
+        // Triangle
+        ctx.moveTo(0, -f.size);
+        ctx.lineTo(f.size, f.size);
+        ctx.lineTo(-f.size, f.size);
+      } else if (f.fragmentType === 1) {
+        // Square
+        ctx.rect(-f.size / 2, -f.size / 2, f.size, f.size);
+      } else {
+        // Pentagon
+        for (let i = 0; i < 5; i++) {
+          const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+          const x = Math.cos(angle) * f.size;
+          const y = Math.sin(angle) * f.size;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  });
+};
+
+// Ancient Runes Effect
+export const initAncientRunes = (
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+): AncientRune[] => {
+  const symbols = ["◯", "△", "☐", "◇", "⬡", "✦"];
+  return Array.from({ length: 6 }, (_, i) => ({
+    x: moonX,
+    y: moonY,
+    symbol: symbols[i],
+    size: 12 + Math.random() * 8,
+    opacity: 0.6 + Math.random() * 0.3,
+    rotation: 0,
+    pulsePhase: (Math.PI * 2 * i) / 6,
+    orbitAngle: (Math.PI * 2 * i) / 6,
+    orbitSpeed: 0.005 + Math.random() * 0.003,
+    orbitRadius: moonRadius * (1.8 + Math.random() * 0.4),
+  }));
+};
+
+export const drawAncientRunes = (
+  ctx: CanvasRenderingContext2D,
+  runes: AncientRune[],
+  moonX: number,
+  moonY: number,
+) => {
+  runes.forEach((rune) => {
+    rune.orbitAngle += rune.orbitSpeed;
+    rune.pulsePhase += 0.02;
+    rune.rotation += 0.01;
+
+    const x = moonX + Math.cos(rune.orbitAngle) * rune.orbitRadius;
+    const y = moonY + Math.sin(rune.orbitAngle) * rune.orbitRadius;
+    const pulse = Math.sin(rune.pulsePhase) * 0.3 + 0.7;
+    const currentOpacity = rune.opacity * pulse;
+
+    // Glow
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, rune.size * 2);
+    gradient.addColorStop(0, `rgba(184, 168, 136, ${currentOpacity * 0.5})`);
+    gradient.addColorStop(1, "rgba(184, 168, 136, 0)");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, rune.size * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Symbol
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rune.rotation);
+    ctx.fillStyle = `rgba(184, 168, 136, ${currentOpacity})`;
+    ctx.font = `${rune.size}px serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(rune.symbol, 0, 0);
+    ctx.restore();
+  });
+};
+
+// Light Rays Effect
+export const initLightRays = (count = 12): LightRay[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    angle: (Math.PI * 2 * i) / count,
+    length: 80 + Math.random() * 40,
+    opacity: 0.3 + Math.random() * 0.4,
+    width: 2 + Math.random() * 3,
+    pulsePhase: Math.random() * Math.PI * 2,
+    speed: 0.02 + Math.random() * 0.02,
+  }));
+};
+
+export const drawLightRays = (
+  ctx: CanvasRenderingContext2D,
+  rays: LightRay[],
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+) => {
+  rays.forEach((ray) => {
+    ray.pulsePhase += ray.speed;
+    ray.angle += 0.003;
+    const pulse = Math.sin(ray.pulsePhase) * 0.4 + 0.6;
+    const currentOpacity = ray.opacity * pulse;
+
+    const startX = moonX + Math.cos(ray.angle) * moonRadius;
+    const startY = moonY + Math.sin(ray.angle) * moonRadius;
+    const endX = moonX + Math.cos(ray.angle) * (moonRadius + ray.length);
+    const endY = moonY + Math.sin(ray.angle) * (moonRadius + ray.length);
+
+    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+    gradient.addColorStop(0, `rgba(248, 248, 255, ${currentOpacity})`);
+    gradient.addColorStop(0.5, `rgba(248, 248, 255, ${currentOpacity * 0.6})`);
+    gradient.addColorStop(1, "rgba(248, 248, 255, 0)");
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = ray.width;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  });
+};
+
+// Shooting Stars Effect
+export const initShootingStars = (): ShootingStar[] => {
+  return [];
+};
+
+export const drawShootingStars = (
+  ctx: CanvasRenderingContext2D,
+  stars: ShootingStar[],
+  canvasWidth: number,
+  canvasHeight: number,
+): ShootingStar[] => {
+  // Spawn new shooting stars
+  if (Math.random() < 0.05) {
+    const angle = Math.PI / 4 + Math.random() * (Math.PI / 4);
+    const speed = 5 + Math.random() * 5;
+    stars.push({
+      x: Math.random() * canvasWidth,
+      y: Math.random() * canvasHeight * 0.3,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      length: 20 + Math.random() * 30,
+      opacity: 0.8 + Math.random() * 0.2,
+      trailLength: 40 + Math.random() * 60,
+      color: "#E8E8FF",
+    });
+  }
+
+  return stars
+    .map((star) => {
+      star.x += star.vx;
+      star.y += star.vy;
+      star.opacity -= 0.008;
+
+      if (star.opacity > 0.05) {
+        // Trail
+        const gradient = ctx.createLinearGradient(
+          star.x,
+          star.y,
+          star.x - star.vx * 3,
+          star.y - star.vy * 3,
+        );
+        gradient.addColorStop(
+          0,
+          `${star.color}${Math.floor(star.opacity * 255)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        gradient.addColorStop(
+          0.5,
+          `${star.color}${Math.floor(star.opacity * 128)
+            .toString(16)
+            .padStart(2, "0")}`,
+        );
+        gradient.addColorStop(1, `${star.color}00`);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(star.x, star.y);
+        ctx.lineTo(star.x - star.vx * 3, star.y - star.vy * 3);
+        ctx.stroke();
+
+        // Head
+        ctx.fillStyle = `${star.color}${Math.floor(star.opacity * 255)
+          .toString(16)
+          .padStart(2, "0")}`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      return star;
+    })
+    .filter(
+      (star) =>
+        star.opacity > 0.05 &&
+        star.x < canvasWidth + 50 &&
+        star.y < canvasHeight + 50,
+    );
 };

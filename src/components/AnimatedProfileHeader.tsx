@@ -30,6 +30,24 @@ import {
   drawMoonFragments,
   initShatterDust,
   drawShatterDust,
+  initEchoMoons,
+  drawEchoMoons,
+  initBloodRings,
+  drawBloodRings,
+  initFadeParticles,
+  drawFadeParticles,
+  initSilenceWaves,
+  drawSilenceWaves,
+  initDreamDust,
+  drawDreamDust,
+  initMemoryFragments,
+  drawMemoryFragments,
+  initAncientRunes,
+  drawAncientRunes,
+  initLightRays,
+  drawLightRays,
+  initShootingStars,
+  drawShootingStars,
   type MoonFlash,
   type OrbitingParticle,
   type Sparkle,
@@ -42,6 +60,15 @@ import {
   type VoidRipple,
   type MoonFragment,
   type ShatterDust,
+  type EchoMoon,
+  type BloodRing,
+  type FadeParticle,
+  type SilenceWave,
+  type DreamDust,
+  type MemoryFragment,
+  type AncientRune,
+  type LightRay,
+  type ShootingStar as ShootingStarParticle,
 } from "@/utils/particleEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
@@ -99,6 +126,17 @@ export function AnimatedProfileHeader() {
   const meteorShowerRef = useRef<MeteorShowerParticle[]>([]);
   const frozenTimeRef = useRef<FrozenTimeParticle[]>([]);
   const voidRipplesRef = useRef<VoidRipple[]>([]);
+  const echoMoonsRef = useRef<EchoMoon[]>([]);
+
+  // Legendary particle system refs
+  const bloodRingsRef = useRef<BloodRing[]>([]);
+  const fadeParticlesRef = useRef<FadeParticle[]>([]);
+  const silenceWavesRef = useRef<SilenceWave[]>([]);
+  const dreamDustRef = useRef<DreamDust[]>([]);
+  const memoryFragmentsRef = useRef<MemoryFragment[]>([]);
+  const ancientRunesRef = useRef<AncientRune[]>([]);
+  const lightRaysRef = useRef<LightRay[]>([]);
+  const shootingStarsLegendaryRef = useRef<ShootingStarParticle[]>([]);
 
   // Timer for resetting shatter dust every 10 seconds
   const lastShatterResetRef = useRef<number>(Date.now());
@@ -197,9 +235,7 @@ export function AnimatedProfileHeader() {
 
     // Then init particles at moon position
     const moon = moonPositionRef.current;
-    if (phenomenon.id === "lunarTransientPhenomena")
-      moonFlashesRef.current = initMoonFlashes();
-    else if (phenomenon.id === "superBlueBloodMoon")
+    if (phenomenon.id === "superBlueBloodMoon")
       orbitingParticlesRef.current = initOrbitingParticles(
         20,
         "#B84060",
@@ -221,42 +257,87 @@ export function AnimatedProfileHeader() {
         0.005,
         0.01,
       );
-    else if (phenomenon.id === "crystalMoon")
-      sparklesRef.current = initSparkles(moon.x, moon.y, 40);
 
+    // Special effects work for rare and above (rare, very_rare, legendary, mythic)
     const intensity = phenomenon.effectIntensity || 0.5;
-    if (phenomenon.specialEffect === "aurora")
-      auroraWavesRef.current = initAuroraWaves(rect.height);
-    else if (phenomenon.specialEffect === "fireflies")
-      firefliesRef.current = initFireflies(
-        rect.width,
-        rect.height,
-        Math.floor(20 + intensity * 30),
-      );
-    else if (phenomenon.specialEffect === "snow")
-      snowflakesRef.current = initSnowflakes(
-        rect.width,
-        Math.floor(50 + intensity * 100),
-      );
-    else if (phenomenon.specialEffect === "fog")
-      fogLayersRef.current = initFogLayers(rect.width, rect.height);
-    else if (phenomenon.specialEffect === "meteorShower")
-      meteorShowerRef.current = initMeteorShower(
-        rect.width,
-        rect.height,
-        Math.floor(15 + intensity * 20),
-      );
-    else if (phenomenon.specialEffect === "frozenTime")
-      frozenTimeRef.current = initFrozenTime(
-        rect.width,
-        rect.height,
-        Math.floor(30 + intensity * 30),
-      );
-    else if (phenomenon.specialEffect === "voidRipples")
-      voidRipplesRef.current = initVoidRipples();
-    else if (phenomenon.specialEffect === "shattered") {
-      moonFragmentsRef.current = initMoonFragments(moon.x, moon.y, 12);
-      shatterDustRef.current = initShatterDust(moon.x, moon.y, 25);
+    const baseMoonRadius = 40;
+    const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+
+    // Scale effect intensity based on rarity
+    const rarityScale = {
+      normal: 0,
+      rare: 0.3,
+      very_rare: 0.5,
+      legendary: 0.75,
+      mythic: 1.0,
+    }[phenomenon.rarity];
+
+    const hasEffect =
+      phenomenon.rarity !== "normal" && phenomenon.specialEffect;
+
+    if (hasEffect) {
+      if (phenomenon.specialEffect === "flash")
+        moonFlashesRef.current = initMoonFlashes();
+      else if (phenomenon.specialEffect === "sparkle")
+        sparklesRef.current = initSparkles(moon.x, moon.y, 60);
+      else if (phenomenon.specialEffect === "echo")
+        echoMoonsRef.current = initEchoMoons(moon.x, moon.y, moonRadius, 4);
+      else if (phenomenon.specialEffect === "aurora")
+        auroraWavesRef.current = initAuroraWaves(rect.height);
+      else if (phenomenon.specialEffect === "fireflies")
+        firefliesRef.current = initFireflies(
+          rect.width,
+          rect.height,
+          Math.floor((10 + intensity * 20) * rarityScale),
+        );
+      else if (phenomenon.specialEffect === "snow")
+        snowflakesRef.current = initSnowflakes(
+          rect.width,
+          Math.floor((30 + intensity * 70) * rarityScale),
+        );
+      else if (phenomenon.specialEffect === "fog")
+        fogLayersRef.current = initFogLayers(rect.width, rect.height);
+      else if (phenomenon.specialEffect === "meteorShower")
+        meteorShowerRef.current = initMeteorShower(
+          rect.width,
+          rect.height,
+          Math.floor((10 + intensity * 15) * rarityScale),
+        );
+      else if (phenomenon.specialEffect === "frozenTime")
+        frozenTimeRef.current = initFrozenTime(
+          rect.width,
+          rect.height,
+          Math.floor((20 + intensity * 20) * rarityScale),
+        );
+      else if (phenomenon.specialEffect === "voidRipples")
+        voidRipplesRef.current = initVoidRipples();
+      else if (phenomenon.specialEffect === "shattered") {
+        moonFragmentsRef.current = initMoonFragments(moon.x, moon.y, 12);
+        shatterDustRef.current = initShatterDust(moon.x, moon.y, 25);
+      } else if (phenomenon.specialEffect === "bloodRing")
+        bloodRingsRef.current = initBloodRings(moon.x, moon.y, moonRadius);
+      else if (phenomenon.specialEffect === "fadeParticles")
+        fadeParticlesRef.current = initFadeParticles(
+          moon.x,
+          moon.y,
+          moonRadius,
+        );
+      else if (phenomenon.specialEffect === "silence")
+        silenceWavesRef.current = initSilenceWaves();
+      else if (phenomenon.specialEffect === "dreamDust")
+        dreamDustRef.current = initDreamDust(moon.x, moon.y, moonRadius);
+      else if (phenomenon.specialEffect === "memoryFragments")
+        memoryFragmentsRef.current = initMemoryFragments(
+          moon.x,
+          moon.y,
+          moonRadius,
+        );
+      else if (phenomenon.specialEffect === "ancientRunes")
+        ancientRunesRef.current = initAncientRunes(moon.x, moon.y, moonRadius);
+      else if (phenomenon.specialEffect === "lightRays")
+        lightRaysRef.current = initLightRays(moon.x, moon.y);
+      else if (phenomenon.specialEffect === "shootingStars")
+        shootingStarsLegendaryRef.current = initShootingStars();
     }
 
     const drawSky = () => {
@@ -299,9 +380,18 @@ export function AnimatedProfileHeader() {
       const moonX = moon.x;
       const moonY = moon.y;
 
-      // Dynamic moon size based on phenomenon (default 40, supermoons larger)
+      // Dynamic moon size based on phenomenon and rarity
       const baseMoonRadius = 40;
-      const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+      // Apply both phenomenon moonSize and rarity scaling
+      const rarityMoonScale = {
+        normal: 1.0,
+        rare: 1.05,
+        very_rare: 1.1,
+        legendary: 1.15,
+        mythic: 1.2,
+      }[phenomenon.rarity];
+      const moonRadius =
+        baseMoonRadius * (phenomenon.moonSize || 1.0) * rarityMoonScale;
 
       // Outer glow - uses phenomenon moonTint with very low opacity
       const glowColor = phenomenon.moonTint;
@@ -648,22 +738,40 @@ export function AnimatedProfileHeader() {
 
       drawSky();
 
-      // Draw advanced particle effects based on phenomenon
-      if (
-        phenomenon.specialEffect === "aurora" &&
-        auroraWavesRef.current.length > 0
-      ) {
-        drawAurora(ctx, auroraWavesRef.current, rect.width);
-      }
+      // Draw advanced particle effects based on phenomenon (rare and above)
+      if (phenomenon.specialEffect) {
+        if (
+          phenomenon.specialEffect === "aurora" &&
+          auroraWavesRef.current.length > 0
+        ) {
+          drawAurora(ctx, auroraWavesRef.current, rect.width);
+        }
 
-      if (
-        phenomenon.specialEffect === "fog" &&
-        fogLayersRef.current.length > 0
-      ) {
-        drawFog(ctx, fogLayersRef.current, rect.width);
+        if (
+          phenomenon.specialEffect === "fog" &&
+          fogLayersRef.current.length > 0
+        ) {
+          drawFog(ctx, fogLayersRef.current, rect.width);
+        }
       }
 
       drawStars();
+
+      // Draw echo moons BEFORE main moon
+      if (
+        phenomenon.specialEffect === "echo" &&
+        echoMoonsRef.current.length > 0
+      ) {
+        const moon = moonPositionRef.current;
+        drawEchoMoons(
+          ctx,
+          echoMoonsRef.current,
+          moon.x,
+          moon.y,
+          moon.phase,
+          phenomenon.moonTint,
+        );
+      }
 
       if (
         phenomenon.specialEffect === "fireflies" &&
@@ -706,9 +814,111 @@ export function AnimatedProfileHeader() {
         }
       }
 
-      // Draw mythic phenomena particles
-      if (phenomenon.id === "crystalMoon" && sparklesRef.current.length > 0) {
-        drawSparkles(ctx, sparklesRef.current);
+      // Draw special phenomena particles
+      if (phenomenon.specialEffect) {
+        // Flash effect for mysterious flashing phenomena
+        if (
+          phenomenon.specialEffect === "flash" &&
+          moonFlashesRef.current.length >= 0
+        ) {
+          const moon = moonPositionRef.current;
+          // Spawn random flashes
+          if (Math.random() < 0.025) {
+            const baseMoonRadius = 40;
+            const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+            moonFlashesRef.current.push(
+              spawnMoonFlash(moon.x, moon.y, moonRadius),
+            );
+          }
+          moonFlashesRef.current = drawMoonFlashes(ctx, moonFlashesRef.current);
+        }
+
+        if (
+          phenomenon.specialEffect === "sparkle" &&
+          sparklesRef.current.length > 0
+        ) {
+          drawSparkles(ctx, sparklesRef.current);
+        }
+
+        // Legendary effects
+        if (
+          phenomenon.specialEffect === "bloodRing" &&
+          bloodRingsRef.current.length > 0
+        ) {
+          const moon = moonPositionRef.current;
+          drawBloodRings(ctx, bloodRingsRef.current, moon.x, moon.y);
+        }
+
+        if (
+          phenomenon.specialEffect === "fadeParticles" &&
+          fadeParticlesRef.current.length > 0
+        ) {
+          drawFadeParticles(ctx, fadeParticlesRef.current);
+        }
+
+        if (
+          phenomenon.specialEffect === "silence" &&
+          silenceWavesRef.current.length >= 0
+        ) {
+          const moon = moonPositionRef.current;
+          const baseMoonRadius = 40;
+          const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+          drawSilenceWaves(
+            ctx,
+            silenceWavesRef.current,
+            moon.x,
+            moon.y,
+            moonRadius,
+          );
+        }
+
+        if (
+          phenomenon.specialEffect === "dreamDust" &&
+          dreamDustRef.current.length > 0
+        ) {
+          drawDreamDust(ctx, dreamDustRef.current);
+        }
+
+        if (
+          phenomenon.specialEffect === "memoryFragments" &&
+          memoryFragmentsRef.current.length > 0
+        ) {
+          drawMemoryFragments(ctx, memoryFragmentsRef.current);
+        }
+
+        if (
+          phenomenon.specialEffect === "ancientRunes" &&
+          ancientRunesRef.current.length > 0
+        ) {
+          const moon = moonPositionRef.current;
+          drawAncientRunes(ctx, ancientRunesRef.current, moon.x, moon.y);
+        }
+
+        if (
+          phenomenon.specialEffect === "lightRays" &&
+          lightRaysRef.current.length > 0
+        ) {
+          const moon = moonPositionRef.current;
+          drawLightRays(ctx, lightRaysRef.current, moon.x, moon.y);
+        }
+
+        if (
+          phenomenon.specialEffect === "shootingStars" &&
+          shootingStarsLegendaryRef.current.length >= 0
+        ) {
+          const moon = moonPositionRef.current;
+          const baseMoonRadius = 40;
+          const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0);
+          drawShootingStars(
+            ctx,
+            shootingStarsLegendaryRef.current,
+            moon.x,
+            moon.y,
+            moonRadius,
+            rect.width,
+            rect.height,
+          );
+        }
       }
 
       if (
@@ -726,36 +936,34 @@ export function AnimatedProfileHeader() {
         );
       }
 
-      if (phenomenon.id === "lunarTransientPhenomena") {
-        const moon = moonPositionRef.current;
-        // Spawn random flashes
-        if (Math.random() < 0.02) {
-          moonFlashesRef.current.push(spawnMoonFlash(moon.x, moon.y, 40));
-        }
-        moonFlashesRef.current = drawMoonFlashes(ctx, moonFlashesRef.current);
-      }
-
       drawClouds();
 
-      if (
-        phenomenon.specialEffect === "snow" &&
-        snowflakesRef.current.length > 0
-      ) {
-        drawSnowflakes(ctx, snowflakesRef.current, rect.width, rect.height);
-      }
+      if (phenomenon.specialEffect) {
+        if (
+          phenomenon.specialEffect === "snow" &&
+          snowflakesRef.current.length > 0
+        ) {
+          drawSnowflakes(ctx, snowflakesRef.current, rect.width, rect.height);
+        }
 
-      if (
-        phenomenon.specialEffect === "meteorShower" &&
-        meteorShowerRef.current.length > 0
-      ) {
-        drawMeteorShower(ctx, meteorShowerRef.current, rect.width, rect.height);
-      }
+        if (
+          phenomenon.specialEffect === "meteorShower" &&
+          meteorShowerRef.current.length > 0
+        ) {
+          drawMeteorShower(
+            ctx,
+            meteorShowerRef.current,
+            rect.width,
+            rect.height,
+          );
+        }
 
-      if (
-        phenomenon.specialEffect === "frozenTime" &&
-        frozenTimeRef.current.length > 0
-      ) {
-        drawFrozenTime(ctx, frozenTimeRef.current);
+        if (
+          phenomenon.specialEffect === "frozenTime" &&
+          frozenTimeRef.current.length > 0
+        ) {
+          drawFrozenTime(ctx, frozenTimeRef.current);
+        }
       }
 
       if (phenomenon.specialEffect === "voidRipples") {
@@ -805,106 +1013,116 @@ export function AnimatedProfileHeader() {
         style={{ width: "100%", height: "100%" }}
       />
 
-
       {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-        <h1 
+        <h1
           className={`font-bold text-white mb-2 tracking-wide transition-all duration-500 ${
-            phenomenon?.rarity === 'mythic' ? 'text-6xl' :
-            phenomenon?.rarity === 'legendary' ? 'text-5xl' :
-            phenomenon?.rarity === 'very_rare' ? 'text-5xl' :
-            phenomenon?.rarity === 'rare' ? 'text-4xl' :
-            'text-4xl'
+            phenomenon?.rarity === "mythic"
+              ? "text-6xl"
+              : phenomenon?.rarity === "legendary"
+                ? "text-5xl"
+                : phenomenon?.rarity === "very_rare"
+                  ? "text-5xl"
+                  : phenomenon?.rarity === "rare"
+                    ? "text-4xl"
+                    : "text-4xl"
           }`}
           style={{
-            fontFamily: 
-              phenomenon?.rarity === 'mythic'
+            fontFamily:
+              phenomenon?.rarity === "mythic"
                 ? // Mythic: แต่ละดวงมีฟอนต์เฉพาะตัว
-                  phenomenon.id === 'superBloodMoon'
-                    ? "'Cinzel', serif"  // ดวงจันทร์เลือดยักษ์: โบราณ ดุดัน
-                  : phenomenon.id === 'superBlueBloodMoon'
-                    ? "'UnifrakturMaguntia', cursive"  // ซูเปอร์บลูบลัดมูน: Gothic เวทมนตร์
-                  : phenomenon.id === 'lunarTransientPhenomena'
-                    ? "'Orbitron', sans-serif"  // แสงวาบลึกลับ: อนาคต เทคโนโลยี
-                  : phenomenon.id === 'hybridEclipse'
-                    ? "'Spectral', serif"  // อุปราคาผสม: สง่างาม ลึกลับ
-                  : phenomenon.id === 'stillMoon'
-                    ? "'Abril Fatface', serif"  // ดวงจันทร์หยุดนิ่ง: หนัก นิ่ง
-                  : phenomenon.id === 'echoMoon'
-                    ? "'Righteous', cursive"  // ดวงจันทร์เสียงสะท้อน: ทันสมัย สะท้อน
-                  : phenomenon.id === 'brokenMoon'
-                    ? "'Creepster', cursive"  // ดวงจันทร์แตกร้าว: แตกหัก สยองขวัญ
-                  : phenomenon.id === 'emptySky'
-                    ? "'Nosifer', cursive"  // ท้องฟ้าว่างเปล่า: ว่างเปล่า น่ากลัว
-                  : phenomenon.id === 'crystalMoon'
-                    ? "'Poiret One', cursive"  // ดวงจันทร์คริสตัล: เรขาคณิต คริสตัล
-                  : phenomenon.id === 'shatteredMoon'
-                    ? "'Creepster', cursive"  // ดวงจันทร์แตกร้าว: แตกหัก
-                  : "'Cinzel', serif"  // Default mythic
-              : phenomenon?.rarity === 'legendary'
-                ? "'Playfair Display', serif"
-              : phenomenon?.rarity === 'very_rare'
-                ? "'Cormorant Garamond', serif"
-              : phenomenon?.rarity === 'rare'
-                ? // Rare: ดวงจันทร์หิมะมีฟอนต์พิเศษ
-                  phenomenon.id === 'snowMoon'
-                    ? "'Mountains of Christmas', cursive"  // ดวงจันทร์หิมะ: ฟอนต์หิมะ
-                  : "'Philosopher', sans-serif"
-              : "'Inter', sans-serif",
-            textShadow: 
-              phenomenon?.rarity === 'mythic' 
+                  phenomenon.id === "superBloodMoon"
+                  ? "'Cinzel', serif" // ดวงจันทร์เลือดยักษ์: โบราณ ดุดัน
+                  : phenomenon.id === "superBlueBloodMoon"
+                    ? "'UnifrakturMaguntia', cursive" // ซูเปอร์บลูบลัดมูน: Gothic เวทมนตร์
+                    : phenomenon.id === "lunarTransientPhenomena"
+                      ? "'Orbitron', sans-serif" // แสงวาบลึกลับ: อนาคต เทคโนโลยี
+                      : phenomenon.id === "hybridEclipse"
+                        ? "'Spectral', serif" // อุปราคาผสม: สง่างาม ลึกลับ
+                        : phenomenon.id === "stillMoon"
+                          ? "'Abril Fatface', serif" // ดวงจันทร์หยุดนิ่ง: หนัก นิ่ง
+                          : phenomenon.id === "echoMoon"
+                            ? "'Righteous', cursive" // ดวงจันทร์เสียงสะท้อน: ทันสมัย สะท้อน
+                            : phenomenon.id === "brokenMoon"
+                              ? "'Creepster', cursive" // ดวงจันทร์แตกร้าว: แตกหัก สยองขวัญ
+                              : phenomenon.id === "emptySky"
+                                ? "'Nosifer', cursive" // ท้องฟ้าว่างเปล่า: ว่างเปล่า น่ากลัว
+                                : phenomenon.id === "crystalMoon"
+                                  ? "'Poiret One', cursive" // ดวงจันทร์คริสตัล: เรขาคณิต คริสตัล
+                                  : phenomenon.id === "shatteredMoon"
+                                    ? "'Creepster', cursive" // ดวงจันทร์แตกร้าว: แตกหัก
+                                    : "'Cinzel', serif" // Default mythic
+                : phenomenon?.rarity === "legendary"
+                  ? "'Playfair Display', serif"
+                  : phenomenon?.rarity === "very_rare"
+                    ? "'Cormorant Garamond', serif"
+                    : phenomenon?.rarity === "rare"
+                      ? // Rare: ดวงจันทร์หิมะมีฟอนต์พิเศษ
+                        phenomenon.id === "snowMoon"
+                        ? "'Mountains of Christmas', cursive" // ดวงจันทร์หิมะ: ฟอนต์หิมะ
+                        : "'Philosopher', sans-serif"
+                      : "'Inter', sans-serif",
+            textShadow:
+              phenomenon?.rarity === "mythic"
                 ? `0 0 30px ${phenomenon.uiAccent}, 0 0 60px ${phenomenon.uiAccent}, 0 0 90px ${phenomenon.uiAccent}80, 0 4px 12px rgba(0, 0, 0, 0.8)`
-              : phenomenon?.rarity === 'legendary'
-                ? `0 0 25px ${phenomenon.uiAccent}, 0 0 50px ${phenomenon.uiAccent}cc, 0 4px 10px rgba(0, 0, 0, 0.7)`
-              : phenomenon?.rarity === 'very_rare'
-                ? `0 0 20px ${phenomenon.uiAccent}aa, 0 0 40px ${phenomenon.uiAccent}66, 0 4px 8px rgba(0, 0, 0, 0.6)`
-              : phenomenon?.rarity === 'rare'
-                ? '0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(0, 0, 0, 0.5)'
-              : '0 0 10px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5)',
-            color: phenomenon?.rarity === 'mythic' || phenomenon?.rarity === 'legendary' 
-              ? phenomenon.uiAccent 
-              : '#ffffff',
-            animation: phenomenon?.rarity === 'mythic' 
-              ? 'pulse 3s ease-in-out infinite' 
-              : phenomenon?.rarity === 'legendary'
-                ? 'pulse 4s ease-in-out infinite'
-              : 'none'
+                : phenomenon?.rarity === "legendary"
+                  ? `0 0 25px ${phenomenon.uiAccent}, 0 0 50px ${phenomenon.uiAccent}cc, 0 4px 10px rgba(0, 0, 0, 0.7)`
+                  : phenomenon?.rarity === "very_rare"
+                    ? `0 0 20px ${phenomenon.uiAccent}aa, 0 0 40px ${phenomenon.uiAccent}66, 0 4px 8px rgba(0, 0, 0, 0.6)`
+                    : phenomenon?.rarity === "rare"
+                      ? "0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(0, 0, 0, 0.5)"
+                      : "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5)",
+            color:
+              phenomenon?.rarity === "mythic" ||
+              phenomenon?.rarity === "legendary"
+                ? phenomenon.uiAccent
+                : "#ffffff",
+            animation:
+              phenomenon?.rarity === "mythic"
+                ? "pulse 3s ease-in-out infinite"
+                : phenomenon?.rarity === "legendary"
+                  ? "pulse 4s ease-in-out infinite"
+                  : "none",
           }}
         >
           Dream book
         </h1>
         {phenomenon && (
-          <p 
+          <p
             className={`italic font-light transition-all duration-500 ${
-              phenomenon.rarity === 'mythic' ? 'text-xl' :
-              phenomenon.rarity === 'legendary' ? 'text-lg' :
-              'text-lg'
+              phenomenon.rarity === "mythic"
+                ? "text-xl"
+                : phenomenon.rarity === "legendary"
+                  ? "text-lg"
+                  : "text-lg"
             }`}
             style={{
-              fontFamily: 
-                phenomenon.rarity === 'mythic' || phenomenon.rarity === 'legendary'
+              fontFamily:
+                phenomenon.rarity === "mythic" ||
+                phenomenon.rarity === "legendary"
                   ? "'Cormorant Garamond', serif"
-                : phenomenon.rarity === 'very_rare'
-                  ? "'Philosopher', sans-serif"
-                : "'Inter', sans-serif",
-              textShadow: 
-                phenomenon.rarity === 'mythic'
+                  : phenomenon.rarity === "very_rare"
+                    ? "'Philosopher', sans-serif"
+                    : "'Inter', sans-serif",
+              textShadow:
+                phenomenon.rarity === "mythic"
                   ? `0 0 20px ${phenomenon.uiAccent}cc, 0 0 40px ${phenomenon.uiAccent}66, 0 2px 6px rgba(0, 0, 0, 0.7)`
-                : phenomenon.rarity === 'legendary'
-                  ? `0 0 15px ${phenomenon.uiAccent}99, 0 2px 5px rgba(0, 0, 0, 0.6)`
-                : phenomenon.rarity === 'very_rare'
-                  ? `0 0 12px ${phenomenon.uiAccent}66, 0 2px 4px rgba(0, 0, 0, 0.5)`
-                : '0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)',
-              color: phenomenon.rarity === 'mythic' || phenomenon.rarity === 'legendary'
-                ? phenomenon.uiAccent
-                : 'rgba(255, 255, 255, 0.95)'
+                  : phenomenon.rarity === "legendary"
+                    ? `0 0 15px ${phenomenon.uiAccent}99, 0 2px 5px rgba(0, 0, 0, 0.6)`
+                    : phenomenon.rarity === "very_rare"
+                      ? `0 0 12px ${phenomenon.uiAccent}66, 0 2px 4px rgba(0, 0, 0, 0.5)`
+                      : "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)",
+              color:
+                phenomenon.rarity === "mythic" ||
+                phenomenon.rarity === "legendary"
+                  ? phenomenon.uiAccent
+                  : "rgba(255, 255, 255, 0.95)",
             }}
           >
             {phenomenon.subtitle}
           </p>
         )}
       </div>
-
 
       {/* Bottom gradient fade - Smooth transition to background */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />

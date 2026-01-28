@@ -16,6 +16,16 @@ export type SpecialEffect =
   | "voidRipples"
   | "shattered"
   | "sparkle"
+  | "echo"
+  | "flash"
+  | "bloodRing"
+  | "fadeParticles"
+  | "silence"
+  | "dreamDust"
+  | "memoryFragments"
+  | "ancientRunes"
+  | "lightRays"
+  | "shootingStars"
   | null;
 
 export interface MoonPhenomenon {
@@ -239,6 +249,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.4,
     cloudSpeed: 1.2,
     shootingStarChance: 0.4,
+    specialEffect: "bloodRing",
+    effectIntensity: 0.75,
     emotionTag: "intense",
     subtitle: "พยานสีแดงเลือดหมู",
   },
@@ -276,6 +288,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.35,
     cloudSpeed: 1.4,
     shootingStarChance: 0.6,
+    specialEffect: "meteorShower",
+    effectIntensity: 0.7,
     emotionTag: "once_in_lifetime",
     subtitle: "ปรากฏการณ์หายากที่สุดในชีวิต",
     moonSize: 1.5, // Supermoon - 50% larger
@@ -294,6 +308,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.2,
     cloudSpeed: 0.9,
     shootingStarChance: 0.45,
+    specialEffect: "flash",
+    effectIntensity: 0.8,
     emotionTag: "mysterious_flash",
     subtitle: "แสงพริบตาที่ไม่มีใครเข้าใจ",
     moonSize: 1.4,
@@ -651,6 +667,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.45,
     cloudSpeed: 0.6,
     shootingStarChance: 0.15,
+    specialEffect: "fadeParticles",
+    effectIntensity: 0.7,
     emotionTag: "disappearing",
     subtitle: "ค่อยๆ จางหายไป",
   },
@@ -668,8 +686,6 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.6,
     cloudSpeed: 0.8,
     shootingStarChance: 0.18,
-    specialEffect: "fog",
-    effectIntensity: 0.8,
     emotionTag: "obscured",
     subtitle: "ความชัดเจนถูกบัง",
   },
@@ -687,7 +703,7 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.35,
     cloudSpeed: 0.9,
     shootingStarChance: 0.25,
-    specialEffect: "fireflies",
+    specialEffect: "echo",
     effectIntensity: 0.75,
     emotionTag: "repeating",
     subtitle: "เฟสซ้อนกัน",
@@ -707,6 +723,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.2,
     cloudSpeed: 0.5,
     shootingStarChance: 0.0,
+    specialEffect: "silence",
+    effectIntensity: 0.8,
     emotionTag: "silent",
     subtitle: "ไม่มีดาว ไม่มีเสียง",
   },
@@ -762,6 +780,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.4,
     cloudSpeed: 0.7,
     shootingStarChance: 0.35,
+    specialEffect: "dreamDust",
+    effectIntensity: 0.75,
     emotionTag: "dreamy",
     subtitle: "ระหว่างความจริงและฝัน",
   },
@@ -796,6 +816,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.5,
     cloudSpeed: 0.4,
     shootingStarChance: 0.1,
+    specialEffect: "memoryFragments",
+    effectIntensity: 0.65,
     emotionTag: "forgotten",
     subtitle: "ความทรงจำที่จางหาย",
   },
@@ -847,6 +869,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.3,
     cloudSpeed: 0.6,
     shootingStarChance: 0.22,
+    specialEffect: "ancientRunes",
+    effectIntensity: 0.7,
     emotionTag: "ancient",
     subtitle: "พยานแห่งกาลเวลา",
   },
@@ -901,6 +925,8 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     cloudOpacity: 0.2,
     cloudSpeed: 1.1,
     shootingStarChance: 0.38,
+    specialEffect: "lightRays",
+    effectIntensity: 0.8,
     emotionTag: "radiant",
     subtitle: "แสงสว่างอันบริสุทธิ์",
   },
@@ -937,9 +963,9 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     starDensity: 1.0,
     cloudOpacity: 0.15,
     cloudSpeed: 0.8,
-    shootingStarChance: 0.0, // Will be overridden by special effect
-    specialEffect: "meteorShower",
-    effectIntensity: 0.9,
+    shootingStarChance: 0.0,
+    specialEffect: "shootingStars",
+    effectIntensity: 0.85,
     emotionTag: "spectacular",
     subtitle: "ดาวตกหลั่งไหลราวสายฝน",
   },
