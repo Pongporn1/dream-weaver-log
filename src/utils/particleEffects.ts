@@ -2256,6 +2256,80 @@ export const drawShootingStars = (
     );
 };
 
+// =================== PRISM LIGHTS EFFECT (CRYSTAL MOON) ===================
+
+export interface PrismLight {
+  angle: number;
+  length: number;
+  width: number;
+  color: string;
+  speed: number;
+  opacity: number;
+}
+
+export const initPrismLights = (): PrismLight[] => {
+  const colors = [
+    "rgba(255, 255, 255, 0.4)", // White
+    "rgba(160, 220, 255, 0.3)", // Cyan
+    "rgba(220, 180, 255, 0.3)", // Purple
+    "rgba(180, 255, 200, 0.3)", // Mint
+  ];
+  
+  return Array.from({ length: 16 }, (_, i) => ({
+    angle: (Math.PI * 2 * i) / 16,
+    length: 80 + Math.random() * 60,
+    width: 2 + Math.random() * 4,
+    color: colors[i % colors.length],
+    speed: 0.005 + Math.random() * 0.01, // Rotating slowly
+    opacity: 0.3 + Math.random() * 0.4,
+  }));
+};
+
+export const drawPrismLights = (
+  ctx: CanvasRenderingContext2D,
+  lights: PrismLight[],
+  moonX: number,
+  moonY: number,
+  moonRadius: number,
+) => {
+  ctx.save();
+  ctx.globalCompositeOperation = "screen"; // Additive blending for light effect
+
+  lights.forEach((light) => {
+    light.angle += light.speed; // Rotate
+    
+    // Calculate start and end points
+    const startX = moonX + Math.cos(light.angle) * moonRadius;
+    const startY = moonY + Math.sin(light.angle) * moonRadius;
+    const endX = moonX + Math.cos(light.angle) * (moonRadius + light.length);
+    const endY = moonY + Math.sin(light.angle) * (moonRadius + light.length);
+
+    // Create gradient for light ray
+    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+    gradient.addColorStop(0, light.color);
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = light.width;
+    ctx.lineCap = "round";
+    
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Add cross glare occasionally
+    if (Math.random() < 0.01) {
+       ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+       ctx.beginPath();
+       ctx.arc(endX, endY, 2, 0, Math.PI * 2);
+       ctx.fill();
+    }
+  });
+
+  ctx.restore();
+};
+
 // =================== STARFIELD EFFECT ===================
 
 export const initStarfield = (count = 120): StarfieldParticle[] => {

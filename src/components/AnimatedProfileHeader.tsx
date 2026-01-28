@@ -52,6 +52,8 @@ import {
   drawStarfield,
   initNebula,
   drawNebula,
+  initPrismLights,
+  drawPrismLights,
   type MoonFlash,
   type OrbitingParticle,
   type Sparkle,
@@ -75,6 +77,7 @@ import {
   type ShootingStar as ShootingStarParticle,
   type StarfieldParticle,
   type NebulaCloud,
+  type PrismLight,
 } from "@/utils/particleEffects";
 import { getMoonPhase, drawMoonWithPhase } from "@/utils/moonPhases";
 import {
@@ -220,6 +223,7 @@ export function AnimatedProfileHeader() {
   // New visual enhancement refs
   const starfieldRef = useRef<StarfieldParticle[]>([]);
   const nebulaRef = useRef<NebulaCloud[]>([]);
+  const prismLightsRef = useRef<PrismLight[]>([]);
   const moonPhaseRef = useRef(getMoonPhase());
   const scrollOffsetRef = useRef({ x: 0, y: 0 });
   const currentHourRef = useRef(new Date().getHours());
@@ -426,6 +430,8 @@ export function AnimatedProfileHeader() {
         starfieldRef.current = initStarfield(150);
       else if (phenomenon.specialEffect === "nebula")
         nebulaRef.current = initNebula(rect.width, rect.height, 5);
+      else if (phenomenon.specialEffect === "prismLights")
+        prismLightsRef.current = initPrismLights();
     }
 
     // Initialize moon phase
@@ -1043,6 +1049,30 @@ export function AnimatedProfileHeader() {
         }
 
         if (
+          phenomenon.specialEffect === "prismLights" &&
+          prismLightsRef.current.length > 0
+        ) {
+          const moon = moonPositionRef.current;
+          const baseMoonRadius = 40;
+          const rarityMoonScale = {
+            normal: 1.0,
+            rare: 1.05,
+            very_rare: 1.1,
+            legendary: 1.15,
+            mythic: 1.2,
+          }[phenomenon.rarity];
+          const moonRadius =
+            baseMoonRadius * (phenomenon.moonSize || 1.0) * rarityMoonScale;
+          drawPrismLights(
+            ctx,
+            prismLightsRef.current,
+            moon.x,
+            moon.y,
+            moonRadius,
+          );
+        }
+
+        if (
           phenomenon.specialEffect === "shootingStars" &&
           shootingStarsLegendaryRef.current.length >= 0
         ) {
@@ -1202,9 +1232,9 @@ export function AnimatedProfileHeader() {
                       : "'Inter', sans-serif",
             textShadow:
               phenomenon?.rarity === "mythic"
-                ? `0 0 30px ${phenomenon.uiAccent}, 0 0 60px ${phenomenon.uiAccent}, 0 0 90px ${phenomenon.uiAccent}80, 0 4px 12px rgba(0, 0, 0, 0.8)`
+                ? `0 0 15px ${phenomenon.uiAccent}, 0 0 30px ${phenomenon.uiAccent}cc, 0 4px 12px rgba(0, 0, 0, 0.9)`
                 : phenomenon?.rarity === "legendary"
-                  ? `0 0 25px ${phenomenon.uiAccent}, 0 0 50px ${phenomenon.uiAccent}cc, 0 4px 10px rgba(0, 0, 0, 0.7)`
+                  ? `0 0 12px ${phenomenon.uiAccent}, 0 0 25px ${phenomenon.uiAccent}aa, 0 4px 10px rgba(0, 0, 0, 0.8)`
                   : phenomenon?.rarity === "very_rare"
                     ? `0 0 20px ${phenomenon.uiAccent}aa, 0 0 40px ${phenomenon.uiAccent}66, 0 4px 8px rgba(0, 0, 0, 0.6)`
                     : phenomenon?.rarity === "rare"
