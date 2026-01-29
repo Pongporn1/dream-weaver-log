@@ -1232,7 +1232,7 @@ export function AnimatedProfileHeader() {
                       : "'Inter', sans-serif",
             textShadow:
               phenomenon?.rarity === "mythic"
-                ? `0 0 15px ${phenomenon.uiAccent}, 0 0 30px ${phenomenon.uiAccent}cc, 0 4px 12px rgba(0, 0, 0, 0.9)`
+                ? `0 0 10px ${phenomenon.uiAccent}aa, 0 0 20px ${phenomenon.uiAccent}66, 0 4px 12px rgba(0, 0, 0, 0.9)`
                 : phenomenon?.rarity === "legendary"
                   ? `0 0 12px ${phenomenon.uiAccent}, 0 0 25px ${phenomenon.uiAccent}aa, 0 4px 10px rgba(0, 0, 0, 0.8)`
                   : phenomenon?.rarity === "very_rare"
@@ -1274,13 +1274,13 @@ export function AnimatedProfileHeader() {
                     : "'Inter', sans-serif",
               textShadow:
                 phenomenon.rarity === "mythic"
-                  ? `0 0 20px ${phenomenon.uiAccent}cc, 0 0 40px ${phenomenon.uiAccent}66, 0 2px 6px rgba(0, 0, 0, 0.7)`
+                  ? `0 0 12px ${phenomenon.uiAccent}aa, 0 0 25px ${phenomenon.uiAccent}44, 0 2px 6px rgba(0, 0, 0, 0.7)`
                   : phenomenon.rarity === "legendary"
                     ? `0 0 15px ${phenomenon.uiAccent}99, 0 2px 5px rgba(0, 0, 0, 0.6)`
                     : phenomenon.rarity === "very_rare"
                       ? `0 0 12px ${phenomenon.uiAccent}66, 0 2px 4px rgba(0, 0, 0, 0.5)`
                       : "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)",
-              color:
+            color:
                 phenomenon.rarity === "mythic" ||
                 phenomenon.rarity === "legendary"
                   ? phenomenon.uiAccent

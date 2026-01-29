@@ -2186,18 +2186,19 @@ export const drawShootingStars = (
   canvasHeight: number,
 ): ShootingStar[] => {
   // Spawn new shooting stars
-  if (Math.random() < 0.05) {
-    const angle = Math.PI / 4 + Math.random() * (Math.PI / 4);
-    const speed = 5 + Math.random() * 5;
+  // INCREASED INTENSITY: Spawn more frequently for "Shower" effect
+  if (Math.random() < 0.3) {
+    const angle = Math.PI / 4 + Math.random() * (Math.PI / 6); // 45-75 degrees
+    const speed = 15 + Math.random() * 10; // Fast!
     stars.push({
-      x: canvasWidth + Math.random() * 100, // Start from right edge + offset
+      x: Math.random() * canvasWidth, // Start anywhere across the width
       y: -50 - Math.random() * 100, // Start from above the screen
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
-      length: 20 + Math.random() * 30,
-      opacity: 0.8 + Math.random() * 0.2,
-      trailLength: 40 + Math.random() * 60,
-      color: "#E8E8FF",
+      length: 50 + Math.random() * 50, // Longer
+      opacity: Math.random() * 0.4 + 0.6,
+      trailLength: 100 + Math.random() * 80,
+      color: "#FFFFFF",
     });
   }
 
