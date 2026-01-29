@@ -80,10 +80,7 @@ import {
   type PrismLight,
 } from "@/utils/particleEffects";
 import { getMoonPhase, drawMoonWithPhase } from "@/utils/moonPhases";
-import {
-  getGlowIntensity,
-  applyTimeBasedGlow,
-} from "@/utils/timeBasedEffects";
+import { getGlowIntensity, applyTimeBasedGlow } from "@/utils/timeBasedEffects";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
 // Helper function to draw realistic moon phase shadow with gradient
@@ -98,7 +95,7 @@ const drawMoonPhaseShadow = (
   if (Math.abs(phase - 0.5) < 0.01) return; // Full moon, no shadow
 
   ctx.save();
-  
+
   // Create clipping path for the moon circle
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -114,41 +111,45 @@ const drawMoonPhaseShadow = (
     // Waxing (shadow on left side)
     const illumination = phase * 2; // 0 to 1
     const shadowWidth = radius * (1 - illumination);
-    
+
     // Gradient simulating spherical curvature
     const gradient = ctx.createLinearGradient(
       x - radius,
       y,
       x - radius + shadowWidth * 2.2, // Extend slightly for soft terminator
-      y
+      y,
     );
-    gradient.addColorStop(0, deepShadow);     // Darkest at edge
-    gradient.addColorStop(0.4, deepShadow);   // Stay dark longer for volume
-    gradient.addColorStop(0.7, midShadow);    // Mid-tone transition
+    gradient.addColorStop(0, deepShadow); // Darkest at edge
+    gradient.addColorStop(0.4, deepShadow); // Stay dark longer for volume
+    gradient.addColorStop(0.7, midShadow); // Mid-tone transition
     gradient.addColorStop(1, "rgba(5, 10, 25, 0)"); // Fade to transparent
-    
+
     ctx.fillStyle = gradient;
     ctx.fillRect(x - radius, y - radius, shadowWidth * 2.2, radius * 2);
-    
   } else if (phase > 0.5) {
     // Waning (shadow on right side)
-    const illumination = 1 - ((phase - 0.5) * 2); // 1 to 0
+    const illumination = 1 - (phase - 0.5) * 2; // 1 to 0
     const shadowWidth = radius * (1 - illumination);
-    
+
     // Gradient simulating spherical curvature
     const gradient = ctx.createLinearGradient(
       x + radius - shadowWidth * 2.2,
       y,
       x + radius,
-      y
+      y,
     );
     gradient.addColorStop(0, "rgba(5, 10, 25, 0)"); // Fade from transparent
-    gradient.addColorStop(0.3, midShadow);    // Mid-tone transition
-    gradient.addColorStop(0.6, deepShadow);   // Start getting dark
-    gradient.addColorStop(1, deepShadow);     // Darkest at edge
-    
+    gradient.addColorStop(0.3, midShadow); // Mid-tone transition
+    gradient.addColorStop(0.6, deepShadow); // Start getting dark
+    gradient.addColorStop(1, deepShadow); // Darkest at edge
+
     ctx.fillStyle = gradient;
-    ctx.fillRect(x + radius - shadowWidth * 2.2, y - radius, shadowWidth * 2.2, radius * 2);
+    ctx.fillRect(
+      x + radius - shadowWidth * 2.2,
+      y - radius,
+      shadowWidth * 2.2,
+      radius * 2,
+    );
   }
 
   ctx.restore();
@@ -341,11 +342,11 @@ export function AnimatedProfileHeader() {
       );
     else if (phenomenon.id === "emptySky")
       orbitingParticlesRef.current = initOrbitingParticles(
-        18,
-        "#404050",
-        "#505070",
-        0.005,
-        0.01,
+        30,
+        "#606080",
+        "#707090",
+        0.008,
+        0.012,
       );
 
     // Special effects work for rare and above (rare, very_rare, legendary, mythic)
@@ -407,10 +408,7 @@ export function AnimatedProfileHeader() {
       } else if (phenomenon.specialEffect === "bloodRing")
         bloodRingsRef.current = initBloodRings(moonRadius);
       else if (phenomenon.specialEffect === "fadeParticles")
-        fadeParticlesRef.current = initFadeParticles(
-          rect.width,
-          rect.height,
-        );
+        fadeParticlesRef.current = initFadeParticles(rect.width, rect.height);
       else if (phenomenon.specialEffect === "silence")
         silenceWavesRef.current = initSilenceWaves();
       else if (phenomenon.specialEffect === "dreamDust")
@@ -450,7 +448,6 @@ export function AnimatedProfileHeader() {
       };
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-
 
     const drawSky = () => {
       const g = ctx.createLinearGradient(0, 0, 0, rect.height);
@@ -696,6 +693,209 @@ export function AnimatedProfileHeader() {
         moonRadius,
         moonPhaseRef.current.phase,
       );
+
+      // CRYSTAL MOON EXCLUSIVE: Diamond brilliant cut facets
+      if (phenomenon.id === "crystalMoon") {
+        ctx.save();
+
+        // Layer 1: Outer crown facets (8 main facets)
+        const crownFacets = 8;
+        for (let i = 0; i < crownFacets; i++) {
+          const angle = (Math.PI * 2 * i) / crownFacets + moon.phase * 0.3;
+          const nextAngle =
+            (Math.PI * 2 * (i + 1)) / crownFacets + moon.phase * 0.3;
+          const outerRadius = moonRadius * 0.95;
+          const innerRadius = moonRadius * 0.6;
+
+          const x1 = moonX + Math.cos(angle) * outerRadius;
+          const y1 = moonY + offsetY + Math.sin(angle) * outerRadius;
+          const x2 = moonX + Math.cos(nextAngle) * outerRadius;
+          const y2 = moonY + offsetY + Math.sin(nextAngle) * outerRadius;
+          const x3 = moonX + Math.cos(nextAngle) * innerRadius;
+          const y3 = moonY + offsetY + Math.sin(nextAngle) * innerRadius;
+          const x4 = moonX + Math.cos(angle) * innerRadius;
+          const y4 = moonY + offsetY + Math.sin(angle) * innerRadius;
+
+          // Alternating light and dark facets for depth - reduced opacity
+          const brightness = i % 2 === 0 ? 0.08 : 0.04;
+          const gradient = ctx.createLinearGradient(
+            x1,
+            y1,
+            moonX,
+            moonY + offsetY,
+          );
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${brightness})`);
+          gradient.addColorStop(
+            0.5,
+            `rgba(200, 230, 255, ${brightness * 0.8})`,
+          );
+          gradient.addColorStop(1, `rgba(180, 220, 255, ${brightness * 0.5})`);
+
+          ctx.fillStyle = gradient;
+          ctx.strokeStyle = `rgba(220, 240, 255, ${0.15 + brightness})`;
+          ctx.lineWidth = 0.5;
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineTo(x3, y3);
+          ctx.lineTo(x4, y4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Layer 2: Star facets (16 triangular facets) - very subtle
+        const starFacets = 16;
+        for (let i = 0; i < starFacets; i++) {
+          const angle = (Math.PI * 2 * i) / starFacets - moon.phase * 0.2;
+          const radius1 = moonRadius * 0.6;
+          const radius2 = moonRadius * 0.35;
+
+          const x1 = moonX + Math.cos(angle) * radius1;
+          const y1 = moonY + offsetY + Math.sin(angle) * radius1;
+          const x2 = moonX + Math.cos(angle + Math.PI / starFacets) * radius2;
+          const y2 =
+            moonY + offsetY + Math.sin(angle + Math.PI / starFacets) * radius2;
+          const x3 = moonX + Math.cos(angle - Math.PI / starFacets) * radius2;
+          const y3 =
+            moonY + offsetY + Math.sin(angle - Math.PI / starFacets) * radius2;
+
+          const brightness = i % 3 === 0 ? 0.06 : i % 3 === 1 ? 0.04 : 0.02;
+
+          ctx.fillStyle = `rgba(200, 230, 255, ${brightness})`;
+          ctx.strokeStyle = `rgba(220, 240, 255, 0.1)`;
+          ctx.lineWidth = 0.3;
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineTo(x3, y3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Layer 3: Table facet (central octagon) - lighter
+        const tableFacets = 8;
+        const tableRadius = moonRadius * 0.35;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        for (let i = 0; i <= tableFacets; i++) {
+          const angle = (Math.PI * 2 * i) / tableFacets;
+          const x = moonX + Math.cos(angle) * tableRadius;
+          const y = moonY + offsetY + Math.sin(angle) * tableRadius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        // Radial facet lines (brilliant cut pattern) - very subtle
+        const radialLines = 24;
+        for (let i = 0; i < radialLines; i++) {
+          const angle = (Math.PI * 2 * i) / radialLines;
+          const startRadius = moonRadius * 0.15;
+          const endRadius = moonRadius * 0.95;
+          const opacity = i % 2 === 0 ? 0.12 : 0.06;
+
+          ctx.strokeStyle = `rgba(220, 240, 255, ${opacity})`;
+          ctx.lineWidth = 0.3;
+          ctx.beginPath();
+          ctx.moveTo(
+            moonX + Math.cos(angle) * startRadius,
+            moonY + offsetY + Math.sin(angle) * startRadius,
+          );
+          ctx.lineTo(
+            moonX + Math.cos(angle) * endRadius,
+            moonY + offsetY + Math.sin(angle) * endRadius,
+          );
+          ctx.stroke();
+        }
+
+        // Multiple sparkle points (reduced to 20 and lighter)
+        const sparkles = 20;
+        for (let i = 0; i < sparkles; i++) {
+          const angle = (Math.PI * 2 * i) / sparkles + moon.phase * (i % 3);
+          const radiusVariation = 0.2 + (i % 5) * 0.15;
+          const sparkleRadius = moonRadius * radiusVariation;
+          const sparkleX = moonX + Math.cos(angle) * sparkleRadius;
+          const sparkleY = moonY + offsetY + Math.sin(angle) * sparkleRadius;
+          const intensity = Math.sin(moon.phase * 4 + i * 0.5) * 0.5 + 0.5;
+          const sparkleSize =
+            (0.8 + intensity * 1.2) * (i % 3 === 0 ? 1.2 : 0.8);
+
+          const sparkleGlow = ctx.createRadialGradient(
+            sparkleX,
+            sparkleY,
+            0,
+            sparkleX,
+            sparkleY,
+            sparkleSize * 2.5,
+          );
+          sparkleGlow.addColorStop(
+            0,
+            `rgba(255, 255, 255, ${0.5 * intensity})`,
+          );
+          sparkleGlow.addColorStop(
+            0.4,
+            `rgba(220, 240, 255, ${0.3 * intensity})`,
+          );
+          sparkleGlow.addColorStop(1, "rgba(200, 230, 255, 0)");
+
+          ctx.fillStyle = sparkleGlow;
+          ctx.beginPath();
+          ctx.arc(sparkleX, sparkleY, sparkleSize * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Bright central culet (diamond bottom point) - lighter
+        const culetGradient = ctx.createRadialGradient(
+          moonX,
+          moonY + offsetY,
+          0,
+          moonX,
+          moonY + offsetY,
+          moonRadius * 0.25,
+        );
+        culetGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+        culetGradient.addColorStop(0.5, "rgba(240, 250, 255, 0.2)");
+        culetGradient.addColorStop(1, "rgba(220, 240, 255, 0)");
+
+        ctx.fillStyle = culetGradient;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY + offsetY, moonRadius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Intense cross-shaped reflection (diamond fire) - much lighter
+        const crossLength = moonRadius * 0.6;
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+
+        const crossAngles = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
+        crossAngles.forEach((angle) => {
+          const gradient = ctx.createLinearGradient(
+            moonX,
+            moonY + offsetY,
+            moonX + Math.cos(angle) * crossLength,
+            moonY + offsetY + Math.sin(angle) * crossLength,
+          );
+          gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+          gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+          ctx.strokeStyle = gradient;
+          ctx.beginPath();
+          ctx.moveTo(moonX, moonY + offsetY);
+          ctx.lineTo(
+            moonX + Math.cos(angle) * crossLength,
+            moonY + offsetY + Math.sin(angle) * crossLength,
+          );
+          ctx.stroke();
+        });
+
+        ctx.restore();
+      }
     };
 
     const drawClouds = () => {
@@ -832,8 +1032,7 @@ export function AnimatedProfileHeader() {
             const s = shootingStarsRef.current[idx];
             s.isActive = true;
             // Start from outside the screen (top-right area)
-            s.x =
-              rect.width + Math.random() * 100; // Start from right edge + offset
+            s.x = rect.width + Math.random() * 100; // Start from right edge + offset
             s.y = -50 - Math.random() * 100; // Start from above the screen
           }
         }
@@ -1280,7 +1479,7 @@ export function AnimatedProfileHeader() {
                     : phenomenon.rarity === "very_rare"
                       ? `0 0 12px ${phenomenon.uiAccent}66, 0 2px 4px rgba(0, 0, 0, 0.5)`
                       : "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)",
-            color:
+              color:
                 phenomenon.rarity === "mythic" ||
                 phenomenon.rarity === "legendary"
                   ? phenomenon.uiAccent

@@ -74,7 +74,7 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
     const initParticles = () => {
       const particles: Particle[] = [];
       const rect = canvas.getBoundingClientRect();
-      
+
       for (let i = 0; i < 30; i++) {
         particles.push({
           x: Math.random() * rect.width,
@@ -117,7 +117,11 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
         // Draw particle
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `${colorScheme.particles}${Math.floor(particle.opacity * 255).toString(16).padStart(2, "0")}`;
+        ctx.fillStyle = `${colorScheme.particles}${Math.floor(
+          particle.opacity * 255,
+        )
+          .toString(16)
+          .padStart(2, "0")}`;
         ctx.fill();
       });
 

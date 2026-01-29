@@ -2139,7 +2139,11 @@ export const drawLightRays = (
 ) => {
   // Validate inputs to prevent NaN errors
   if (!isFinite(moonX) || !isFinite(moonY) || !isFinite(moonRadius)) {
-    console.warn("Invalid moon parameters in drawLightRays:", { moonX, moonY, moonRadius });
+    console.warn("Invalid moon parameters in drawLightRays:", {
+      moonX,
+      moonY,
+      moonRadius,
+    });
     return;
   }
 
@@ -2155,7 +2159,12 @@ export const drawLightRays = (
     const endY = moonY + Math.sin(ray.angle) * (moonRadius + ray.length);
 
     // Additional validation before creating gradient
-    if (!isFinite(startX) || !isFinite(startY) || !isFinite(endX) || !isFinite(endY)) {
+    if (
+      !isFinite(startX) ||
+      !isFinite(startY) ||
+      !isFinite(endX) ||
+      !isFinite(endY)
+    ) {
       return;
     }
 
@@ -2257,32 +2266,46 @@ export const drawShootingStars = (
     );
 };
 
-// =================== PRISM LIGHTS EFFECT (CRYSTAL MOON) ===================
+// =================== CRYSTAL SHARDS EFFECT (CRYSTAL MOON) ===================
 
 export interface PrismLight {
   angle: number;
-  length: number;
-  width: number;
-  color: string;
-  speed: number;
+  distance: number;
+  size: number;
+  rotation: number;
+  rotationSpeed: number;
+  orbitSpeed: number;
   opacity: number;
+  color: string;
+  pulsePhase: number;
+  shardType: "hexagon" | "diamond" | "triangle";
 }
 
 export const initPrismLights = (): PrismLight[] => {
   const colors = [
-    "rgba(255, 255, 255, 0.4)", // White
-    "rgba(160, 220, 255, 0.3)", // Cyan
-    "rgba(220, 180, 255, 0.3)", // Purple
-    "rgba(180, 255, 200, 0.3)", // Mint
+    "rgba(220, 240, 255, 0.9)", // Ice blue
+    "rgba(255, 255, 255, 0.95)", // Pure white
+    "rgba(200, 230, 255, 0.85)", // Light cyan
+    "rgba(240, 250, 255, 0.9)", // Very light blue
   ];
-  
-  return Array.from({ length: 16 }, (_, i) => ({
-    angle: (Math.PI * 2 * i) / 16,
-    length: 80 + Math.random() * 60,
-    width: 2 + Math.random() * 4,
+
+  const shardTypes: ("hexagon" | "diamond" | "triangle")[] = [
+    "hexagon",
+    "diamond",
+    "triangle",
+  ];
+
+  return Array.from({ length: 12 }, (_, i) => ({
+    angle: (Math.PI * 2 * i) / 12,
+    distance: 80 + (i % 3) * 20,
+    size: 8 + Math.random() * 8,
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: 0.02 + Math.random() * 0.03,
+    orbitSpeed: 0.008 + Math.random() * 0.004,
+    opacity: 0.6 + Math.random() * 0.3,
     color: colors[i % colors.length],
-    speed: 0.005 + Math.random() * 0.01, // Rotating slowly
-    opacity: 0.3 + Math.random() * 0.4,
+    pulsePhase: Math.random() * Math.PI * 2,
+    shardType: shardTypes[i % 3],
   }));
 };
 
@@ -2294,39 +2317,95 @@ export const drawPrismLights = (
   moonRadius: number,
 ) => {
   ctx.save();
-  ctx.globalCompositeOperation = "screen"; // Additive blending for light effect
 
-  lights.forEach((light) => {
-    light.angle += light.speed; // Rotate
-    
-    // Calculate start and end points
-    const startX = moonX + Math.cos(light.angle) * moonRadius;
-    const startY = moonY + Math.sin(light.angle) * moonRadius;
-    const endX = moonX + Math.cos(light.angle) * (moonRadius + light.length);
-    const endY = moonY + Math.sin(light.angle) * (moonRadius + light.length);
+  // Draw orbiting crystal shards
+  lights.forEach((shard) => {
+    // Update animation
+    shard.angle += shard.orbitSpeed;
+    shard.rotation += shard.rotationSpeed;
+    shard.pulsePhase += 0.03;
 
-    // Create gradient for light ray
-    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-    gradient.addColorStop(0, light.color);
-    gradient.addColorStop(1, "rgba(0,0,0,0)");
+    // Calculate position
+    const x = moonX + Math.cos(shard.angle) * (moonRadius + shard.distance);
+    const y = moonY + Math.sin(shard.angle) * (moonRadius + shard.distance);
 
-    ctx.strokeStyle = gradient;
-    ctx.lineWidth = light.width;
-    ctx.lineCap = "round";
-    
+    // Pulsing opacity
+    const pulseOpacity =
+      shard.opacity * (0.8 + 0.2 * Math.sin(shard.pulsePhase));
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(shard.rotation);
+
+    // Draw shard with glow
+    ctx.globalCompositeOperation = "screen";
+
+    // Outer glow
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = shard.color;
+
+    ctx.fillStyle = shard.color.replace(/[\d.]+\)$/g, `${pulseOpacity})`);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${pulseOpacity * 0.8})`;
+    ctx.lineWidth = 1.5;
+
     ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
+
+    if (shard.shardType === "hexagon") {
+      // Hexagonal crystal
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const px = Math.cos(angle) * shard.size;
+        const py = Math.sin(angle) * shard.size;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    } else if (shard.shardType === "diamond") {
+      // Diamond shape
+      ctx.moveTo(0, -shard.size);
+      ctx.lineTo(shard.size * 0.6, 0);
+      ctx.lineTo(0, shard.size);
+      ctx.lineTo(-shard.size * 0.6, 0);
+      ctx.closePath();
+    } else {
+      // Triangle
+      ctx.moveTo(0, -shard.size);
+      ctx.lineTo(shard.size * 0.866, shard.size * 0.5);
+      ctx.lineTo(-shard.size * 0.866, shard.size * 0.5);
+      ctx.closePath();
+    }
+
+    ctx.fill();
     ctx.stroke();
 
-    // Add cross glare occasionally
-    if (Math.random() < 0.01) {
-       ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-       ctx.beginPath();
-       ctx.arc(endX, endY, 2, 0, Math.PI * 2);
-       ctx.fill();
-    }
+    // Inner bright core
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = `rgba(255, 255, 255, ${pulseOpacity * 0.6})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, shard.size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   });
+
+  // Add crystalline aura around moon
+  const gradient = ctx.createRadialGradient(
+    moonX,
+    moonY,
+    moonRadius * 0.8,
+    moonX,
+    moonY,
+    moonRadius * 1.5,
+  );
+  gradient.addColorStop(0, "rgba(220, 240, 255, 0.15)");
+  gradient.addColorStop(0.6, "rgba(200, 230, 255, 0.08)");
+  gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonRadius * 1.5, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.restore();
 };
@@ -2482,14 +2561,23 @@ export const drawNebula = (
       const layerOpacity = currentOpacity * (1 - index * 0.3);
 
       const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, layerSize);
-      gradient.addColorStop(0, `${color}${Math.floor(layerOpacity * 255).toString(16).padStart(2, "0")}`);
+      gradient.addColorStop(
+        0,
+        `${color}${Math.floor(layerOpacity * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
+      );
       gradient.addColorStop(
         0.4,
-        `${color}${Math.floor(layerOpacity * 0.6 * 255).toString(16).padStart(2, "0")}`,
+        `${color}${Math.floor(layerOpacity * 0.6 * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
       );
       gradient.addColorStop(
         0.7,
-        `${color}${Math.floor(layerOpacity * 0.3 * 255).toString(16).padStart(2, "0")}`,
+        `${color}${Math.floor(layerOpacity * 0.3 * 255)
+          .toString(16)
+          .padStart(2, "0")}`,
       );
       gradient.addColorStop(1, `${color}00`);
 
@@ -2502,4 +2590,3 @@ export const drawNebula = (
     return cloud;
   });
 };
-
