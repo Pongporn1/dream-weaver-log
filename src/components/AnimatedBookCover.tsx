@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import { DreamLog, ENVIRONMENTS } from "@/types/dream";
-import { MapPin, Users, Clock, Shield, LogOut } from "lucide-react";
+import { MapPin, Users, Clock, Shield, LogOut, Sparkles } from "lucide-react";
+import { useCoverStyle, AICoverStyle } from "@/hooks/useCoverStyle";
 
 interface Particle {
   x: number;
@@ -14,6 +15,8 @@ interface Particle {
   opacity: number;
   type: "dot" | "star" | "ring" | "triangle" | "diamond";
   color: string;
+  // AI-enhanced properties
+  behaviorSeed?: number;
 }
 
 interface AnimatedBookCoverProps {
@@ -70,10 +73,52 @@ function hashString(str: string): number {
   return str.split("").reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
 }
 
-// Generate unique colors based on all dream data
-function generateUniqueStyle(dream: DreamLog) {
-  // Base from environments
-  let avgHue = 240; // default
+// Generate unique colors based on all dream data - enhanced with AI style
+function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
+  // If AI style is available, use it as the primary source
+  if (aiStyle) {
+    const brightnessMap = { dim: 0.6, normal: 1.0, bright: 1.2, glowing: 1.5 };
+    const brightness = brightnessMap[aiStyle.brightness] || 1.0;
+    
+    // Map AI pattern to internal pattern type
+    const aiPatternMap: Record<string, typeof safetyPatterns[keyof typeof safetyPatterns]> = {
+      waves: "diagonal",
+      circles: "circular",
+      stars: "radial",
+      lines: "diagonal",
+      dots: "grid",
+      crystals: "radial",
+      smoke: "noise",
+      spiral: "circular",
+    };
+    
+    const primary = `hsl(${aiStyle.primaryHue}, ${aiStyle.saturation}%, 25%)`;
+    const secondary = `hsl(${aiStyle.secondaryHue}, ${aiStyle.saturation - 10}%, 35%)`;
+    const accent = `hsl(${aiStyle.accentHue}, ${Math.min(90, aiStyle.saturation + 20)}%, 60%)`;
+    
+    return {
+      primary,
+      secondary,
+      accent,
+      gradientAngle: aiStyle.gradientAngle,
+      particleCount: 20 + dream.threatLevel * 4,
+      patternType: aiPatternMap[aiStyle.pattern] || "grid",
+      patternSeed: hashString(aiStyle.mood + aiStyle.symbolEmoji),
+      timeEffect: timeSystemEffects[dream.timeSystem] || timeSystemEffects.unknown,
+      exitStyle: exitVisuals[dream.exit] || exitVisuals.unknown,
+      brightness,
+      animSpeed: aiStyle.particleStyle === "pulsing" ? 0.8 : 
+                 aiStyle.particleStyle === "orbiting" ? 0.6 : 0.4,
+      aiEnhanced: true,
+      aiMood: aiStyle.mood,
+      aiSymbol: aiStyle.symbolEmoji,
+      aiKeywords: aiStyle.keywords,
+      particleStyle: aiStyle.particleStyle,
+    };
+  }
+
+  // Fallback to original logic
+  let avgHue = 240;
   let avgSat = 50;
   
   if (dream.environments && dream.environments.length > 0) {
@@ -84,37 +129,24 @@ function generateUniqueStyle(dream: DreamLog) {
     avgSat = envContributions.reduce((sum, e) => sum + e.saturation, 0) / envContributions.length;
   }
 
-  // Modify by threat level
   const threatMod = threatColors[dream.threatLevel] || threatColors[2];
-  
-  // Time system effect
   const timeEffect = timeSystemEffects[dream.timeSystem] || timeSystemEffects.unknown;
-  
-  // Safety pattern
   const patternType = safetyPatterns[dream.safetyOverride] || safetyPatterns.unknown;
-  
-  // Exit visual
   const exitStyle = exitVisuals[dream.exit] || exitVisuals.unknown;
-  
-  // Entity count affects complexity
   const entityCount = dream.entities?.length || 0;
   const particleCount = 10 + entityCount * 3 + dream.threatLevel * 4;
   
-  // World name hash for unique rotation/gradient angle
   const worldHash = hashString(dream.world || "unknown");
   const idHash = hashString(dream.id);
   const gradientAngle = (worldHash + idHash) % 360;
   
-  // Generate primary colors using HSL
   const primaryHue = (avgHue + dream.threatLevel * 15) % 360;
   const secondaryHue = (primaryHue + 30 + entityCount * 10) % 360;
   
-  // Build gradient colors
   const primary = `hsl(${primaryHue}, ${Math.min(90, avgSat + 20)}%, ${25 + dream.threatLevel * 3}%)`;
   const secondary = `hsl(${secondaryHue}, ${Math.min(85, avgSat + 10)}%, ${35 + dream.threatLevel * 2}%)`;
   const accent = threatMod.accent;
   
-  // Unique pattern seed from combined data
   const patternSeed = worldHash * idHash + dream.threatLevel * 100 + entityCount * 50;
   
   return {
@@ -129,6 +161,11 @@ function generateUniqueStyle(dream: DreamLog) {
     exitStyle,
     brightness: timeEffect.brightness,
     animSpeed: timeEffect.animSpeed * (1 + dream.threatLevel * 0.15),
+    aiEnhanced: false,
+    aiMood: null as string | null,
+    aiSymbol: null as string | null,
+    aiKeywords: [] as string[],
+    particleStyle: "floating" as const,
   };
 }
 
@@ -161,7 +198,10 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
   const animationFrameRef = useRef<number>();
   const timeRef = useRef(0);
   
-  const style = useMemo(() => generateUniqueStyle(dream), [dream]);
+  // Use AI-generated cover style if notes are available
+  const { style: aiStyle, loading: aiLoading } = useCoverStyle(dream);
+  
+  const style = useMemo(() => generateUniqueStyle(dream, aiStyle), [dream, aiStyle]);
   const particleTypes = useMemo(() => generateParticleTypes(dream), [dream]);
 
   useEffect(() => {
@@ -427,9 +467,18 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Top Bar - ID & Threat */}
         <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between">
-          <span className="text-[8px] text-white/50 font-mono bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
-            {dream.id}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[8px] text-white/50 font-mono bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
+              {dream.id}
+            </span>
+            {/* AI Enhanced Indicator */}
+            {style.aiEnhanced && (
+              <span className="flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded backdrop-blur-sm bg-primary/30 text-primary-foreground">
+                <Sparkles className="w-2 h-2" />
+                AI
+              </span>
+            )}
+          </div>
           <div 
             className="flex items-center gap-1 px-1.5 py-0.5 rounded-full backdrop-blur-sm"
             style={{ backgroundColor: `${style.accent}30` }}
@@ -457,6 +506,13 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-3">
+          {/* AI Symbol (if AI-enhanced) */}
+          {style.aiEnhanced && style.aiSymbol && (
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl opacity-30 animate-pulse">
+              {style.aiSymbol}
+            </div>
+          )}
+
           {/* World Name */}
           <h3 className="font-bold text-base sm:text-lg text-center leading-snug text-white drop-shadow-lg line-clamp-2 mb-2">
             {dream.world || "Unknown"}

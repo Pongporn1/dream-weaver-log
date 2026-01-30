@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.suggest-tags]
 verify_jwt = false
+
+[functions.analyze-cover]
+verify_jwt = false
