@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getDreamLogs, deleteDreamLog, updateDreamLog } from "@/lib/api";
@@ -12,6 +12,38 @@ import {
   DreamEntitiesEdit,
   DreamNotesEdit,
 } from "@/components/dream-detail";
+
+// Animation wrapper component
+function AnimatedSection({ 
+  children, 
+  delay = 0, 
+  duration = 400 
+}: { 
+  children: ReactNode; 
+  delay?: number; 
+  duration?: number;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsVisible(true), delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+
+  return (
+    <div
+      className="transition-all"
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : "translateY(16px)",
+        transitionDuration: `${duration}ms`,
+        transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function DreamDetail() {
   const { id } = useParams<{ id: string }>();
@@ -141,83 +173,95 @@ export default function DreamDetail() {
 
   return (
     <div className="py-4 space-y-6">
-      <DreamDetailHeader
-        dreamId={dream.id}
-        isEditing={isEditing}
-        saving={saving}
-        onBack={() => navigate(-1)}
-        onEdit={handleEdit}
-        onCancel={handleCancel}
-        onSave={handleSave}
-        onDelete={handleDelete}
-      />
+      <AnimatedSection delay={0} duration={400}>
+        <DreamDetailHeader
+          dreamId={dream.id}
+          isEditing={isEditing}
+          saving={saving}
+          onBack={() => navigate(-1)}
+          onEdit={handleEdit}
+          onCancel={handleCancel}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
+      </AnimatedSection>
 
       {/* Main Info */}
-      <div>
-        {isEditing ? (
-          <DreamWorldEdit editForm={editForm} onFormChange={handleFormChange} />
-        ) : (
-          <h1 className="text-xl mb-1">{dream.world}</h1>
-        )}
-        <p className="text-muted-foreground">
-          {formattedDate} • {dream.wakeTime}
-        </p>
-      </div>
+      <AnimatedSection delay={80} duration={400}>
+        <div>
+          {isEditing ? (
+            <DreamWorldEdit editForm={editForm} onFormChange={handleFormChange} />
+          ) : (
+            <h1 className="text-xl mb-1">{dream.world}</h1>
+          )}
+          <p className="text-muted-foreground">
+            {formattedDate} • {dream.wakeTime}
+          </p>
+        </div>
+      </AnimatedSection>
 
-      <DreamStatsGrid
-        dream={dream}
-        isEditing={isEditing}
-        editForm={editForm}
-        onFormChange={handleFormChange}
-      />
+      <AnimatedSection delay={160} duration={400}>
+        <DreamStatsGrid
+          dream={dream}
+          isEditing={isEditing}
+          editForm={editForm}
+          onFormChange={handleFormChange}
+        />
+      </AnimatedSection>
 
       {/* Environments */}
-      <div>
-        <p className="text-sm text-muted-foreground mb-2">Environments</p>
-        {isEditing ? (
-          <DreamEnvironmentsEdit editForm={editForm} onFormChange={handleFormChange} />
-        ) : dream.environments.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {dream.environments.map((env) => (
-              <span key={env} className="tag">
-                {env}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">-</p>
-        )}
-      </div>
+      <AnimatedSection delay={240} duration={400}>
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Environments</p>
+          {isEditing ? (
+            <DreamEnvironmentsEdit editForm={editForm} onFormChange={handleFormChange} />
+          ) : dream.environments.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {dream.environments.map((env) => (
+                <span key={env} className="tag">
+                  {env}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">-</p>
+          )}
+        </div>
+      </AnimatedSection>
 
       {/* Entities */}
-      <div>
-        <p className="text-sm text-muted-foreground mb-2">Entities</p>
-        {isEditing ? (
-          <DreamEntitiesEdit editForm={editForm} onFormChange={handleFormChange} />
-        ) : dream.entities.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {dream.entities.map((entity) => (
-              <span key={entity} className="tag-accent">
-                {entity}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">-</p>
-        )}
-      </div>
+      <AnimatedSection delay={320} duration={400}>
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Entities</p>
+          {isEditing ? (
+            <DreamEntitiesEdit editForm={editForm} onFormChange={handleFormChange} />
+          ) : dream.entities.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {dream.entities.map((entity) => (
+                <span key={entity} className="tag-accent">
+                  {entity}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">-</p>
+          )}
+        </div>
+      </AnimatedSection>
 
       {/* Notes */}
-      <div>
-        <p className="text-sm text-muted-foreground mb-2">Notes</p>
-        {isEditing ? (
-          <DreamNotesEdit editForm={editForm} onFormChange={handleFormChange} />
-        ) : dream.notes ? (
-          <p className="text-sm whitespace-pre-wrap">{dream.notes}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">-</p>
-        )}
-      </div>
+      <AnimatedSection delay={400} duration={400}>
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Notes</p>
+          {isEditing ? (
+            <DreamNotesEdit editForm={editForm} onFormChange={handleFormChange} />
+          ) : dream.notes ? (
+            <p className="text-sm whitespace-pre-wrap">{dream.notes}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">-</p>
+          )}
+        </div>
+      </AnimatedSection>
     </div>
   );
 }
