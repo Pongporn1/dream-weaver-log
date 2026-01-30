@@ -14,6 +14,7 @@ interface LibraryHeaderProps {
   totalDreams: number;
   currentPhenomenon: MoonPhenomenon | null;
   onChangePhenomenon: () => void;
+  showDreamFilters?: boolean;
 }
 
 export function LibraryHeader({
@@ -24,6 +25,7 @@ export function LibraryHeader({
   totalDreams,
   currentPhenomenon,
   onChangePhenomenon,
+  showDreamFilters = true,
 }: LibraryHeaderProps) {
   return (
     <header className="sticky top-0 z-10 bg-background border-b">
@@ -62,44 +64,48 @@ export function LibraryHeader({
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="ค้นหาในห้องสมุดความฝัน..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        {/* Search Bar - Only show when on dreams tab */}
+        {showDreamFilters && (
+          <>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="ค้นหาในห้องสมุดความฝัน..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-        {/* Group By Tabs */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onGroupByChange("date")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              groupBy === "date"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Calendar className="w-4 h-4" />
-            ตามวันที่
-          </button>
-          <button
-            onClick={() => onGroupByChange("world")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              groupBy === "world"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Globe className="w-4 h-4" />
-            ตามโลก
-          </button>
-        </div>
+            {/* Group By Tabs */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => onGroupByChange("date")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                  groupBy === "date"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Calendar className="w-4 h-4" />
+                ตามวันที่
+              </button>
+              <button
+                onClick={() => onGroupByChange("world")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                  groupBy === "world"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Globe className="w-4 h-4" />
+                ตามโลก
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
