@@ -1,10 +1,9 @@
-
-
 import { useEffect, useRef, useState } from "react";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { adjustBrightness } from "@/utils/colorUtils";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import { PhenomenonTransition } from "@/utils/transitionUtils";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 import {
   initMoonFlashes,
@@ -1600,6 +1599,11 @@ export function AnimatedProfileHeader() {
             {phenomenon.subtitle}
           </p>
         )}
+      </div>
+
+      {/* Theme Toggle - Top Right */}
+      <div className="absolute top-4 right-4 z-30">
+        <ThemeToggle />
       </div>
 
       {/* Bottom gradient fade - Smooth transition to background */}
