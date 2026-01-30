@@ -52,7 +52,6 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
     boxShadow:
       "0 -4px 35px rgba(255, 180, 0, 0.7), 0 -8px 70px rgba(255, 150, 0, 0.5), 0 -12px 105px rgba(255, 120, 0, 0.3), inset 0 4px 25px rgba(255, 200, 50, 0.2), inset 0 -2px 15px rgba(120, 70, 20, 0.4)",
     backdropFilter: "blur(18px) saturate(180%) brightness(1.05)",
-    animation: "goldenWave 4s ease-in-out infinite",
   },
   stillMoon: {
     background:
@@ -112,9 +111,6 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
     boxShadow:
       "0 -4px 35px rgba(80, 180, 230, 0.6), 0 -8px 70px rgba(120, 200, 250, 0.45), 0 -12px 105px rgba(60, 160, 210, 0.3), inset 0 4px 22px rgba(150, 220, 255, 0.15), inset 0 -2px 15px rgba(30, 60, 90, 0.4)",
     backdropFilter: "blur(20px) saturate(190%) brightness(1.05)",
-    position: "relative",
-    overflow: "hidden",
-    animation: "auroraFlow 5s ease-in-out infinite",
   },
   shatteredMoon: {
     background:
@@ -138,7 +134,6 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
     boxShadow:
       "0 -4px 35px rgba(138, 43, 226, 0.7), 0 -8px 70px rgba(168, 73, 255, 0.5), 0 -12px 105px rgba(108, 23, 196, 0.35), inset 0 4px 22px rgba(178, 103, 255, 0.15), inset 0 -2px 15px rgba(50, 20, 80, 0.4)",
     backdropFilter: "blur(20px) saturate(190%) brightness(1.05)",
-    animation: "cosmicOrbit 6s linear infinite",
   },
   nebulaDreamMoon: {
     background:

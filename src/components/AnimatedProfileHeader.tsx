@@ -1431,7 +1431,7 @@ export function AnimatedProfileHeader() {
                       : "'Inter', sans-serif",
             textShadow:
               phenomenon?.rarity === "mythic"
-                ? `0 0 10px ${phenomenon.uiAccent}aa, 0 0 20px ${phenomenon.uiAccent}66, 0 4px 12px rgba(0, 0, 0, 0.9)`
+                ? `0 0 5px ${phenomenon.uiAccent}99, 0 0 12px ${phenomenon.uiAccent}55, 0 3px 8px rgba(0, 0, 0, 0.8)`
                 : phenomenon?.rarity === "legendary"
                   ? `0 0 12px ${phenomenon.uiAccent}, 0 0 25px ${phenomenon.uiAccent}aa, 0 4px 10px rgba(0, 0, 0, 0.8)`
                   : phenomenon?.rarity === "very_rare"
@@ -1442,7 +1442,9 @@ export function AnimatedProfileHeader() {
             color:
               phenomenon?.rarity === "mythic" ||
               phenomenon?.rarity === "legendary"
-                ? phenomenon.uiAccent
+                ? phenomenon.id === "emptySky"
+                  ? "#ffffff"
+                  : phenomenon.uiAccent
                 : "#ffffff",
             animation:
               phenomenon?.rarity === "mythic"
