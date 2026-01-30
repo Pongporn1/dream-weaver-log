@@ -593,9 +593,14 @@ export function AnimatedProfileHeader() {
 
   // Touch event handlers
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    console.log('👆 Touch Start triggered');
     const touch = e.touches[0];
-    if (!isMoonHit(touch.clientX, touch.clientY)) return;
-
+    
+    // Prevent default to avoid scroll while touching moon
+    const hitMoon = isMoonHit(touch.clientX, touch.clientY);
+    if (!hitMoon) return;
+    
+    e.preventDefault();
     isTouchMoveRef.current = false;
     touchStartTimeRef.current = Date.now();
     
@@ -659,8 +664,8 @@ export function AnimatedProfileHeader() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="absolute inset-0 w-full h-full cursor-pointer touch-none"
-        style={{ width: "100%", height: "100%" }}
+        className="absolute inset-0 w-full h-full cursor-pointer"
+        style={{ width: "100%", height: "100%", touchAction: "pan-y" }}
       />
       <HeaderContent phenomenon={phenomenon} />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
