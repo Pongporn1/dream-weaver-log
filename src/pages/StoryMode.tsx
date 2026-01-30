@@ -74,7 +74,7 @@ export function StoryMode({ dreams, worlds, entities }: Props) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-24">
         <div className="p-4">
           <AnimatedSection delay={160} duration={400}>
             {viewMode === "timeline" && <TimelineView dreams={dreams} />}
