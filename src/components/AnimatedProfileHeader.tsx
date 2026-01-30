@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
-import { getMoonPhase } from "@/utils/moonPhases";
+import { getMoonPhase, MoonPhaseInfo } from "@/utils/moonPhases";
 import { useParallax } from "@/hooks/useParallax";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFPSThrottle } from "@/hooks/useFPSThrottle";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
+
+// UI Components
+import { MoonInfoOverlay } from "./header/MoonInfoOverlay";
 
 // Canvas renderers
 import {
@@ -155,7 +158,14 @@ export function AnimatedProfileHeader() {
   const lastShatterResetRef = useRef<number>(Date.now());
   const scrollOffsetRef = useRef({ x: 0, y: 0 });
 
+  // Touch interaction state
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartTimeRef = useRef<number>(0);
+  const isTouchMoveRef = useRef<boolean>(false);
+
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
+  const [overlayType, setOverlayType] = useState<"phase" | "phenomenon" | null>(null);
+  const [currentMoonPhase, setCurrentMoonPhase] = useState<MoonPhaseInfo>(getMoonPhase());
 
   // Initialize phenomenon
   useEffect(() => {
@@ -514,13 +524,13 @@ export function AnimatedProfileHeader() {
     voidRipplesRef.current = drawVoidRipples(ctx, voidRipplesRef.current, moon.x, moon.y);
   };
 
-  // Click handler
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !phenomenon) return;
+  // Check if touch/click is on the moon
+  const isMoonHit = useCallback((clientX: number, clientY: number): boolean => {
+    if (!canvasRef.current || !phenomenon) return false;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left) * window.devicePixelRatio;
-    const clickY = (e.clientY - rect.top) * window.devicePixelRatio;
+    const clickX = (clientX - rect.left) * window.devicePixelRatio;
+    const clickY = (clientY - rect.top) * window.devicePixelRatio;
 
     const moon = moonPositionRef.current;
     const pX = parallaxOffsetRef.current.x * 0.8;
@@ -533,24 +543,121 @@ export function AnimatedProfileHeader() {
       Math.pow(clickX - currentMoonX, 2) + Math.pow(clickY - currentMoonY, 2)
     );
 
-    if (dist < moonRadius * 1.5) {
-      if (navigator.vibrate) navigator.vibrate(20);
-      moonFlashesRef.current.push(spawnMoonFlash(currentMoonX, currentMoonY));
-      const newSparkles = initSparkles(currentMoonX, currentMoonY, 15);
-      sparklesRef.current = [...sparklesRef.current, ...newSparkles];
+    return dist < moonRadius * 1.5;
+  }, [phenomenon]);
+
+  // Trigger visual feedback on moon tap
+  const triggerMoonEffect = useCallback(() => {
+    if (!canvasRef.current || !phenomenon) return;
+
+    const moon = moonPositionRef.current;
+    const pX = parallaxOffsetRef.current.x * 0.8;
+    const pY = parallaxOffsetRef.current.y * 0.8;
+    const currentMoonX = moon.x + pX;
+    const currentMoonY = moon.y + Math.sin(moon.phase) * 3 + pY;
+
+    if (navigator.vibrate) navigator.vibrate(20);
+    moonFlashesRef.current.push(spawnMoonFlash(currentMoonX, currentMoonY));
+    const newSparkles = initSparkles(currentMoonX, currentMoonY, 15);
+    sparklesRef.current = [...sparklesRef.current, ...newSparkles];
+  }, [phenomenon]);
+
+  // Handle tap (short press) - show Moon Phase Info
+  const handleTap = useCallback(() => {
+    setCurrentMoonPhase(getMoonPhase());
+    setOverlayType("phase");
+    triggerMoonEffect();
+  }, [triggerMoonEffect]);
+
+  // Handle long press - show Phenomenon Details
+  const handleLongPress = useCallback(() => {
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50]); // Pattern for long press
+    setOverlayType("phenomenon");
+  }, []);
+
+  // Touch event handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    const touch = e.touches[0];
+    if (!isMoonHit(touch.clientX, touch.clientY)) return;
+
+    isTouchMoveRef.current = false;
+    touchStartTimeRef.current = Date.now();
+    
+    // Start long press timer (500ms)
+    longPressTimerRef.current = setTimeout(() => {
+      if (!isTouchMoveRef.current) {
+        handleLongPress();
+      }
+    }, 500);
+  }, [isMoonHit, handleLongPress]);
+
+  const handleTouchMove = useCallback(() => {
+    isTouchMoveRef.current = true;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    // If it was a short tap (less than 500ms) and no move
+    const touchDuration = Date.now() - touchStartTimeRef.current;
+    if (touchDuration < 500 && !isTouchMoveRef.current) {
+      const touch = e.changedTouches[0];
+      if (isMoonHit(touch.clientX, touch.clientY)) {
+        handleTap();
+      }
+    }
+  }, [isMoonHit, handleTap]);
+
+  // Mouse click handler (for desktop)
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isMoonHit(e.clientX, e.clientY)) return;
+    handleTap();
   };
+
+  // Close overlay
+  const handleCloseOverlay = useCallback(() => {
+    setOverlayType(null);
+  }, []);
+
+  // Cleanup long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full h-[60vh] min-h-[400px] overflow-hidden">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
-        className="absolute inset-0 w-full h-full cursor-pointer"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="absolute inset-0 w-full h-full cursor-pointer touch-none"
         style={{ width: "100%", height: "100%" }}
       />
       <HeaderContent phenomenon={phenomenon} />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
+      
+      {/* Moon Info Overlay */}
+      {overlayType && (
+        <MoonInfoOverlay
+          type={overlayType}
+          moonPhase={currentMoonPhase}
+          phenomenon={phenomenon}
+          onClose={handleCloseOverlay}
+        />
+      )}
     </div>
   );
 }
