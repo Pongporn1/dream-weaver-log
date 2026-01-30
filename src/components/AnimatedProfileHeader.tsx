@@ -526,7 +526,10 @@ export function AnimatedProfileHeader() {
 
   // Check if touch/click is on the moon
   const isMoonHit = useCallback((clientX: number, clientY: number): boolean => {
-    if (!canvasRef.current || !phenomenon) return false;
+    if (!canvasRef.current || !phenomenon) {
+      console.log('🎯 isMoonHit: No canvas or phenomenon');
+      return false;
+    }
 
     const rect = canvasRef.current.getBoundingClientRect();
     // Use CSS coordinates (not scaled by devicePixelRatio) since moon position is in CSS pixels
@@ -544,7 +547,19 @@ export function AnimatedProfileHeader() {
       Math.pow(clickX - currentMoonX, 2) + Math.pow(clickY - currentMoonY, 2)
     );
 
-    return dist < moonRadius * 1.5;
+    const hit = dist < moonRadius * 1.5;
+    console.log('🎯 Moon Hit Check:', { 
+      clickX: clickX.toFixed(0), 
+      clickY: clickY.toFixed(0), 
+      moonX: currentMoonX.toFixed(0), 
+      moonY: currentMoonY.toFixed(0), 
+      dist: dist.toFixed(0), 
+      moonRadius: moonRadius.toFixed(0), 
+      threshold: (moonRadius * 1.5).toFixed(0),
+      hit 
+    });
+
+    return hit;
   }, [phenomenon]);
 
   // Trigger visual feedback on moon tap
