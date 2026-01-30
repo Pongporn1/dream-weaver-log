@@ -8,6 +8,7 @@ import { useFPSThrottle } from "@/hooks/useFPSThrottle";
 import { useParticleSystem } from "@/hooks/useParticleSystem";
 import { useMoonInteraction } from "@/hooks/useMoonInteraction";
 import { useHeaderGestures } from "@/hooks/useHeaderGestures";
+import { useMythicCollection } from "@/hooks/useMythicCollection";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 import { toast } from "sonner";
 
@@ -38,6 +39,9 @@ export function AnimatedProfileHeader() {
   const animationFrameRef = useRef<number>();
   const parallaxOffsetRef = useParallax();
   
+  // Mythic collection hook
+  const { recordEncounter, getEffectiveThemeDuration } = useMythicCollection();
+  
   // Performance hooks
   const prefersReducedMotion = useReducedMotion();
   const { shouldRenderFrame } = useFPSThrottle({
@@ -65,15 +69,19 @@ export function AnimatedProfileHeader() {
     setPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
     
+    // Record encounter in collection
+    recordEncounter(newPhenomenon);
+    
     // Show toast with new phenomenon
-    toast.success(`🌙 ${newPhenomenon.name}`, {
+    const rarityLabel = newPhenomenon.rarity === "mythic" ? "✨ MYTHIC ✨ " : "";
+    toast.success(`🌙 ${rarityLabel}${newPhenomenon.name}`, {
       description: newPhenomenon.subtitle,
-      duration: 3000,
+      duration: newPhenomenon.rarity === "mythic" ? 5000 : 3000,
     });
     
     // Small delay for visual feedback
     await new Promise((resolve) => setTimeout(resolve, 800));
-  }, []);
+  }, [recordEncounter]);
 
   // Header gesture hook
   const {
@@ -127,8 +135,12 @@ export function AnimatedProfileHeader() {
     const sessionPhenomenon = getSessionPhenomenon();
     setPhenomenon(sessionPhenomenon);
     applyMoonTheme(sessionPhenomenon);
+    
+    // Record initial encounter in collection
+    recordEncounter(sessionPhenomenon);
+    
     console.log("🌙 Moon Phenomenon:", sessionPhenomenon.name, `(${sessionPhenomenon.rarity})`);
-  }, []);
+  }, [recordEncounter]);
 
   // Main animation effect
   useEffect(() => {
