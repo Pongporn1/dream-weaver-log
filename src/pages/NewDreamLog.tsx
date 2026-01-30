@@ -226,7 +226,7 @@ export default function NewDreamLog() {
   };
 
   return (
-    <div className="py-4">
+    <div className="py-4 pb-28">
       <AnimatedField delay={0} duration={400}>
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
