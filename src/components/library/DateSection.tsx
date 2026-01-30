@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DreamLog } from "@/types/dream";
 import { AnimatedBookCover } from "@/components/AnimatedBookCover";
+import { StaggeredGrid } from "./StaggeredGrid";
 
 interface DateSectionProps {
   title: string;
@@ -36,11 +37,11 @@ export function DateSection({ title, dreams, colorClass, isExpanded, onToggle }:
       </button>
       {isExpanded && (
         <div className="p-4 pt-0">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <StaggeredGrid staggerDelay={60} animationDuration={350}>
             {dreams.map((dream) => (
               <AnimatedBookCover key={dream.id} dream={dream} />
             ))}
-          </div>
+          </StaggeredGrid>
         </div>
       )}
     </section>
