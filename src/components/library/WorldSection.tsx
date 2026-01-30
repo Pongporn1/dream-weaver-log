@@ -34,8 +34,17 @@ export function WorldSection({ worldName, dreams, isExpanded, onToggle }: WorldS
       {isExpanded && (
         <div className="p-4 pt-0">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {dreams.map((dream) => (
-              <AnimatedBookCover key={dream.id} dream={dream} />
+            {dreams.map((dream, index) => (
+              <div
+                key={dream.id}
+                className="animate-fade-in opacity-0"
+                style={{
+                  animationDelay: `${index * 80}ms`,
+                  animationFillMode: "forwards",
+                }}
+              >
+                <AnimatedBookCover dream={dream} />
+              </div>
             ))}
           </div>
         </div>
