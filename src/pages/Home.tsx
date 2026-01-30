@@ -30,6 +30,7 @@ import {
 } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
+import { HomeSkeleton } from "@/components/skeletons/HomeSkeleton";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
 
@@ -360,9 +361,7 @@ export default function Home() {
 
           {/* Recent Dreams */}
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              กำลังโหลด...
-            </div>
+            <HomeSkeleton />
           ) : recentDreams.length > 0 ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">

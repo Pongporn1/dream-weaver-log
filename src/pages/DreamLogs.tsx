@@ -13,6 +13,7 @@ import {
 import { DreamCard } from "@/components/DreamCard";
 import { getDreamLogs, getWorlds } from "@/lib/api";
 import { DreamLog, World, TIME_SYSTEMS, SAFETY_OVERRIDES } from "@/types/dream";
+import { DreamCardSkeleton } from "@/components/skeletons/DreamCardSkeleton";
 
 export default function DreamLogs() {
   const [dreams, setDreams] = useState<DreamLog[]>([]);
@@ -70,7 +71,16 @@ export default function DreamLogs() {
 
   if (loading) {
     return (
-      <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>
+      <div className="space-y-4 py-4">
+        <div className="flex items-center justify-between">
+          <h1>Dream Logs</h1>
+        </div>
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <DreamCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
     );
   }
 

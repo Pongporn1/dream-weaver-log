@@ -28,6 +28,7 @@ import {
 } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
+import { LibraryPageSkeleton } from "@/components/skeletons/LibrarySkeleton";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
 
@@ -114,6 +115,7 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("date");
   const [dreamLogs, setDreamLogs] = useState<DreamLog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -146,6 +148,8 @@ export default function Library() {
         setDreamLogs(dreamsData);
       } catch (error) {
         console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     loadData();
@@ -294,7 +298,9 @@ export default function Library() {
 
       {/* Main Content - Scrollable */}
       <main className="flex-1 overflow-y-auto pb-20">
-        {filteredDreams.length === 0 ? (
+        {loading ? (
+          <LibraryPageSkeleton />
+        ) : filteredDreams.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground px-4">
             <LibraryIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>ไม่พบความฝัน</p>

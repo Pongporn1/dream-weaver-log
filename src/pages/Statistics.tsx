@@ -27,6 +27,7 @@ import { ThreatTrends } from "@/components/analytics/ThreatTrends";
 import { RecurringPatterns } from "@/components/analytics/RecurringPatterns";
 import { EntityFrequency } from "@/components/analytics/EntityFrequency";
 import { StreakCounter } from "@/components/analytics/StreakCounter";
+import { StatsOverviewSkeleton } from "@/components/skeletons/StatsSkeleton";
 
 export default function Statistics() {
   const [dreams, setDreams] = useState<DreamLog[]>([]);
@@ -211,7 +212,9 @@ export default function Statistics() {
 
   if (loading) {
     return (
-      <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>
+      <div className="py-4">
+        <StatsOverviewSkeleton />
+      </div>
     );
   }
 
