@@ -1,19 +1,28 @@
 import { useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { addDreamLog, getWorlds, getEntities } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DateTimeFields,
   WorldSelector,
   EnvironmentSelector,
   EntitySelector,
   DreamSettings,
+  StoryDetailsFields,
+  CoverPreview,
 } from "@/components/dream-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Animation wrapper component
 function AnimatedField({ 
@@ -52,6 +61,9 @@ export default function NewDreamLog() {
   const [worlds, setWorlds] = useState<{ id: string; name: string }[]>([]);
   const [entities, setEntities] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [showCoverDialog, setShowCoverDialog] = useState(false);
 
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -67,6 +79,11 @@ export default function NewDreamLog() {
     safetyOverride: "none" as DreamLog["safetyOverride"],
     exit: "unknown" as DreamLog["exit"],
     notes: "",
+    // New detailed fields
+    storySummary: "",
+    emotions: [] as string[],
+    atmosphereColors: [] as string[],
+    lucidityLevel: 5,
   });
 
   useEffect(() => {
@@ -81,6 +98,49 @@ export default function NewDreamLog() {
     loadData();
   }, []);
 
+  const generateCover = async () => {
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover", {
+        body: {
+          storySummary: form.storySummary || form.notes,
+          emotions: form.emotions,
+          atmosphereColors: form.atmosphereColors,
+          environments: form.environments,
+          world: form.newWorld || form.world,
+          threatLevel: form.threatLevel,
+          lucidityLevel: form.lucidityLevel,
+        },
+      });
+
+      if (error) {
+        console.error("Cover generation error:", error);
+        toast({
+          title: "ไม่สามารถสร้างปกได้",
+          description: error.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      if (data?.coverUrl) {
+        setCoverUrl(data.coverUrl);
+        return data.coverUrl;
+      }
+      return null;
+    } catch (err) {
+      console.error("Cover generation failed:", err);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถสร้างปกได้",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setGeneratingCover(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -93,6 +153,11 @@ export default function NewDreamLog() {
       const environmentNames = [...form.environments];
       if (form.newEnvironment) environmentNames.push(form.newEnvironment);
 
+      // Combine notes with story summary
+      const fullNotes = [form.storySummary, form.notes]
+        .filter(Boolean)
+        .join("\n\n---\n\n");
+
       const result = await addDreamLog({
         date: form.date,
         wakeTime: form.wakeTime,
@@ -103,12 +168,19 @@ export default function NewDreamLog() {
         threatLevel: form.threatLevel,
         safetyOverride: form.safetyOverride,
         exit: form.exit,
-        notes: form.notes || undefined,
+        notes: fullNotes || undefined,
       });
 
       if (result) {
         toast({ title: "บันทึกเรียบร้อย" });
-        navigate("/logs");
+        
+        // Generate cover after saving
+        if (form.storySummary || form.notes) {
+          setShowCoverDialog(true);
+          await generateCover();
+        } else {
+          navigate("/logs");
+        }
       } else {
         toast({ title: "เกิดข้อผิดพลาด", variant: "destructive" });
       }
@@ -148,6 +220,11 @@ export default function NewDreamLog() {
     }
   };
 
+  const handleCloseCoverDialog = () => {
+    setShowCoverDialog(false);
+    navigate("/logs");
+  };
+
   return (
     <div className="py-4">
       <AnimatedField delay={0} duration={400}>
@@ -155,12 +232,40 @@ export default function NewDreamLog() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1>บันทึกฝันใหม่</h1>
+          <div>
+            <h1 className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              บันทึกฝันใหม่
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              บันทึกรายละเอียดเพื่อสร้างปกหนังสืออัตโนมัติ
+            </p>
+          </div>
         </div>
       </AnimatedField>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Story Details Section - New prominent section */}
         <AnimatedField delay={60} duration={400}>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 via-background to-primary/5 border border-primary/20">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold">รายละเอียดความฝัน</h2>
+            </div>
+            <StoryDetailsFields
+              storySummary={form.storySummary}
+              onStorySummaryChange={(v) => setForm((prev) => ({ ...prev, storySummary: v }))}
+              emotions={form.emotions}
+              onEmotionsChange={(v) => setForm((prev) => ({ ...prev, emotions: v }))}
+              atmosphereColors={form.atmosphereColors}
+              onAtmosphereColorsChange={(v) => setForm((prev) => ({ ...prev, atmosphereColors: v }))}
+              lucidityLevel={form.lucidityLevel}
+              onLucidityLevelChange={(v) => setForm((prev) => ({ ...prev, lucidityLevel: v }))}
+            />
+          </div>
+        </AnimatedField>
+
+        <AnimatedField delay={120} duration={400}>
           <DateTimeFields
             date={form.date}
             wakeTime={form.wakeTime}
@@ -169,7 +274,7 @@ export default function NewDreamLog() {
           />
         </AnimatedField>
 
-        <AnimatedField delay={120} duration={400}>
+        <AnimatedField delay={180} duration={400}>
           <WorldSelector
             worlds={worlds}
             selectedWorld={form.world}
@@ -179,7 +284,7 @@ export default function NewDreamLog() {
           />
         </AnimatedField>
 
-        <AnimatedField delay={180} duration={400}>
+        <AnimatedField delay={240} duration={400}>
           <DreamSettings
             timeSystem={form.timeSystem}
             threatLevel={form.threatLevel}
@@ -192,7 +297,7 @@ export default function NewDreamLog() {
           />
         </AnimatedField>
 
-        <AnimatedField delay={240} duration={400}>
+        <AnimatedField delay={300} duration={400}>
           <EnvironmentSelector
             selectedEnvironments={form.environments}
             newEnvironment={form.newEnvironment}
@@ -202,7 +307,7 @@ export default function NewDreamLog() {
           />
         </AnimatedField>
 
-        <AnimatedField delay={300} duration={400}>
+        <AnimatedField delay={360} duration={400}>
           <EntitySelector
             entities={entities}
             selectedEntities={form.selectedEntities}
@@ -212,13 +317,13 @@ export default function NewDreamLog() {
           />
         </AnimatedField>
 
-        {/* Notes */}
-        <AnimatedField delay={360} duration={400}>
+        {/* Additional Notes */}
+        <AnimatedField delay={420} duration={400}>
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">Notes เพิ่มเติม (optional)</Label>
             <Textarea
               id="notes"
-              placeholder="รายละเอียดเพิ่มเติม..."
+              placeholder="รายละเอียดเพิ่มเติม เช่น ความหมายที่คิดว่ามี, สัญลักษณ์พิเศษ..."
               value={form.notes}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
               className="min-h-[80px]"
@@ -226,12 +331,42 @@ export default function NewDreamLog() {
           </div>
         </AnimatedField>
 
-        <AnimatedField delay={420} duration={400}>
-          <Button type="submit" className="w-full" disabled={saving}>
-            {saving ? "กำลังบันทึก..." : "บันทึก"}
+        <AnimatedField delay={480} duration={400}>
+          <Button type="submit" className="w-full gap-2" disabled={saving || generatingCover}>
+            {saving ? (
+              "กำลังบันทึก..."
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                บันทึกและสร้างปก
+              </>
+            )}
           </Button>
         </AnimatedField>
       </form>
+
+      {/* Cover Generation Dialog */}
+      <Dialog open={showCoverDialog} onOpenChange={setShowCoverDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              ปกหนังสือความฝัน
+            </DialogTitle>
+          </DialogHeader>
+          <CoverPreview
+            coverUrl={coverUrl}
+            isGenerating={generatingCover}
+            onRegenerate={generateCover}
+            dreamTitle={form.storySummary?.slice(0, 50) || form.world}
+          />
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCloseCoverDialog}>
+              ปิด
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
