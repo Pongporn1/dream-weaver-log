@@ -25,6 +25,12 @@ const App = () => {
     const phenomenon = getSessionPhenomenon();
     applyMoonTheme(phenomenon);
     console.log("🌙 Global Moon Theme Applied:", phenomenon.name);
+
+    // Initialize theme from localStorage or system preference
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
   }, []);
 
   return (
