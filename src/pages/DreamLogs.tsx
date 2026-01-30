@@ -16,6 +16,7 @@ import { DreamLog, World, TIME_SYSTEMS, SAFETY_OVERRIDES } from "@/types/dream";
 import { DreamCardSkeleton } from "@/components/skeletons/DreamCardSkeleton";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { AnimatedSection, StaggeredList } from "@/components/ui/animated";
 import { toast } from "sonner";
 
 export default function DreamLogs() {
@@ -97,128 +98,143 @@ export default function DreamLogs() {
     <PullToRefresh onRefresh={handleRefresh} className="h-full">
       <OfflineIndicator />
       <div className="space-y-4 py-4">
-      <div className="flex items-center justify-between">
-        <h1>Dream Logs</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="w-4 h-4" />
-          </Button>
-          <Button asChild size="sm">
-            <Link to="/logs/new">
-              <Plus className="w-4 h-4 mr-1" />
-              New
-            </Link>
-          </Button>
-        </div>
-      </div>
+        <AnimatedSection delay={0} duration={400}>
+          <div className="flex items-center justify-between">
+            <h1>Dream Logs</h1>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="w-4 h-4" />
+              </Button>
+              <Button asChild size="sm">
+                <Link to="/logs/new">
+                  <Plus className="w-4 h-4 mr-1" />
+                  New
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </AnimatedSection>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="ค้นหา dreams... (world, notes, entities, environments)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 pr-9"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setSearchQuery("")}
-          >
-            <X className="w-3 h-3" />
-          </Button>
+        {/* Search Bar */}
+        <AnimatedSection delay={60} duration={400}>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="ค้นหา dreams... (world, notes, entities, environments)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            )}
+          </div>
+        </AnimatedSection>
+
+        {showFilters && (
+          <AnimatedSection delay={0} duration={300} animation="fade">
+            <div className="card-minimal space-y-3">
+              <p className="text-sm font-medium">Filters</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={worldFilter} onValueChange={setWorldFilter}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="World" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Worlds</SelectItem>
+                    {worlds.map((w) => (
+                      <SelectItem key={w.id} value={w.name}>
+                        {w.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={threatFilter} onValueChange={setThreatFilter}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Threat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Threats</SelectItem>
+                    {[0, 1, 2, 3, 4, 5].map((t) => (
+                      <SelectItem key={t} value={String(t)}>
+                        Level {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={timeSystemFilter}
+                  onValueChange={setTimeSystemFilter}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Time System" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {TIME_SYSTEMS.map((ts) => (
+                      <SelectItem key={ts} value={ts}>
+                        {ts}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={safetyFilter} onValueChange={setSafetyFilter}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Safety" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {SAFETY_OVERRIDES.map((so) => (
+                      <SelectItem key={so} value={so}>
+                        {so}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </AnimatedSection>
         )}
-      </div>
 
-      {showFilters && (
-        <div className="card-minimal space-y-3">
-          <p className="text-sm font-medium">Filters</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Select value={worldFilter} onValueChange={setWorldFilter}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="World" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Worlds</SelectItem>
-                {worlds.map((w) => (
-                  <SelectItem key={w.id} value={w.name}>
-                    {w.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={threatFilter} onValueChange={setThreatFilter}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Threat" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Threats</SelectItem>
-                {[0, 1, 2, 3, 4, 5].map((t) => (
-                  <SelectItem key={t} value={String(t)}>
-                    Level {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={timeSystemFilter}
-              onValueChange={setTimeSystemFilter}
+        <div className="space-y-2">
+          {filteredDreams.length === 0 ? (
+            <AnimatedSection delay={120} duration={400}>
+              <div className="text-center py-12 text-muted-foreground">
+                <p>ไม่พบบันทึก</p>
+                <Button asChild variant="link" className="mt-2">
+                  <Link to="/logs/new">สร้างบันทึกใหม่</Link>
+                </Button>
+              </div>
+            </AnimatedSection>
+          ) : (
+            <StaggeredList 
+              baseDelay={120} 
+              staggerDelay={50} 
+              duration={400}
+              className="space-y-2"
             >
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Time System" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {TIME_SYSTEMS.map((ts) => (
-                  <SelectItem key={ts} value={ts}>
-                    {ts}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={safetyFilter} onValueChange={setSafetyFilter}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Safety" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {SAFETY_OVERRIDES.map((so) => (
-                  <SelectItem key={so} value={so}>
-                    {so}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {filteredDreams.map((dream) => (
+                <DreamCard key={dream.id} dream={dream} showEdit={true} />
+              ))}
+            </StaggeredList>
+          )}
         </div>
-      )}
-
-      <div className="space-y-2">
-        {filteredDreams.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>ไม่พบบันทึก</p>
-            <Button asChild variant="link" className="mt-2">
-              <Link to="/logs/new">สร้างบันทึกใหม่</Link>
-            </Button>
-          </div>
-        ) : (
-          filteredDreams.map((dream) => (
-            <DreamCard key={dream.id} dream={dream} showEdit={true} />
-          ))
-        )}
       </div>
-    </div>
     </PullToRefresh>
   );
 }
