@@ -1,8 +1,11 @@
+
+
 import { useEffect, useRef, useState } from "react";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { adjustBrightness } from "@/utils/colorUtils";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import { PhenomenonTransition } from "@/utils/transitionUtils";
+
 import {
   initMoonFlashes,
   spawnMoonFlash,
@@ -232,11 +235,44 @@ export function AnimatedProfileHeader() {
   // Timer for resetting shatter dust every 10 seconds
   const lastShatterResetRef = useRef<number>(Date.now());
 
+  // Parallax Ref
+  const parallaxOffsetRef = useRef({ x: 0, y: 0 });
+
   // Get moon phenomenon for this session
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
   const transitionManagerRef = useRef<PhenomenonTransition>(
     new PhenomenonTransition(),
   );
+
+  useEffect(() => {
+    const handleParallax = (e: MouseEvent | DeviceOrientationEvent) => {
+      let x = 0;
+      let y = 0;
+
+      if (e instanceof MouseEvent) {
+        // Desktop mouse movement
+        x = (e.clientX / window.innerWidth - 0.5) * 20; // -10 to 10
+        y = (e.clientY / window.innerHeight - 0.5) * 20;
+      } else if (window.DeviceOrientationEvent && e instanceof DeviceOrientationEvent) {
+        // Mobile gyro
+        // gamma is left/right tilt (-90 to 90)
+        // beta is front/back tilt (-180 to 180)
+        if (e.gamma !== null) x = Math.max(-20, Math.min(20, e.gamma / 2));
+        if (e.beta !== null) y = Math.max(-20, Math.min(20, (e.beta - 45) / 2));
+      }
+
+      // Smooth interpolation could be added here, but direct mapping for responsiveness first
+      parallaxOffsetRef.current = { x, y };
+    };
+
+    window.addEventListener("mousemove", handleParallax);
+    window.addEventListener("deviceorientation", handleParallax);
+
+    return () => {
+      window.removeEventListener("mousemove", handleParallax);
+      window.removeEventListener("deviceorientation", handleParallax);
+    };
+  }, []);
 
   useEffect(() => {
     const sessionPhenomenon = getSessionPhenomenon();
@@ -449,6 +485,8 @@ export function AnimatedProfileHeader() {
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
+
+
     const drawSky = () => {
       const g = ctx.createLinearGradient(0, 0, 0, rect.height);
       g.addColorStop(0, phenomenon.skyPalette[0]);
@@ -460,12 +498,17 @@ export function AnimatedProfileHeader() {
 
     const drawStars = () => {
       if (phenomenon.starDensity === 0) return;
+      
+      // Parallax for stars (Furthest layer - moves slowly)
+      const pX = parallaxOffsetRef.current.x * 0.5;
+      const pY = parallaxOffsetRef.current.y * 0.5;
+
       starsRef.current.forEach((s) => {
         s.twinklePhase += s.twinkleSpeed;
         const o = s.opacity * (Math.sin(s.twinklePhase) * 0.5 + 0.5);
 
-        const starX = s.x;
-        const starY = s.y;
+        const starX = s.x + pX;
+        const starY = s.y + pY;
 
         ctx.beginPath();
         ctx.arc(starX, starY, s.size, 0, Math.PI * 2);
@@ -486,8 +529,17 @@ export function AnimatedProfileHeader() {
       moon.phase += 0.005;
       const offsetY = Math.sin(moon.phase) * 3;
 
-      const moonX = moon.x;
-      const moonY = moon.y;
+      // Parallax for moon (Mid layer - moves slightly more than stars for depth)
+      // Or move LESS if we want it to feel "in the sky" vs "on the glass"?
+      // Usually, distant objects (stars) move almost 0. Closer objects (moon) move slightly. 
+      // Very close objects (UI) move most relative to screen if camera moves.
+      // Let's stick to standard parallax: Foreground moves fast, background moves slow.
+      // So Stars (infinite) -> 0.2, Moon (far) -> 0.4, Clouds (mid) -> 0.8
+      const pX = parallaxOffsetRef.current.x * 0.8; 
+      const pY = parallaxOffsetRef.current.y * 0.8;
+
+      const moonX = moon.x + pX;
+      const moonY = moon.y + pY;
 
       // Dynamic moon size based on phenomenon and rarity
       const baseMoonRadius = 40;
@@ -1371,17 +1423,74 @@ export function AnimatedProfileHeader() {
     };
   }, [phenomenon]);
 
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !phenomenon) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) * window.devicePixelRatio;
+    const clickY = (e.clientY - rect.top) * window.devicePixelRatio;
+
+    // Calculate current moon position with parallax
+    const moon = moonPositionRef.current;
+      
+    // Re-calculate pX and pY exactly as in drawMoon
+    const pX = parallaxOffsetRef.current.x * 0.8; 
+    const pY = parallaxOffsetRef.current.y * 0.8;
+      
+    const currentMoonX = moon.x + pX;
+    // Note: moon.y in drawMoon has offsetY (Math.sin(moon.phase) * 3) added to it
+    const currentMoonY = moon.y + Math.sin(moon.phase) * 3 + pY;
+
+    // Dynamic moon size calculation (copied from drawMoon for accuracy)
+    const baseMoonRadius = 40;
+    const rarityMoonScale = {
+      normal: 1.0,
+      rare: 1.05,
+      very_rare: 1.1,
+      legendary: 1.15,
+      mythic: 1.2,
+    }[phenomenon.rarity];
+    const moonRadius = baseMoonRadius * (phenomenon.moonSize || 1.0) * rarityMoonScale;
+
+    // Hit testing (allow slightly larger hit area for easier tapping)
+    const dist = Math.sqrt(
+      Math.pow(clickX - currentMoonX, 2) + Math.pow(clickY - currentMoonY, 2)
+    );
+
+    if (dist < moonRadius * 1.5) {
+      // HIT!
+        
+      // 1. Haptic Feedback
+      if (navigator.vibrate) {
+          navigator.vibrate(20); // Short tick
+      }
+
+      // 2. Trigger Flash
+      moonFlashesRef.current.push(spawnMoonFlash(currentMoonX, currentMoonY));
+
+      // 3. Trigger Sparkles Burst
+      // We'll add a burst of sparkles (e.g., 10-15 particles)
+      // initSparkles returns an array, we append it
+      const newSparkles = initSparkles(currentMoonX, currentMoonY, 15);
+      sparklesRef.current = [...sparklesRef.current, ...newSparkles];
+    }
+  };
+
   return (
     <div className="relative w-full h-[60vh] min-h-[400px] overflow-hidden">
       {/* Animated Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
+        onClick={handleCanvasClick}
+        className="absolute inset-0 w-full h-full cursor-pointer"
         style={{ width: "100%", height: "100%" }}
       />
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 pt-10">
+        
+
+
         <h1
           className={`font-bold text-white mb-2 tracking-wide transition-all duration-500 ${
             phenomenon?.rarity === "mythic"
@@ -1442,7 +1551,7 @@ export function AnimatedProfileHeader() {
             color:
               phenomenon?.rarity === "mythic" ||
               phenomenon?.rarity === "legendary"
-                ? phenomenon.id === "emptySky"
+                ? phenomenon.id === "emptySky" || phenomenon.id === "brokenMoon"
                   ? "#ffffff"
                   : phenomenon.uiAccent
                 : "#ffffff",

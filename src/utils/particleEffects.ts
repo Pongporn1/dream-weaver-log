@@ -827,6 +827,30 @@ export const drawFog = (
     ctx.fillStyle = g;
     ctx.fillRect(l.x, currentY, l.width, l.height);
 
+    // Seamless loop: Draw a second instance if near the edge
+    if (l.x > 0) {
+      // If moving right and part is visible, draw the tile before it
+      ctx.fillRect(l.x - l.width, currentY, l.width, l.height);
+    } else if (l.x + l.width < canvasWidth) {
+       // If moving left (or just standard fill) and gap opens on right
+       // Actually for simple forward scrolling (l.speed > 0):
+       // When l.x > 0, we need to draw at l.x - l.width to fill the left gap.
+       // The original check "if (l.x > canvasWidth * 0.3) l.x = -l.width" was preventing this.
+       // We should remove that jump and just let it modulo or wrap.
+    }
+    
+    // Better seamless logic for speed > 0:
+    // 1. Draw at current l.x
+    // 2. If l.x > 0, draw at l.x - l.width
+    // 3. Reset: if l.x >= canvasWidth, l.x -= l.width (or similar)
+    
+    ctx.fillRect(l.x - l.width, currentY, l.width, l.height); // Always draw the trailing one for seamlessness?
+    // Wait, let's simplify.
+    // If we just let l.x increment, and use modulo?
+    // l.x = (l.x + l.speed) % l.width; but l.x needs to be relative to canvas.
+    
+    ctx.restore();
+
     if (i % 2 === 0 && Math.random() < 0.02) {
       const sparkleX = l.x + Math.random() * l.width;
       const sparkleY = currentY + Math.random() * l.height;

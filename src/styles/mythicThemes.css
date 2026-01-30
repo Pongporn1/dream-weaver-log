@@ -510,29 +510,15 @@
 
 /* Lunar Transient Phenomena - Electric Glitch */
 :root[data-mythic-theme="lunarTransientPhenomena"] .mythic-bottom-nav {
-  background: rgba(14, 10, 30, 0.95);
-  border-top: 2px solid rgba(200, 168, 248, 0.6);
-  box-shadow:
-    0 -2px 10px rgba(200, 168, 248, 0.4),
-    0 -1px 3px rgba(255, 255, 255, 0.6);
-  animation: electricGlitch 5s steps(10) infinite;
-}
-
-@keyframes electricGlitch {
-  0%,
-  90%,
-  100% {
-    opacity: 1;
-  }
-  92%,
-  94%,
-  96% {
-    opacity: 0.8;
-  }
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
 :root[data-mythic-theme="lunarTransientPhenomena"] .mythic-nav-item {
-  text-shadow: 0 0 5px rgba(200, 168, 248, 0.5);
+  /* clear old text shadow */
+  text-shadow: none !important;
 }
 
 /* Hybrid Eclipse - Golden Border Wave */
@@ -599,7 +585,17 @@
     0 -4px 10px rgba(208, 208, 232, 0.3),
     0 -8px 20px rgba(208, 208, 232, 0.2),
     0 -12px 30px rgba(208, 208, 232, 0.1);
+  animation: echoPulse 4s ease-in-out infinite;
 }
+
+/* Nebula Dream Moon - Cosmic Clouds */
+:root[data-mythic-theme="nebulaDreamMoon"] .mythic-bottom-nav {
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
 
 :root[data-mythic-theme="echoMoon"] .mythic-nav-active {
   box-shadow:
@@ -610,23 +606,19 @@
 
 /* Broken Moon - Fractured Border */
 :root[data-mythic-theme="brokenMoon"] .mythic-bottom-nav {
-  background: rgba(10, 10, 28, 0.95);
-  border-top: 2px dashed rgba(152, 152, 184, 0.5);
-  box-shadow: 0 -4px 15px rgba(152, 152, 184, 0.3);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    rgba(152, 152, 184, 0.05) 10px,
-    rgba(152, 152, 184, 0.05) 11px
-  );
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
 }
 
 /* Empty Sky - Void Minimalist */
+/* Empty Sky - Void Minimalist */
 :root[data-mythic-theme="emptySky"] .mythic-bottom-nav {
-  background: rgba(0, 0, 0, 0.95);
-  border-top: 1px solid rgba(60, 60, 60, 0.3);
-  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.8);
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
 :root[data-mythic-theme="emptySky"] .mythic-nav-item {
@@ -639,29 +631,10 @@
 
 /* Crystal Moon - Prismatic Refraction */
 :root[data-mythic-theme="crystalMoon"] .mythic-bottom-nav {
-  background: linear-gradient(
-    to top,
-    rgba(10, 14, 48, 0.9),
-    rgba(15, 20, 60, 0.85)
-  );
-  border-top: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow:
-    0 -4px 20px rgba(224, 240, 255, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  animation: prismShift 8s ease-in-out infinite;
-}
-
-@keyframes prismShift {
-  0%,
-  100% {
-    filter: hue-rotate(0deg);
-  }
-  33% {
-    filter: hue-rotate(20deg);
-  }
-  66% {
-    filter: hue-rotate(-20deg);
-  }
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
 /* Arctic Moon - Aurora Waves */
@@ -705,23 +678,13 @@
 }
 
 /* Shattered Moon - Fragmented Glow */
+/* Shattered Moon - Fragmented Glow */
 :root[data-mythic-theme="shatteredMoon"] .mythic-bottom-nav {
-  background: rgba(10, 10, 31, 0.95);
-  border-top: 2px solid rgba(160, 160, 220, 0.5);
-  box-shadow:
-    0 -2px 10px rgba(152, 152, 200, 0.3),
-    0 -6px 15px rgba(152, 152, 200, 0.2),
-    0 -10px 20px rgba(152, 152, 200, 0.1);
-  clip-path: polygon(
-    0 0,
-    20% 2px,
-    40% 0,
-    60% 2px,
-    80% 0,
-    100% 2px,
-    100% 100%,
-    0 100%
-  );
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+  clip-path: none !important;
 }
 
 /* Cosmic Voyage Moon - Starfield Drift */
@@ -757,6 +720,19 @@
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes echoSonar {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+    border-width: 4px;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+    border-width: 0px;
   }
 }
 
@@ -800,5 +776,39 @@
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+@keyframes echoRipple {
+  0% {
+    box-shadow: 
+      0 -5px 20px rgba(124, 58, 237, 0.5),
+      0 -15px 40px rgba(124, 58, 237, 0.25),
+      inset 0 2px 15px rgba(192, 132, 252, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 -5px 30px rgba(140, 70, 255, 0.7),
+      0 -20px 60px rgba(124, 58, 237, 0.4),
+      inset 0 4px 25px rgba(200, 160, 255, 0.5);
+  }
+  100% {
+    box-shadow: 
+      0 -5px 20px rgba(124, 58, 237, 0.5),
+      0 -15px 40px rgba(124, 58, 237, 0.25),
+      inset 0 2px 15px rgba(192, 132, 252, 0.3);
+  }
+}
+
+@keyframes echoSonar {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+    border-width: 4px;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+    border-width: 0px;
   }
 }
