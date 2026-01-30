@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import { DreamCard } from "@/components/DreamCard";
 import { getDreamLogs, getWorlds } from "@/lib/api";
 import { DreamLog, World, TIME_SYSTEMS, SAFETY_OVERRIDES } from "@/types/dream";
 import { DreamCardSkeleton } from "@/components/skeletons/DreamCardSkeleton";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { toast } from "sonner";
 
 export default function DreamLogs() {
   const [dreams, setDreams] = useState<DreamLog[]>([]);
@@ -28,23 +31,29 @@ export default function DreamLogs() {
   const [timeSystemFilter, setTimeSystemFilter] = useState<string>("all");
   const [safetyFilter, setSafetyFilter] = useState<string>("all");
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [dreamsData, worldsData] = await Promise.all([
-          getDreamLogs(),
-          getWorlds(),
-        ]);
-        setDreams(dreamsData);
-        setWorlds(worldsData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      const [dreamsData, worldsData] = await Promise.all([
+        getDreamLogs(),
+        getWorlds(),
+      ]);
+      setDreams(dreamsData);
+      setWorlds(worldsData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    await loadData();
+    toast.success("รีเฟรชข้อมูลแล้ว");
+  }, [loadData]);
 
   const filteredDreams = dreams.filter((dream) => {
     // Search filter
@@ -85,7 +94,9 @@ export default function DreamLogs() {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <PullToRefresh onRefresh={handleRefresh} className="h-full">
+      <OfflineIndicator />
+      <div className="space-y-4 py-4">
       <div className="flex items-center justify-between">
         <h1>Dream Logs</h1>
         <div className="flex gap-2">
@@ -208,5 +219,6 @@ export default function DreamLogs() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
