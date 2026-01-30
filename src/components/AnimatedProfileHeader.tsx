@@ -529,8 +529,9 @@ export function AnimatedProfileHeader() {
     if (!canvasRef.current || !phenomenon) return false;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const clickX = (clientX - rect.left) * window.devicePixelRatio;
-    const clickY = (clientY - rect.top) * window.devicePixelRatio;
+    // Use CSS coordinates (not scaled by devicePixelRatio) since moon position is in CSS pixels
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
 
     const moon = moonPositionRef.current;
     const pX = parallaxOffsetRef.current.x * 0.8;
