@@ -3,6 +3,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AISuggestionsPreview } from "./AISuggestionsPreview";
+import { AnimatedSection } from "./AnimatedSection";
 import { suggestTags, addDreamLog, getDreamLogs } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
@@ -112,46 +113,48 @@ export function QuickDreamEntry({
   };
 
   return (
-    <div className="space-y-3">
-      <Textarea
-        placeholder="เล่าความฝันสั้นๆ... "
-        value={quickNote}
-        onChange={(e) => setQuickNote(e.target.value)}
-        className="min-h-[120px] resize-none"
-        disabled={showSuggestions}
-      />
-
-      {showSuggestions && aiSuggestions && (
-        <AISuggestionsPreview
-          suggestions={aiSuggestions}
-          editing={editingSuggestions}
-          analyzing={analyzing}
-          onToggleEdit={() => setEditingSuggestions(!editingSuggestions)}
-          onConfirm={handleConfirmSave}
-          onCancel={handleCancel}
-          onUpdate={updateSuggestion}
+    <AnimatedSection delay={100} duration={450}>
+      <div className="space-y-3">
+        <Textarea
+          placeholder="เล่าความฝันสั้นๆ... "
+          value={quickNote}
+          onChange={(e) => setQuickNote(e.target.value)}
+          className="min-h-[120px] resize-none"
+          disabled={showSuggestions}
         />
-      )}
 
-      {!showSuggestions && (
-        <Button
-          onClick={handleAnalyze}
-          disabled={analyzing || !quickNote.trim()}
-          className="w-full gap-2"
-        >
-          {analyzing ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              กำลังวิเคราะห์...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              วิเคราะห์
-            </>
-          )}
-        </Button>
-      )}
-    </div>
+        {showSuggestions && aiSuggestions && (
+          <AISuggestionsPreview
+            suggestions={aiSuggestions}
+            editing={editingSuggestions}
+            analyzing={analyzing}
+            onToggleEdit={() => setEditingSuggestions(!editingSuggestions)}
+            onConfirm={handleConfirmSave}
+            onCancel={handleCancel}
+            onUpdate={updateSuggestion}
+          />
+        )}
+
+        {!showSuggestions && (
+          <Button
+            onClick={handleAnalyze}
+            disabled={analyzing || !quickNote.trim()}
+            className="w-full gap-2"
+          >
+            {analyzing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                กำลังวิเคราะห์...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                วิเคราะห์
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    </AnimatedSection>
   );
 }
