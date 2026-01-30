@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import { getMoonPhase } from "@/utils/moonPhases";
@@ -7,11 +7,14 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFPSThrottle } from "@/hooks/useFPSThrottle";
 import { useParticleSystem } from "@/hooks/useParticleSystem";
 import { useMoonInteraction } from "@/hooks/useMoonInteraction";
+import { useHeaderGestures } from "@/hooks/useHeaderGestures";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
+import { toast } from "sonner";
 
 // UI Components
 import { MoonInfoOverlay } from "./header/MoonInfoOverlay";
 import { HeaderContent } from "./header/HeaderContent";
+import { HeaderPullIndicator } from "./header/HeaderPullIndicator";
 
 // Canvas renderers
 import {
@@ -55,6 +58,36 @@ export function AnimatedProfileHeader() {
 
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    // Regenerate moon phenomenon
+    const newPhenomenon = getSessionPhenomenon();
+    setPhenomenon(newPhenomenon);
+    applyMoonTheme(newPhenomenon);
+    
+    // Show toast with new phenomenon
+    toast.success(`🌙 ${newPhenomenon.name}`, {
+      description: newPhenomenon.subtitle,
+      duration: 3000,
+    });
+    
+    // Small delay for visual feedback
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  }, []);
+
+  // Header gesture hook
+  const {
+    containerRef: gestureContainerRef,
+    pullDistance,
+    isRefreshing,
+    isPulling,
+    progress,
+    isReady,
+  } = useHeaderGestures({
+    onRefresh: handleRefresh,
+    pullThreshold: 100,
+  });
+
   // Particle system hook
   const {
     moonFlashesRef,
@@ -75,9 +108,9 @@ export function AnimatedProfileHeader() {
   const {
     overlayType,
     currentMoonPhase,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
+    handleTouchStart: handleMoonTouchStart,
+    handleTouchMove: handleMoonTouchMove,
+    handleTouchEnd: handleMoonTouchEnd,
     handleCanvasClick,
     handleCloseOverlay,
   } = useMoonInteraction({
@@ -234,13 +267,29 @@ export function AnimatedProfileHeader() {
   ]);
 
   return (
-    <div className="relative w-full h-[60vh] min-h-[400px] overflow-hidden">
+    <div 
+      ref={gestureContainerRef}
+      className="relative w-full h-[60vh] min-h-[400px] overflow-hidden"
+      style={{
+        transform: `translateY(${isRefreshing ? 20 : pullDistance * 0.3}px)`,
+        transition: isPulling ? "none" : "transform 0.3s ease-out",
+      }}
+    >
+      {/* Pull-to-refresh indicator */}
+      <HeaderPullIndicator
+        pullDistance={pullDistance}
+        progress={progress}
+        isRefreshing={isRefreshing}
+        isReady={isReady}
+        isPulling={isPulling}
+      />
+
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={handleMoonTouchStart}
+        onTouchMove={handleMoonTouchMove}
+        onTouchEnd={handleMoonTouchEnd}
         className="absolute inset-0 w-full h-full cursor-pointer"
         style={{ width: "100%", height: "100%", touchAction: "pan-y" }}
       />
