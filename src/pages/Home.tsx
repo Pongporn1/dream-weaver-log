@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Plus,
@@ -31,6 +31,8 @@ import {
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
 import { HomeSkeleton } from "@/components/skeletons/HomeSkeleton";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
 
@@ -55,25 +57,31 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingSuggestions, setEditingSuggestions] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [dreams, worlds, entities] = await Promise.all([
-          getDreamLogs(),
-          getWorlds(),
-          getEntities(),
-        ]);
-        setRecentDreams(dreams.slice(0, 5));
-        setExistingWorlds(worlds.map((w) => w.name));
-        setExistingEntities(entities.map((e) => e.name));
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      const [dreams, worlds, entities] = await Promise.all([
+        getDreamLogs(),
+        getWorlds(),
+        getEntities(),
+      ]);
+      setRecentDreams(dreams.slice(0, 5));
+      setExistingWorlds(worlds.map((w) => w.name));
+      setExistingEntities(entities.map((e) => e.name));
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    await loadData();
+    toast.success("รีเฟรชข้อมูลแล้ว");
+  }, [loadData]);
 
   const handleAnalyze = async () => {
     if (!quickNote.trim()) {
@@ -165,11 +173,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+
       {/* Animated Header */}
       <AnimatedProfileHeader />
 
-      {/* Main Content */}
-      <div className="flex-1">
+      {/* Main Content with Pull to Refresh */}
+      <PullToRefresh onRefresh={handleRefresh} className="flex-1">
         <div className="space-y-8 py-4 container-app">
           {/* Greeting */}
           <div className="space-y-2">
@@ -388,7 +399,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </div>
+      </PullToRefresh>
 
       {/* Bottom Navigation */}
       {/* Bottom Navigation */}
