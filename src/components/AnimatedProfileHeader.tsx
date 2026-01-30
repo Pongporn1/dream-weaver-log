@@ -3,6 +3,8 @@ import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import { getMoonPhase } from "@/utils/moonPhases";
 import { useParallax } from "@/hooks/useParallax";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useFPSThrottle } from "@/hooks/useFPSThrottle";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
 // Canvas renderers
@@ -107,6 +109,15 @@ export function AnimatedProfileHeader() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
   const parallaxOffsetRef = useParallax();
+  
+  // Performance hooks
+  const prefersReducedMotion = useReducedMotion();
+  const { shouldRenderFrame, metrics, isLowPowerMode } = useFPSThrottle({
+    targetFPS: prefersReducedMotion ? 15 : 60,
+    enableAdaptive: true,
+    minFPS: 15,
+    maxFPS: 60,
+  });
 
   // Basic elements
   const starsRef = useRef<Star[]>([]);
@@ -196,8 +207,14 @@ export function AnimatedProfileHeader() {
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Animation loop
-    const animate = () => {
+    // Animation loop with FPS throttling
+    const animate = (currentTime: number) => {
+      // FPS throttling - skip frame if not enough time has passed
+      if (!shouldRenderFrame(currentTime)) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       ctx.clearRect(0, 0, width, height);
       
       const baseProps = {
@@ -205,69 +222,87 @@ export function AnimatedProfileHeader() {
         width,
         height,
         phenomenon,
-        parallaxOffset: parallaxOffsetRef.current,
+        parallaxOffset: prefersReducedMotion ? { x: 0, y: 0 } : parallaxOffsetRef.current,
       };
 
-      // Draw sky
+      // Draw sky (always drawn)
       drawSky(baseProps);
 
-      // Draw background effects (nebula, starfield)
-      drawBackgroundEffects(ctx, phenomenon, width, height, scrollOffsetRef.current);
+      // Skip complex effects if reduced motion is preferred
+      if (!prefersReducedMotion) {
+        // Draw background effects (nebula, starfield)
+        drawBackgroundEffects(ctx, phenomenon, width, height, scrollOffsetRef.current);
 
-      // Draw aurora and fog (behind stars)
-      drawAtmosphericEffects(ctx, phenomenon, width);
+        // Draw aurora and fog (behind stars)
+        drawAtmosphericEffects(ctx, phenomenon, width);
+      }
 
-      // Draw stars
+      // Draw stars (simplified for reduced motion)
       drawStars({ ...baseProps, stars: starsRef.current });
 
-      // Draw echo moons before main moon
-      if (phenomenon.specialEffect === "echo" && echoMoonsRef.current.length > 0) {
-        drawEchoMoons(ctx, echoMoonsRef.current, moon.x, moon.y, moon.phase, phenomenon.moonTint);
+      // Skip complex particle effects if reduced motion is preferred
+      if (!prefersReducedMotion) {
+        // Draw echo moons before main moon
+        if (phenomenon.specialEffect === "echo" && echoMoonsRef.current.length > 0) {
+          drawEchoMoons(ctx, echoMoonsRef.current, moon.x, moon.y, moon.phase, phenomenon.moonTint);
+        }
+
+        // Draw fireflies
+        if (phenomenon.specialEffect === "fireflies" && firefliesRef.current.length > 0) {
+          drawFireflies(ctx, firefliesRef.current, width, height);
+        }
       }
 
-      // Draw fireflies
-      if (phenomenon.specialEffect === "fireflies" && firefliesRef.current.length > 0) {
-        drawFireflies(ctx, firefliesRef.current, width, height);
+      // Draw moon and update position (always drawn, but with reduced animation)
+      const moonPhaseSpeed = prefersReducedMotion ? 0.001 : 0.005;
+      const adjustedMoonPosition = { ...moonPositionRef.current };
+      if (prefersReducedMotion) {
+        // Minimal moon bobbing for reduced motion
+        adjustedMoonPosition.phase += moonPhaseSpeed;
       }
-
-      // Draw moon and update position
       moonPositionRef.current = drawMoon({
         ...baseProps,
-        moonPosition: moonPositionRef.current,
+        moonPosition: prefersReducedMotion ? adjustedMoonPosition : moonPositionRef.current,
         moonPhase: moonPhaseRef.current,
       });
 
-      // Draw shattered moon effects
-      drawShatteredEffects(ctx, phenomenon, moonPositionRef.current);
+      // Skip complex effects if reduced motion is preferred
+      if (!prefersReducedMotion) {
+        // Draw shattered moon effects
+        drawShatteredEffects(ctx, phenomenon, moonPositionRef.current);
 
-      // Draw special particle effects
-      drawSpecialEffects(ctx, phenomenon, moonPositionRef.current, moonRadius, width, height);
+        // Draw special particle effects
+        drawSpecialEffects(ctx, phenomenon, moonPositionRef.current, moonRadius, width, height);
 
-      // Draw orbiting particles for specific phenomena
-      drawOrbitingEffects(ctx, phenomenon, moonPositionRef.current);
+        // Draw orbiting particles for specific phenomena
+        drawOrbitingEffects(ctx, phenomenon, moonPositionRef.current);
+      }
 
-      // Draw clouds
+      // Draw clouds (simplified movement for reduced motion)
       drawClouds({ ...baseProps, clouds: cloudsRef.current });
 
-      // Draw weather effects
-      drawWeatherEffects(ctx, phenomenon, width, height);
+      // Skip weather effects if reduced motion is preferred
+      if (!prefersReducedMotion) {
+        // Draw weather effects
+        drawWeatherEffects(ctx, phenomenon, width, height);
 
-      // Draw void ripples
-      drawVoidEffects(ctx, phenomenon, moonPositionRef.current);
+        // Draw void ripples
+        drawVoidEffects(ctx, phenomenon, moonPositionRef.current);
 
-      // Draw shooting stars
-      const shootingResult = drawShootingStars({
-        ...baseProps,
-        shootingStars: shootingStarsRef.current,
-        timer: shootingStarTimerRef.current,
-      });
-      shootingStarsRef.current = shootingResult.shootingStars;
-      shootingStarTimerRef.current = shootingResult.timer;
+        // Draw shooting stars
+        const shootingResult = drawShootingStars({
+          ...baseProps,
+          shootingStars: shootingStarsRef.current,
+          timer: shootingStarTimerRef.current,
+        });
+        shootingStarsRef.current = shootingResult.shootingStars;
+        shootingStarTimerRef.current = shootingResult.timer;
+      }
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
       if (animationFrameRef.current) {
@@ -275,7 +310,7 @@ export function AnimatedProfileHeader() {
       }
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [phenomenon]);
+  }, [phenomenon, prefersReducedMotion, shouldRenderFrame]);
 
   // Helper functions for initializing and drawing effects
   const initializeParticleEffects = useCallback((
