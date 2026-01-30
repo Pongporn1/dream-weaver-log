@@ -116,7 +116,7 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 pt-10">
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 pt-10 pointer-events-none">
       <h1
         className={`font-bold text-white mb-2 tracking-wide transition-all duration-500 ${getTitleSize()}`}
         style={{
