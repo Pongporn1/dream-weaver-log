@@ -152,8 +152,8 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
           <Progress value={stats.completionPercent} className="h-2" />
         </div>
 
-        {/* Rarity breakdown */}
-        <div className="grid grid-cols-5 gap-2 text-center text-xs">
+        {/* Rarity breakdown with animated progress bars */}
+        <div className="space-y-3">
           {(["mythic", "legendary", "very_rare", "rare", "normal"] as const).map(
             (rarity) => {
               const count =
@@ -166,24 +166,102 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                   : rarity === "rare"
                   ? stats.rareCount
                   : stats.normalCount;
+              
+              // Get max count for this rarity from the phenomena data
+              const maxCount = mythicMoons.filter(m => {
+                const phenomenon = MOON_PHENOMENA[m.id];
+                return phenomenon?.rarity === rarity;
+              }).length || 1;
 
               return (
-                <div
-                  key={rarity}
-                  className={cn(
-                    "p-2 rounded-lg bg-gradient-to-br",
-                    RARITY_COLORS[rarity]
-                  )}
-                  style={{ opacity: count > 0 ? 1 : 0.4 }}
-                >
-                  <div className="font-bold text-primary-foreground">{count}</div>
-                  <div className="text-[10px] text-primary-foreground/80">
-                    {RARITY_LABELS[rarity]}
+                <div key={rarity} className="space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className={cn(
+                      "font-medium px-2 py-0.5 rounded-full bg-gradient-to-r text-white",
+                      RARITY_COLORS[rarity]
+                    )}>
+                      {RARITY_LABELS[rarity]}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {count} / {maxCount}
+                    </span>
                   </div>
+                  <MythicProgressBar
+                    value={count}
+                    max={maxCount}
+                    variant={rarity}
+                    height={16}
+                    showGlow
+                    animated
+                    particleConfig={
+                      count > 0 ? {
+                        type: rarity === "mythic" ? "crystals" 
+                          : rarity === "legendary" ? "fire"
+                          : rarity === "very_rare" ? "stars"
+                          : rarity === "rare" ? "aurora"
+                          : "snow",
+                        color: rarity === "mythic" ? "#c026d3"
+                          : rarity === "legendary" ? "#f59e0b"
+                          : rarity === "very_rare" ? "#60a5fa"
+                          : rarity === "rare" ? "#10b981"
+                          : "#6b7280",
+                        secondaryColor: rarity === "mythic" ? "#f472b6"
+                          : rarity === "legendary" ? "#fcd34d"
+                          : rarity === "very_rare" ? "#a78bfa"
+                          : rarity === "rare" ? "#6ee7b7"
+                          : "#9ca3af",
+                        density: 0.8,
+                        speed: 1.5,
+                        glow: count > 0,
+                      } : null
+                    }
+                  />
                 </div>
               );
             }
           )}
+        </div>
+
+        {/* Demo section - Show all particle types */}
+        <div className="pt-4 border-t space-y-3">
+          <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+            <Sparkles className="h-3 w-3" />
+            Particle Effect Showcase
+          </h4>
+          <div className="grid gap-3">
+            {[
+              { type: "stars", label: "Starfall", color: "#3b82f6", secondary: "#93c5fd" },
+              { type: "fire", label: "Inferno", color: "#f97316", secondary: "#fbbf24" },
+              { type: "snow", label: "Frostbite", color: "#38bdf8", secondary: "#e0f2fe" },
+              { type: "crystals", label: "Crystal", color: "#818cf8", secondary: "#c4b5fd" },
+              { type: "void", label: "Void", color: "#7c3aed", secondary: "#4c1d95" },
+              { type: "aurora", label: "Aurora", color: "#14b8a6", secondary: "#ec4899" },
+              { type: "lightning", label: "Thunder", color: "#fef08a", secondary: "#38bdf8" },
+              { type: "blood", label: "Crimson", color: "#dc2626", secondary: "#b91c1c" },
+            ].map((effect) => (
+              <div key={effect.type} className="space-y-1">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  {effect.label}
+                </span>
+                <MythicProgressBar
+                  value={65 + Math.random() * 30}
+                  max={100}
+                  variant={effect.type as any}
+                  height={14}
+                  showGlow
+                  animated
+                  particleConfig={{
+                    type: effect.type as "stars" | "fire" | "snow" | "crystals" | "void" | "blood" | "aurora" | "lightning",
+                    color: effect.color,
+                    secondaryColor: effect.secondary,
+                    density: 0.9,
+                    speed: 1.8,
+                    glow: true,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
