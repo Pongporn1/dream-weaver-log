@@ -2,26 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { addDreamLog, getWorlds, getEntities } from "@/lib/api";
-import {
-  ENVIRONMENTS,
-  TIME_SYSTEMS,
-  SAFETY_OVERRIDES,
-  EXIT_TYPES,
-  DreamLog,
-} from "@/types/dream";
+import { DreamLog } from "@/types/dream";
 import { toast } from "@/hooks/use-toast";
+import {
+  DateTimeFields,
+  WorldSelector,
+  EnvironmentSelector,
+  EntitySelector,
+  DreamSettings,
+} from "@/components/dream-form";
 
 export default function NewDreamLog() {
   const navigate = useNavigate();
@@ -63,16 +55,11 @@ export default function NewDreamLog() {
 
     try {
       const worldName = form.newWorld || form.world;
-
       const entityNames = [...form.selectedEntities];
-      if (form.newEntity) {
-        entityNames.push(form.newEntity);
-      }
+      if (form.newEntity) entityNames.push(form.newEntity);
 
       const environmentNames = [...form.environments];
-      if (form.newEnvironment) {
-        environmentNames.push(form.newEnvironment);
-      }
+      if (form.newEnvironment) environmentNames.push(form.newEnvironment);
 
       const result = await addDreamLog({
         date: form.date,
@@ -119,6 +106,16 @@ export default function NewDreamLog() {
     }));
   };
 
+  const handleAddEnvironment = () => {
+    if (form.newEnvironment && !form.environments.includes(form.newEnvironment)) {
+      setForm((prev) => ({
+        ...prev,
+        environments: [...prev.environments, prev.newEnvironment],
+        newEnvironment: "",
+      }));
+    }
+  };
+
   return (
     <div className="py-4">
       <div className="flex items-center gap-2 mb-6">
@@ -129,253 +126,47 @@ export default function NewDreamLog() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Date & Time */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={form.date}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, date: e.target.value }))
-              }
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="wakeTime">Wake Time</Label>
-            <Input
-              id="wakeTime"
-              type="time"
-              value={form.wakeTime}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, wakeTime: e.target.value }))
-              }
-              required
-            />
-          </div>
-        </div>
+        <DateTimeFields
+          date={form.date}
+          wakeTime={form.wakeTime}
+          onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
+          onWakeTimeChange={(v) => setForm((prev) => ({ ...prev, wakeTime: v }))}
+        />
 
-        {/* World */}
-        <div className="space-y-2">
-          <Label>World</Label>
-          <Select
-            value={form.world}
-            onValueChange={(v) => setForm((prev) => ({ ...prev, world: v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select or create new" />
-            </SelectTrigger>
-            <SelectContent>
-              {worlds.map((w) => (
-                <SelectItem key={w.id} value={w.name}>
-                  {w.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            placeholder="หรือสร้างโลกใหม่..."
-            value={form.newWorld}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, newWorld: e.target.value }))
-            }
-          />
-        </div>
+        <WorldSelector
+          worlds={worlds}
+          selectedWorld={form.world}
+          newWorld={form.newWorld}
+          onWorldChange={(v) => setForm((prev) => ({ ...prev, world: v }))}
+          onNewWorldChange={(v) => setForm((prev) => ({ ...prev, newWorld: v }))}
+        />
 
-        {/* Time System */}
-        <div className="space-y-2">
-          <Label>Time System</Label>
-          <Select
-            value={form.timeSystem}
-            onValueChange={(v) =>
-              setForm((prev) => ({
-                ...prev,
-                timeSystem: v as DreamLog["timeSystem"],
-              }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIME_SYSTEMS.map((ts) => (
-                <SelectItem key={ts} value={ts}>
-                  {ts}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <DreamSettings
+          timeSystem={form.timeSystem}
+          threatLevel={form.threatLevel}
+          safetyOverride={form.safetyOverride}
+          exit={form.exit}
+          onTimeSystemChange={(v) => setForm((prev) => ({ ...prev, timeSystem: v }))}
+          onThreatLevelChange={(v) => setForm((prev) => ({ ...prev, threatLevel: v }))}
+          onSafetyOverrideChange={(v) => setForm((prev) => ({ ...prev, safetyOverride: v }))}
+          onExitChange={(v) => setForm((prev) => ({ ...prev, exit: v }))}
+        />
 
-        {/* Environments */}
-        <div className="space-y-2">
-          <Label>Environments</Label>
-          <div className="flex flex-wrap gap-2">
-            {ENVIRONMENTS.map((env) => (
-              <button
-                key={env}
-                type="button"
-                onClick={() => toggleEnvironment(env)}
-                className={`tag transition-colors ${
-                  form.environments.includes(env)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-secondary"
-                }`}
-              >
-                {env}
-              </button>
-            ))}
-          </div>
+        <EnvironmentSelector
+          selectedEnvironments={form.environments}
+          newEnvironment={form.newEnvironment}
+          onToggleEnvironment={toggleEnvironment}
+          onNewEnvironmentChange={(v) => setForm((prev) => ({ ...prev, newEnvironment: v }))}
+          onAddEnvironment={handleAddEnvironment}
+        />
 
-          {/* Add custom environment */}
-          <div className="flex gap-2 mt-2">
-            <Input
-              type="text"
-              placeholder="เพิ่ม environment ใหม่..."
-              value={form.newEnvironment}
-              onChange={(e) =>
-                setForm({ ...form, newEnvironment: e.target.value })
-              }
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!form.newEnvironment}
-              onClick={() => {
-                if (
-                  form.newEnvironment &&
-                  !form.environments.includes(form.newEnvironment)
-                ) {
-                  setForm((prev) => ({
-                    ...prev,
-                    environments: [...prev.environments, prev.newEnvironment],
-                    newEnvironment: "",
-                  }));
-                }
-              }}
-            >
-              เพิ่ม
-            </Button>
-          </div>
-
-          {/* Show custom environments */}
-          {form.environments.filter((env) => !ENVIRONMENTS.includes(env as any))
-            .length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t">
-              {form.environments
-                .filter((env) => !ENVIRONMENTS.includes(env as any))
-                .map((env) => (
-                  <button
-                    key={env}
-                    type="button"
-                    onClick={() => toggleEnvironment(env)}
-                    className="tag bg-primary text-primary-foreground"
-                  >
-                    {env}
-                  </button>
-                ))}
-            </div>
-          )}
-        </div>
-
-        {/* Entities */}
-        <div className="space-y-2">
-          <Label>Entities</Label>
-          <div className="space-y-2">
-            {entities.map((entity) => (
-              <div key={entity.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={entity.id}
-                  checked={form.selectedEntities.includes(entity.name)}
-                  onCheckedChange={() => toggleEntity(entity.name)}
-                />
-                <label htmlFor={entity.id} className="text-sm">
-                  {entity.name}
-                </label>
-              </div>
-            ))}
-          </div>
-          <Input
-            placeholder="หรือเพิ่ม entity ใหม่..."
-            value={form.newEntity}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, newEntity: e.target.value }))
-            }
-          />
-        </div>
-
-        {/* Threat Level */}
-        <div className="space-y-2">
-          <Label>Threat Level: {form.threatLevel}</Label>
-          <input
-            type="range"
-            min="0"
-            max="5"
-            value={form.threatLevel}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                threatLevel: Number(e.target.value) as DreamLog["threatLevel"],
-              }))
-            }
-            className="w-full accent-primary"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0</span>
-            <span>5</span>
-          </div>
-        </div>
-
-        {/* Safety Override */}
-        <div className="space-y-2">
-          <Label>Safety Override</Label>
-          <Select
-            value={form.safetyOverride}
-            onValueChange={(v) =>
-              setForm((prev) => ({
-                ...prev,
-                safetyOverride: v as DreamLog["safetyOverride"],
-              }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SAFETY_OVERRIDES.map((so) => (
-                <SelectItem key={so} value={so}>
-                  {so}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Exit */}
-        <div className="space-y-2">
-          <Label>Exit</Label>
-          <Select
-            value={form.exit}
-            onValueChange={(v) =>
-              setForm((prev) => ({ ...prev, exit: v as DreamLog["exit"] }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EXIT_TYPES.map((ex) => (
-                <SelectItem key={ex} value={ex}>
-                  {ex}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <EntitySelector
+          entities={entities}
+          selectedEntities={form.selectedEntities}
+          newEntity={form.newEntity}
+          onToggleEntity={toggleEntity}
+          onNewEntityChange={(v) => setForm((prev) => ({ ...prev, newEntity: v }))}
+        />
 
         {/* Notes */}
         <div className="space-y-2">
@@ -384,9 +175,7 @@ export default function NewDreamLog() {
             id="notes"
             placeholder="รายละเอียดเพิ่มเติม..."
             value={form.notes}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, notes: e.target.value }))
-            }
+            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
             className="min-h-[80px]"
           />
         </div>
