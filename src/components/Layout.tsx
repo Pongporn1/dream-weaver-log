@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 container-app">{children}</main>
+      <main className="flex-1 container-app pb-24">{children}</main>
 
       {/* Bottom navigation - mobile */}
       <BottomNavigation />

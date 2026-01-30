@@ -50,7 +50,7 @@ export default function Home() {
       <AnimatedProfileHeader />
 
       <PullToRefresh onRefresh={handleRefresh} className="flex-1">
-        <div className="space-y-8 py-4 container-app">
+        <div className="space-y-8 py-4 pb-28 container-app">
           <HomeGreeting />
 
           <QuickDreamEntry

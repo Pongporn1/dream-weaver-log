@@ -144,7 +144,7 @@ export default function Library() {
         </div>
 
         <TabsContent value="dreams" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full pb-20">
+          <ScrollArea className="h-full pb-28">
             {loading ? (
               <LibraryPageSkeleton />
             ) : filteredDreams.length === 0 ? (
@@ -200,7 +200,7 @@ export default function Library() {
         </TabsContent>
 
         <TabsContent value="codex" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full pb-20">
+          <ScrollArea className="h-full pb-28">
             <div className="p-4">
               <MythicCodex />
             </div>
