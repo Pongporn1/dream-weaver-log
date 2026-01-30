@@ -16,6 +16,7 @@ import { DatabaseUsage } from "@/components/stats/DatabaseUsage";
 import { StatsOverviewCards } from "@/components/stats/StatsOverviewCards";
 import { InsightsCards } from "@/components/stats/InsightsCards";
 import { ThreatDistribution } from "@/components/stats/ThreatDistribution";
+import { AnimatedStatsSection } from "@/components/stats/AnimatedStatsSection";
 import {
   TopWorldsList,
   TopEntitiesList,
@@ -102,77 +103,117 @@ export default function Statistics() {
   return (
     <div className="py-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary" />
-          <h1>Statistics & Insights</h1>
+      <AnimatedStatsSection delay={0} duration={400}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h1>Statistics & Insights</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {lastUpdate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {lastUpdate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => loadData(true)}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          </Button>
-        </div>
-      </div>
+      </AnimatedStatsSection>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="patterns">Patterns</TabsTrigger>
-        </TabsList>
+      <AnimatedStatsSection delay={80} duration={400}>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="patterns">Patterns</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <InsightsCards
-            dreams={dreams}
-            worldCounts={worldCounts}
-            timeSystemCounts={timeSystemCounts}
-          />
-          <DatabaseUsage
-            totalDreams={totalDreams}
-            worldsCount={worlds.length}
-            entitiesCount={entities.length}
-            threatsCount={threats.length}
-          />
-          <StatsOverviewCards
-            totalDreams={totalDreams}
-            avgThreatLevel={avgThreatLevel}
-            threatTrend={threatTrend}
-            worldsCount={worlds.length}
-            entitiesCount={entities.length}
-          />
-          <ThreatDistribution dreams={dreams} />
-          <TopWorldsList worlds={worlds} />
-          <TopEntitiesList entities={entities} />
-          <ThreatAnalysis threats={threats} />
-          <TimeSystemUsage dreams={dreams} />
-          <TopEnvironments dreams={dreams} />
-          <SafetyOverrideStats dreams={dreams} />
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-6">
+            <AnimatedStatsSection delay={160} duration={400}>
+              <InsightsCards
+                dreams={dreams}
+                worldCounts={worldCounts}
+                timeSystemCounts={timeSystemCounts}
+              />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={240} duration={400}>
+              <DatabaseUsage
+                totalDreams={totalDreams}
+                worldsCount={worlds.length}
+                entitiesCount={entities.length}
+                threatsCount={threats.length}
+              />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={320} duration={400}>
+              <StatsOverviewCards
+                totalDreams={totalDreams}
+                avgThreatLevel={avgThreatLevel}
+                threatTrend={threatTrend}
+                worldsCount={worlds.length}
+                entitiesCount={entities.length}
+              />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={400} duration={400}>
+              <ThreatDistribution dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={480} duration={400}>
+              <TopWorldsList worlds={worlds} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={560} duration={400}>
+              <TopEntitiesList entities={entities} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={640} duration={400}>
+              <ThreatAnalysis threats={threats} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={720} duration={400}>
+              <TimeSystemUsage dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={800} duration={400}>
+              <TopEnvironments dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={880} duration={400}>
+              <SafetyOverrideStats dreams={dreams} />
+            </AnimatedStatsSection>
+          </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <DreamFrequencyChart dreams={dreams} mode="week" />
-          <DreamFrequencyChart dreams={dreams} mode="month" />
-          <ThreatTrends dreams={dreams} />
-          <WordCloud dreams={dreams} />
-          <TopTags dreams={dreams} />
-          <StreakCounter dreams={dreams} />
-        </TabsContent>
+          <TabsContent value="analytics" className="space-y-6">
+            <AnimatedStatsSection delay={100} duration={400}>
+              <DreamFrequencyChart dreams={dreams} mode="week" />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={180} duration={400}>
+              <DreamFrequencyChart dreams={dreams} mode="month" />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={260} duration={400}>
+              <ThreatTrends dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={340} duration={400}>
+              <WordCloud dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={420} duration={400}>
+              <TopTags dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={500} duration={400}>
+              <StreakCounter dreams={dreams} />
+            </AnimatedStatsSection>
+          </TabsContent>
 
-        <TabsContent value="patterns" className="space-y-6">
-          <RecurringPatterns dreams={dreams} entities={entities} />
-          <EntityFrequency dreams={dreams} entities={entities} />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="patterns" className="space-y-6">
+            <AnimatedStatsSection delay={100} duration={400}>
+              <RecurringPatterns dreams={dreams} entities={entities} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={180} duration={400}>
+              <EntityFrequency dreams={dreams} entities={entities} />
+            </AnimatedStatsSection>
+          </TabsContent>
+        </Tabs>
+      </AnimatedStatsSection>
     </div>
   );
 }
