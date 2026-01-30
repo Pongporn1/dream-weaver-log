@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,38 @@ import {
   EntitySelector,
   DreamSettings,
 } from "@/components/dream-form";
+
+// Animation wrapper component
+function AnimatedField({ 
+  children, 
+  delay = 0, 
+  duration = 400 
+}: { 
+  children: ReactNode; 
+  delay?: number; 
+  duration?: number;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsVisible(true), delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+
+  return (
+    <div
+      className="transition-all"
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : "translateY(16px)",
+        transitionDuration: `${duration}ms`,
+        transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function NewDreamLog() {
   const navigate = useNavigate();
@@ -118,71 +150,87 @@ export default function NewDreamLog() {
 
   return (
     <div className="py-4">
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <h1>บันทึกฝันใหม่</h1>
-      </div>
+      <AnimatedField delay={0} duration={400}>
+        <div className="flex items-center gap-2 mb-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h1>บันทึกฝันใหม่</h1>
+        </div>
+      </AnimatedField>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <DateTimeFields
-          date={form.date}
-          wakeTime={form.wakeTime}
-          onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
-          onWakeTimeChange={(v) => setForm((prev) => ({ ...prev, wakeTime: v }))}
-        />
+        <AnimatedField delay={60} duration={400}>
+          <DateTimeFields
+            date={form.date}
+            wakeTime={form.wakeTime}
+            onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
+            onWakeTimeChange={(v) => setForm((prev) => ({ ...prev, wakeTime: v }))}
+          />
+        </AnimatedField>
 
-        <WorldSelector
-          worlds={worlds}
-          selectedWorld={form.world}
-          newWorld={form.newWorld}
-          onWorldChange={(v) => setForm((prev) => ({ ...prev, world: v }))}
-          onNewWorldChange={(v) => setForm((prev) => ({ ...prev, newWorld: v }))}
-        />
+        <AnimatedField delay={120} duration={400}>
+          <WorldSelector
+            worlds={worlds}
+            selectedWorld={form.world}
+            newWorld={form.newWorld}
+            onWorldChange={(v) => setForm((prev) => ({ ...prev, world: v }))}
+            onNewWorldChange={(v) => setForm((prev) => ({ ...prev, newWorld: v }))}
+          />
+        </AnimatedField>
 
-        <DreamSettings
-          timeSystem={form.timeSystem}
-          threatLevel={form.threatLevel}
-          safetyOverride={form.safetyOverride}
-          exit={form.exit}
-          onTimeSystemChange={(v) => setForm((prev) => ({ ...prev, timeSystem: v }))}
-          onThreatLevelChange={(v) => setForm((prev) => ({ ...prev, threatLevel: v }))}
-          onSafetyOverrideChange={(v) => setForm((prev) => ({ ...prev, safetyOverride: v }))}
-          onExitChange={(v) => setForm((prev) => ({ ...prev, exit: v }))}
-        />
+        <AnimatedField delay={180} duration={400}>
+          <DreamSettings
+            timeSystem={form.timeSystem}
+            threatLevel={form.threatLevel}
+            safetyOverride={form.safetyOverride}
+            exit={form.exit}
+            onTimeSystemChange={(v) => setForm((prev) => ({ ...prev, timeSystem: v }))}
+            onThreatLevelChange={(v) => setForm((prev) => ({ ...prev, threatLevel: v }))}
+            onSafetyOverrideChange={(v) => setForm((prev) => ({ ...prev, safetyOverride: v }))}
+            onExitChange={(v) => setForm((prev) => ({ ...prev, exit: v }))}
+          />
+        </AnimatedField>
 
-        <EnvironmentSelector
-          selectedEnvironments={form.environments}
-          newEnvironment={form.newEnvironment}
-          onToggleEnvironment={toggleEnvironment}
-          onNewEnvironmentChange={(v) => setForm((prev) => ({ ...prev, newEnvironment: v }))}
-          onAddEnvironment={handleAddEnvironment}
-        />
+        <AnimatedField delay={240} duration={400}>
+          <EnvironmentSelector
+            selectedEnvironments={form.environments}
+            newEnvironment={form.newEnvironment}
+            onToggleEnvironment={toggleEnvironment}
+            onNewEnvironmentChange={(v) => setForm((prev) => ({ ...prev, newEnvironment: v }))}
+            onAddEnvironment={handleAddEnvironment}
+          />
+        </AnimatedField>
 
-        <EntitySelector
-          entities={entities}
-          selectedEntities={form.selectedEntities}
-          newEntity={form.newEntity}
-          onToggleEntity={toggleEntity}
-          onNewEntityChange={(v) => setForm((prev) => ({ ...prev, newEntity: v }))}
-        />
+        <AnimatedField delay={300} duration={400}>
+          <EntitySelector
+            entities={entities}
+            selectedEntities={form.selectedEntities}
+            newEntity={form.newEntity}
+            onToggleEntity={toggleEntity}
+            onNewEntityChange={(v) => setForm((prev) => ({ ...prev, newEntity: v }))}
+          />
+        </AnimatedField>
 
         {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes (optional)</Label>
-          <Textarea
-            id="notes"
-            placeholder="รายละเอียดเพิ่มเติม..."
-            value={form.notes}
-            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-            className="min-h-[80px]"
-          />
-        </div>
+        <AnimatedField delay={360} duration={400}>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="รายละเอียดเพิ่มเติม..."
+              value={form.notes}
+              onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+              className="min-h-[80px]"
+            />
+          </div>
+        </AnimatedField>
 
-        <Button type="submit" className="w-full" disabled={saving}>
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
-        </Button>
+        <AnimatedField delay={420} duration={400}>
+          <Button type="submit" className="w-full" disabled={saving}>
+            {saving ? "กำลังบันทึก..." : "บันทึก"}
+          </Button>
+        </AnimatedField>
       </form>
     </div>
   );
