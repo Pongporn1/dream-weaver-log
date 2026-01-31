@@ -39,7 +39,14 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        // Cache busting - force immediate update
+        skipWaiting: true,
+        clientsClaim: true,
+        // Clean old caches
+        cleanupOutdatedCaches: true,
+        // Add version to precache for cache busting
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // Shorter cache expiration
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -48,7 +55,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "google-fonts-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year)
               },
               cacheableResponse: {
                 statuses: [0, 200],
@@ -62,14 +69,31 @@ export default defineConfig(({ mode }) => ({
               cacheName: "gstatic-fonts-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year)
               },
               cacheableResponse: {
                 statuses: [0, 200],
               },
             },
           },
+          {
+            // API calls - network first
+            urlPattern: /^https:\/\/.*supabase.*\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5, // 5 minutes
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
         ],
+      },
+      // Dev options for testing
+      devOptions: {
+        enabled: false,
       },
     }),
   ],
