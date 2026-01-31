@@ -29,27 +29,42 @@ export function usePullToRefresh({
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (isRefreshing) return;
     
-    const container = containerRef.current;
-    if (!container) return;
-    
-    // Only start pull if at top of scroll
-    if (container.scrollTop <= 0) {
-      startY.current = e.touches[0].clientY;
-      setIsPulling(true);
-    }
+    // Always record start position
+    startY.current = e.touches[0].clientY;
   }, [isRefreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isPulling || isRefreshing) return;
+    if (isRefreshing) return;
+    
+    const container = containerRef.current;
+    if (!container) return;
     
     currentY.current = e.touches[0].clientY;
-    const distance = Math.max(0, (currentY.current - startY.current) / resistance);
+    const deltaY = currentY.current - startY.current;
     
-    if (distance > 0) {
-      e.preventDefault();
-      setPullDistance(distance);
+    // Only activate pull-to-refresh when:
+    // 1. At the very top of scroll (scrollTop === 0)
+    // 2. Pulling downward (deltaY > 0)
+    const isAtTop = container.scrollTop <= 0;
+    const isPullingDown = deltaY > 0;
+    
+    if (isAtTop && isPullingDown) {
+      const distance = deltaY / resistance;
+      
+      if (distance > 5) {
+        // Only prevent default and set pulling when we have significant pull
+        e.preventDefault();
+        setIsPulling(true);
+        setPullDistance(distance);
+      }
+    } else {
+      // Allow normal scrolling
+      if (isPulling && !isPullingDown) {
+        setIsPulling(false);
+        setPullDistance(0);
+      }
     }
-  }, [isPulling, isRefreshing, resistance]);
+  }, [isRefreshing, resistance, isPulling]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPulling || isRefreshing) return;
