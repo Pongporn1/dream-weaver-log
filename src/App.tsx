@@ -20,11 +20,15 @@ import { applyMoonTheme } from "@/utils/moonTheme";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Version for cache busting verification
+  const APP_VERSION = "2025.01.31.001";
+
   // Apply moon theme globally on app mount
   useEffect(() => {
     const phenomenon = getSessionPhenomenon();
     applyMoonTheme(phenomenon);
     console.log("🌙 Global Moon Theme Applied:", phenomenon.name);
+    console.log(`📦 App Version: ${APP_VERSION} | Build: ${new Date().toISOString()}`);
   }, []);
 
   return (
