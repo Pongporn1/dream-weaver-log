@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+import { writeFileSync } from "fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -101,5 +102,21 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    outDir: "dist",
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+  // Hook to create .nojekyll after build
+  closeBundle() {
+    try {
+      writeFileSync("dist/.nojekyll", "");
+    } catch (e) {
+      console.warn("Could not create .nojekyll file:", e);
+    }
   },
 }));
