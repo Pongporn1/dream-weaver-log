@@ -235,7 +235,7 @@ export function useMythicCollection() {
     });
   }, []);
 
-  // Add duration boost to a moon (max 300 seconds / 5 minutes)
+  // Add duration boost to a moon (max 86400 seconds / 1 day)
   const addDurationBoost = useCallback((moonId: string, seconds: number) => {
     setCollection((prev) => {
       const existing = prev[moonId];
@@ -245,7 +245,7 @@ export function useMythicCollection() {
         ...prev,
         [moonId]: {
           ...existing,
-          themeDurationBoost: Math.min(300, existing.themeDurationBoost + seconds),
+          themeDurationBoost: Math.min(86400, existing.themeDurationBoost + seconds),
         },
       };
     });
