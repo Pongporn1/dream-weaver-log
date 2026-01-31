@@ -9,7 +9,8 @@ export interface MoonCollectionEntry {
   encounterCount: number;
   lastEncountered: string; // ISO date
   isFavorite: boolean;
-  themeDurationBoost: number; // seconds of bonus time (0-300)
+  isLocked: boolean; // Lock moon permanently (no random re-roll)
+  themeDurationBoost: number; // seconds of bonus time (0-86400)
 }
 
 // Collection stats
@@ -35,7 +36,7 @@ export interface MythicParticleConfig {
 }
 
 const STORAGE_KEY = "mythic-moon-collection";
-const BOOST_STORAGE_KEY = "mythic-theme-boosts";
+const LOCKED_MOON_KEY = "mythic-locked-moon";
 
 // Particle configs for each Mythic moon
 export const MYTHIC_PARTICLE_CONFIGS: Record<string, MythicParticleConfig> = {
@@ -147,27 +148,17 @@ export const MYTHIC_PARTICLE_CONFIGS: Record<string, MythicParticleConfig> = {
 
 export function useMythicCollection() {
   const [collection, setCollection] = useState<Record<string, MoonCollectionEntry>>({});
-  const [themeBoosts, setThemeBoosts] = useState<Record<string, number>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    const boosts = localStorage.getItem(BOOST_STORAGE_KEY);
     
     if (stored) {
       try {
         setCollection(JSON.parse(stored));
       } catch (e) {
         console.error("Failed to parse moon collection:", e);
-      }
-    }
-    
-    if (boosts) {
-      try {
-        setThemeBoosts(JSON.parse(boosts));
-      } catch (e) {
-        console.error("Failed to parse theme boosts:", e);
       }
     }
     
@@ -180,12 +171,6 @@ export function useMythicCollection() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
     }
   }, [collection, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(BOOST_STORAGE_KEY, JSON.stringify(themeBoosts));
-    }
-  }, [themeBoosts, isLoaded]);
 
   // Record an encounter with a moon
   const recordEncounter = useCallback((phenomenon: MoonPhenomenon) => {
@@ -213,6 +198,7 @@ export function useMythicCollection() {
           encounterCount: 1,
           lastEncountered: now,
           isFavorite: false,
+          isLocked: false,
           themeDurationBoost: 0,
         },
       };
@@ -233,6 +219,46 @@ export function useMythicCollection() {
         },
       };
     });
+  }, []);
+
+  // Toggle lock status - permanently lock a moon theme
+  const toggleLock = useCallback((moonId: string) => {
+    setCollection((prev) => {
+      const existing = prev[moonId];
+      if (!existing) return prev;
+      
+      const newIsLocked = !existing.isLocked;
+      
+      // Update localStorage for locked moon
+      if (newIsLocked) {
+        localStorage.setItem(LOCKED_MOON_KEY, moonId);
+        console.log(`🔒 Moon locked: ${moonId}`);
+      } else {
+        localStorage.removeItem(LOCKED_MOON_KEY);
+        console.log(`🔓 Moon unlocked: ${moonId}`);
+      }
+      
+      // Unlock any other moons (only one can be locked at a time)
+      const updated = { ...prev };
+      Object.keys(updated).forEach((id) => {
+        if (id !== moonId && updated[id].isLocked) {
+          updated[id] = { ...updated[id], isLocked: false };
+        }
+      });
+      
+      return {
+        ...updated,
+        [moonId]: {
+          ...existing,
+          isLocked: newIsLocked,
+        },
+      };
+    });
+  }, []);
+
+  // Get currently locked moon ID
+  const getLockedMoonId = useCallback((): string | null => {
+    return localStorage.getItem(LOCKED_MOON_KEY);
   }, []);
 
   // Add duration boost to a moon (max 86400 seconds / 1 day)
@@ -311,6 +337,8 @@ export function useMythicCollection() {
     isLoaded,
     recordEncounter,
     toggleFavorite,
+    toggleLock,
+    getLockedMoonId,
     addDurationBoost,
     getEffectiveThemeDuration,
     getStats,

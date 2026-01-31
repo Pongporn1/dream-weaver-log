@@ -2,6 +2,7 @@ import {
   MoonRarity,
   MoonPhenomenon,
   getAllPhenomena,
+  MOON_PHENOMENA,
 } from "@/data/moonPhenomena";
 
 // Rarity weights (adjusted for better user experience)
@@ -17,6 +18,7 @@ const RARITY_WEIGHTS: Record<MoonRarity, number> = {
 const STORAGE_KEY = "dreambook_moon_phenomenon";
 const EXPIRY_KEY = "dreambook_moon_expiry";
 const BOOST_COLLECTION_KEY = "mythic-moon-collection";
+const LOCKED_MOON_KEY = "mythic-locked-moon";
 
 // Base duration before re-rolling (in milliseconds)
 const BASE_DURATION_MS = 30 * 60 * 1000; // 30 minutes base
@@ -73,10 +75,32 @@ const calculateTotalDuration = (phenomenon: MoonPhenomenon): number => {
 };
 
 /**
+ * Get locked moon phenomenon if any
+ */
+const getLockedMoon = (): MoonPhenomenon | null => {
+  const lockedId = localStorage.getItem(LOCKED_MOON_KEY);
+  if (lockedId && MOON_PHENOMENA[lockedId]) {
+    return MOON_PHENOMENA[lockedId];
+  }
+  return null;
+};
+
+/**
  * Get or create session phenomenon
  * Stored in localStorage with expiry based on duration boost
+ * If a moon is locked, always return that moon
  */
 export const getSessionPhenomenon = (): MoonPhenomenon => {
+  // First, check if there's a locked moon
+  const lockedMoon = getLockedMoon();
+  if (lockedMoon) {
+    console.log(`🔒 Using locked moon: ${lockedMoon.name}`);
+    // Store it as current phenomenon (no expiry needed for locked moons)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lockedMoon));
+    localStorage.removeItem(EXPIRY_KEY); // No expiry for locked moons
+    return lockedMoon;
+  }
+
   const now = Date.now();
 
   // Try to get existing phenomenon from localStorage
