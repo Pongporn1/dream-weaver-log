@@ -5,7 +5,6 @@ import {
 } from "@/data/moonPhenomena";
 
 // Rarity weights (adjusted for better user experience)
-// Total: 120% (will be normalized by total weight calculation)
 const RARITY_WEIGHTS: Record<MoonRarity, number> = {
   normal: 70, // 70% - ดวงจันทร์ 8 เฟส (ออกบ่อยที่สุด)
   rare: 20, // 20% - Supermoon, Earthshine (หายากพอประมาณ)
@@ -13,6 +12,14 @@ const RARITY_WEIGHTS: Record<MoonRarity, number> = {
   legendary: 10, // 10% - Blood Moon, Still Moon (หายากมากๆ)
   mythic: 5, // 5% - Empty Sky, Crystal Moon (หายากที่สุด)
 };
+
+// Storage keys
+const STORAGE_KEY = "dreambook_moon_phenomenon";
+const EXPIRY_KEY = "dreambook_moon_expiry";
+const BOOST_COLLECTION_KEY = "mythic-moon-collection";
+
+// Base duration before re-rolling (in milliseconds)
+const BASE_DURATION_MS = 30 * 60 * 1000; // 30 minutes base
 
 /**
  * Select a random moon phenomenon based on rarity weights
@@ -41,21 +48,57 @@ export const selectRandomPhenomenon = (): MoonPhenomenon => {
 };
 
 /**
+ * Get duration boost for a specific moon from collection
+ */
+const getDurationBoost = (moonId: string): number => {
+  try {
+    const stored = localStorage.getItem(BOOST_COLLECTION_KEY);
+    if (stored) {
+      const collection = JSON.parse(stored);
+      return collection[moonId]?.themeDurationBoost || 0;
+    }
+  } catch (e) {
+    console.error("Failed to get duration boost:", e);
+  }
+  return 0;
+};
+
+/**
+ * Calculate total duration for a phenomenon (base + boost)
+ */
+const calculateTotalDuration = (phenomenon: MoonPhenomenon): number => {
+  const boost = getDurationBoost(phenomenon.id);
+  const boostMs = boost * 1000; // Convert seconds to milliseconds
+  return BASE_DURATION_MS + boostMs;
+};
+
+/**
  * Get or create session phenomenon
- * One phenomenon per session - stored in sessionStorage
+ * Stored in localStorage with expiry based on duration boost
  */
 export const getSessionPhenomenon = (): MoonPhenomenon => {
-  const STORAGE_KEY = "dreambook_moon_phenomenon";
+  const now = Date.now();
 
-  // Try to get existing phenomenon from sessionStorage
-  const stored = sessionStorage.getItem(STORAGE_KEY);
+  // Try to get existing phenomenon from localStorage
+  const storedPhenomenon = localStorage.getItem(STORAGE_KEY);
+  const storedExpiry = localStorage.getItem(EXPIRY_KEY);
 
-  if (stored) {
+  if (storedPhenomenon && storedExpiry) {
     try {
-      const parsed = JSON.parse(stored);
-      // Validate that it's still a valid phenomenon
-      if (parsed && parsed.id) {
+      const parsed = JSON.parse(storedPhenomenon);
+      const expiryTime = parseInt(storedExpiry, 10);
+
+      // Check if still valid (not expired)
+      if (parsed && parsed.id && now < expiryTime) {
+        const remainingMs = expiryTime - now;
+        const remainingMins = Math.round(remainingMs / 60000);
+        console.log(`🌙 Moon theme valid for ${remainingMins} more minutes`);
         return parsed as MoonPhenomenon;
+      }
+
+      // Expired - log it
+      if (now >= expiryTime) {
+        console.log("🌙 Moon theme expired, selecting new one...");
       }
     } catch (e) {
       console.error("Failed to parse stored phenomenon:", e);
@@ -65,25 +108,85 @@ export const getSessionPhenomenon = (): MoonPhenomenon => {
   // No valid stored phenomenon - select a new one
   const newPhenomenon = selectRandomPhenomenon();
 
-  // Store for this session
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPhenomenon));
+  // Calculate expiry based on boost
+  const duration = calculateTotalDuration(newPhenomenon);
+  const expiryTime = now + duration;
+
+  // Store for persistence
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newPhenomenon));
+  localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
+
+  const durationMins = Math.round(duration / 60000);
+  console.log(`🌙 New moon selected: ${newPhenomenon.name} (duration: ${durationMins} minutes)`);
 
   return newPhenomenon;
 };
 
 /**
- * Clear session phenomenon (for testing/debugging)
+ * Extend current phenomenon duration by adding boost
+ */
+export const extendPhenomenonDuration = (additionalSeconds: number): void => {
+  const storedExpiry = localStorage.getItem(EXPIRY_KEY);
+  if (storedExpiry) {
+    const currentExpiry = parseInt(storedExpiry, 10);
+    const newExpiry = currentExpiry + (additionalSeconds * 1000);
+    localStorage.setItem(EXPIRY_KEY, newExpiry.toString());
+    console.log(`🌙 Extended duration by ${additionalSeconds}s`);
+  }
+};
+
+/**
+ * Get remaining time for current phenomenon (in seconds)
+ */
+export const getRemainingTime = (): number => {
+  const storedExpiry = localStorage.getItem(EXPIRY_KEY);
+  if (storedExpiry) {
+    const expiryTime = parseInt(storedExpiry, 10);
+    const remaining = Math.max(0, expiryTime - Date.now());
+    return Math.floor(remaining / 1000);
+  }
+  return 0;
+};
+
+/**
+ * Clear session phenomenon (for testing/debugging or force refresh)
  */
 export const clearSessionPhenomenon = (): void => {
-  sessionStorage.removeItem("dreambook_moon_phenomenon");
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(EXPIRY_KEY);
+  console.log("🌙 Moon phenomenon cleared");
 };
 
 /**
  * Force set a specific phenomenon (for testing/debugging)
  */
 export const setSessionPhenomenon = (phenomenon: MoonPhenomenon): void => {
-  sessionStorage.setItem(
-    "dreambook_moon_phenomenon",
-    JSON.stringify(phenomenon),
-  );
+  const duration = calculateTotalDuration(phenomenon);
+  const expiryTime = Date.now() + duration;
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(phenomenon));
+  localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
+  
+  const durationMins = Math.round(duration / 60000);
+  console.log(`🌙 Force set: ${phenomenon.name} (duration: ${durationMins} minutes)`);
+};
+
+/**
+ * Refresh phenomenon with new duration (when boost is added)
+ */
+export const refreshPhenomenonWithBoost = (): void => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const phenomenon = JSON.parse(stored) as MoonPhenomenon;
+      const duration = calculateTotalDuration(phenomenon);
+      const expiryTime = Date.now() + duration;
+      localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
+      
+      const durationMins = Math.round(duration / 60000);
+      console.log(`🌙 Refreshed: ${phenomenon.name} with new duration: ${durationMins} minutes`);
+    } catch (e) {
+      console.error("Failed to refresh phenomenon:", e);
+    }
+  }
 };
