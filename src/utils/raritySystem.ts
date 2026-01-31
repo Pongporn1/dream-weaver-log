@@ -89,8 +89,12 @@ const getLockedMoon = (): MoonPhenomenon | null => {
  * Get or create session phenomenon
  * Stored in localStorage with expiry based on duration boost
  * If a moon is locked, always return that moon
+ * Returns { phenomenon, isNewEncounter } to track if this is a new encounter
  */
-export const getSessionPhenomenon = (): MoonPhenomenon => {
+export const getSessionPhenomenon = (): {
+  phenomenon: MoonPhenomenon;
+  isNewEncounter: boolean;
+} => {
   // First, check if there's a locked moon
   const lockedMoon = getLockedMoon();
   if (lockedMoon) {
@@ -98,7 +102,7 @@ export const getSessionPhenomenon = (): MoonPhenomenon => {
     // Store it as current phenomenon (no expiry needed for locked moons)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lockedMoon));
     localStorage.removeItem(EXPIRY_KEY); // No expiry for locked moons
-    return lockedMoon;
+    return { phenomenon: lockedMoon, isNewEncounter: false }; // Locked moon doesn't count as new encounter
   }
 
   const now = Date.now();
@@ -117,7 +121,7 @@ export const getSessionPhenomenon = (): MoonPhenomenon => {
         const remainingMs = expiryTime - now;
         const remainingMins = Math.round(remainingMs / 60000);
         console.log(`🌙 Moon theme valid for ${remainingMins} more minutes`);
-        return parsed as MoonPhenomenon;
+        return { phenomenon: parsed as MoonPhenomenon, isNewEncounter: false }; // Existing moon
       }
 
       // Expired - log it
@@ -141,9 +145,11 @@ export const getSessionPhenomenon = (): MoonPhenomenon => {
   localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
 
   const durationMins = Math.round(duration / 60000);
-  console.log(`🌙 New moon selected: ${newPhenomenon.name} (duration: ${durationMins} minutes)`);
+  console.log(
+    `🌙 New moon selected: ${newPhenomenon.name} (duration: ${durationMins} minutes)`,
+  );
 
-  return newPhenomenon;
+  return { phenomenon: newPhenomenon, isNewEncounter: true }; // This is a new encounter!
 };
 
 /**
@@ -153,7 +159,7 @@ export const extendPhenomenonDuration = (additionalSeconds: number): void => {
   const storedExpiry = localStorage.getItem(EXPIRY_KEY);
   if (storedExpiry) {
     const currentExpiry = parseInt(storedExpiry, 10);
-    const newExpiry = currentExpiry + (additionalSeconds * 1000);
+    const newExpiry = currentExpiry + additionalSeconds * 1000;
     localStorage.setItem(EXPIRY_KEY, newExpiry.toString());
     console.log(`🌙 Extended duration by ${additionalSeconds}s`);
   }
@@ -187,12 +193,14 @@ export const clearSessionPhenomenon = (): void => {
 export const setSessionPhenomenon = (phenomenon: MoonPhenomenon): void => {
   const duration = calculateTotalDuration(phenomenon);
   const expiryTime = Date.now() + duration;
-  
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(phenomenon));
   localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
-  
+
   const durationMins = Math.round(duration / 60000);
-  console.log(`🌙 Force set: ${phenomenon.name} (duration: ${durationMins} minutes)`);
+  console.log(
+    `🌙 Force set: ${phenomenon.name} (duration: ${durationMins} minutes)`,
+  );
 };
 
 /**
@@ -206,9 +214,11 @@ export const refreshPhenomenonWithBoost = (): void => {
       const duration = calculateTotalDuration(phenomenon);
       const expiryTime = Date.now() + duration;
       localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
-      
+
       const durationMins = Math.round(duration / 60000);
-      console.log(`🌙 Refreshed: ${phenomenon.name} with new duration: ${durationMins} minutes`);
+      console.log(
+        `🌙 Refreshed: ${phenomenon.name} with new duration: ${durationMins} minutes`,
+      );
     } catch (e) {
       console.error("Failed to refresh phenomenon:", e);
     }

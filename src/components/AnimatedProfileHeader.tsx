@@ -38,10 +38,10 @@ export function AnimatedProfileHeader() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
   const parallaxOffsetRef = useParallax();
-  
+
   // Mythic collection hook
   const { recordEncounter, getEffectiveThemeDuration } = useMythicCollection();
-  
+
   // Performance hooks
   const prefersReducedMotion = useReducedMotion();
   const { shouldRenderFrame } = useFPSThrottle({
@@ -65,20 +65,24 @@ export function AnimatedProfileHeader() {
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     // Regenerate moon phenomenon
-    const newPhenomenon = getSessionPhenomenon();
+    const { phenomenon: newPhenomenon, isNewEncounter } =
+      getSessionPhenomenon();
     setPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
-    
-    // Record encounter in collection
-    recordEncounter(newPhenomenon);
-    
+
+    // Record encounter in collection only if it's a new encounter
+    if (isNewEncounter) {
+      recordEncounter(newPhenomenon);
+    }
+
     // Show toast with new phenomenon
-    const rarityLabel = newPhenomenon.rarity === "mythic" ? "✨ MYTHIC ✨ " : "";
+    const rarityLabel =
+      newPhenomenon.rarity === "mythic" ? "✨ MYTHIC ✨ " : "";
     toast.success(`🌙 ${rarityLabel}${newPhenomenon.name}`, {
       description: newPhenomenon.subtitle,
       duration: newPhenomenon.rarity === "mythic" ? 5000 : 3000,
     });
-    
+
     // Small delay for visual feedback
     await new Promise((resolve) => setTimeout(resolve, 800));
   }, [recordEncounter]);
@@ -132,14 +136,21 @@ export function AnimatedProfileHeader() {
 
   // Initialize phenomenon
   useEffect(() => {
-    const sessionPhenomenon = getSessionPhenomenon();
+    const { phenomenon: sessionPhenomenon, isNewEncounter } =
+      getSessionPhenomenon();
     setPhenomenon(sessionPhenomenon);
     applyMoonTheme(sessionPhenomenon);
-    
-    // Record initial encounter in collection
-    recordEncounter(sessionPhenomenon);
-    
-    console.log("🌙 Moon Phenomenon:", sessionPhenomenon.name, `(${sessionPhenomenon.rarity})`);
+
+    // Record initial encounter in collection only if it's a new encounter
+    if (isNewEncounter) {
+      recordEncounter(sessionPhenomenon);
+    }
+
+    console.log(
+      "🌙 Moon Phenomenon:",
+      sessionPhenomenon.name,
+      `(${sessionPhenomenon.rarity})`,
+    );
   }, [recordEncounter]);
 
   // Main animation effect
@@ -192,20 +203,28 @@ export function AnimatedProfileHeader() {
       }
 
       ctx.clearRect(0, 0, width, height);
-      
+
       const baseProps = {
         ctx,
         width,
         height,
         phenomenon,
-        parallaxOffset: prefersReducedMotion ? { x: 0, y: 0 } : parallaxOffsetRef.current,
+        parallaxOffset: prefersReducedMotion
+          ? { x: 0, y: 0 }
+          : parallaxOffsetRef.current,
       };
 
       // Draw sky
       drawSky(baseProps);
 
       if (!prefersReducedMotion) {
-        drawBackgroundEffects(ctx, phenomenon, width, height, scrollOffsetRef.current);
+        drawBackgroundEffects(
+          ctx,
+          phenomenon,
+          width,
+          height,
+          scrollOffsetRef.current,
+        );
         drawAtmosphericEffects(ctx, phenomenon, width);
       }
 
@@ -225,13 +244,22 @@ export function AnimatedProfileHeader() {
       }
       moonPositionRef.current = drawMoon({
         ...baseProps,
-        moonPosition: prefersReducedMotion ? adjustedMoonPosition : moonPositionRef.current,
+        moonPosition: prefersReducedMotion
+          ? adjustedMoonPosition
+          : moonPositionRef.current,
         moonPhase: moonPhaseRef.current,
       });
 
       if (!prefersReducedMotion) {
         drawShatteredEffects(ctx, phenomenon, moonPositionRef.current);
-        drawSpecialEffects(ctx, phenomenon, moonPositionRef.current, moonRadius, width, height);
+        drawSpecialEffects(
+          ctx,
+          phenomenon,
+          moonPositionRef.current,
+          moonRadius,
+          width,
+          height,
+        );
         drawOrbitingEffects(ctx, phenomenon, moonPositionRef.current);
       }
 
@@ -279,7 +307,7 @@ export function AnimatedProfileHeader() {
   ]);
 
   return (
-    <div 
+    <div
       ref={gestureContainerRef}
       className="relative w-full h-[60vh] min-h-[400px] overflow-hidden"
       style={{
@@ -307,7 +335,7 @@ export function AnimatedProfileHeader() {
       />
       <HeaderContent phenomenon={phenomenon} />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
-      
+
       {overlayType && (
         <MoonInfoOverlay
           type={overlayType}

@@ -25,10 +25,12 @@ const App = () => {
 
   // Apply moon theme globally on app mount
   useEffect(() => {
-    const phenomenon = getSessionPhenomenon();
+    const { phenomenon } = getSessionPhenomenon();
     applyMoonTheme(phenomenon);
     console.log("🌙 Global Moon Theme Applied:", phenomenon.name);
-    console.log(`📦 App Version: ${APP_VERSION} | Build: ${new Date().toISOString()}`);
+    console.log(
+      `📦 App Version: ${APP_VERSION} | Build: ${new Date().toISOString()}`,
+    );
   }, []);
 
   return (

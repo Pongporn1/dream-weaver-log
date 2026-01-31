@@ -27,7 +27,15 @@ export interface CollectionStats {
 
 // Particle config for each Mythic moon
 export interface MythicParticleConfig {
-  type: "stars" | "fire" | "snow" | "crystals" | "void" | "blood" | "aurora" | "lightning";
+  type:
+    | "stars"
+    | "fire"
+    | "snow"
+    | "crystals"
+    | "void"
+    | "blood"
+    | "aurora"
+    | "lightning";
   color: string;
   secondaryColor?: string;
   speed: number;
@@ -147,13 +155,15 @@ export const MYTHIC_PARTICLE_CONFIGS: Record<string, MythicParticleConfig> = {
 };
 
 export function useMythicCollection() {
-  const [collection, setCollection] = useState<Record<string, MoonCollectionEntry>>({});
+  const [collection, setCollection] = useState<
+    Record<string, MoonCollectionEntry>
+  >({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    
+
     if (stored) {
       try {
         setCollection(JSON.parse(stored));
@@ -161,7 +171,7 @@ export function useMythicCollection() {
         console.error("Failed to parse moon collection:", e);
       }
     }
-    
+
     setIsLoaded(true);
   }, []);
 
@@ -175,10 +185,10 @@ export function useMythicCollection() {
   // Record an encounter with a moon
   const recordEncounter = useCallback((phenomenon: MoonPhenomenon) => {
     const now = new Date().toISOString();
-    
+
     setCollection((prev) => {
       const existing = prev[phenomenon.id];
-      
+
       if (existing) {
         return {
           ...prev,
@@ -189,7 +199,7 @@ export function useMythicCollection() {
           },
         };
       }
-      
+
       return {
         ...prev,
         [phenomenon.id]: {
@@ -210,7 +220,7 @@ export function useMythicCollection() {
     setCollection((prev) => {
       const existing = prev[moonId];
       if (!existing) return prev;
-      
+
       return {
         ...prev,
         [moonId]: {
@@ -226,9 +236,17 @@ export function useMythicCollection() {
     setCollection((prev) => {
       const existing = prev[moonId];
       if (!existing) return prev;
-      
+
+      // Require 5+ encounters to unlock the lock feature
+      if (existing.encounterCount < 5 && !existing.isLocked) {
+        console.log(
+          `🔒 Need ${5 - existing.encounterCount} more encounters to unlock Lock Theme feature`,
+        );
+        return prev;
+      }
+
       const newIsLocked = !existing.isLocked;
-      
+
       // Update localStorage for locked moon
       if (newIsLocked) {
         localStorage.setItem(LOCKED_MOON_KEY, moonId);
@@ -237,7 +255,7 @@ export function useMythicCollection() {
         localStorage.removeItem(LOCKED_MOON_KEY);
         console.log(`🔓 Moon unlocked: ${moonId}`);
       }
-      
+
       // Unlock any other moons (only one can be locked at a time)
       const updated = { ...prev };
       Object.keys(updated).forEach((id) => {
@@ -245,7 +263,7 @@ export function useMythicCollection() {
           updated[id] = { ...updated[id], isLocked: false };
         }
       });
-      
+
       return {
         ...updated,
         [moonId]: {
@@ -266,36 +284,42 @@ export function useMythicCollection() {
     setCollection((prev) => {
       const existing = prev[moonId];
       if (!existing) return prev;
-      
+
       return {
         ...prev,
         [moonId]: {
           ...existing,
-          themeDurationBoost: Math.min(86400, existing.themeDurationBoost + seconds),
+          themeDurationBoost: Math.min(
+            86400,
+            existing.themeDurationBoost + seconds,
+          ),
         },
       };
     });
   }, []);
 
   // Get effective theme duration (base + boost)
-  const getEffectiveThemeDuration = useCallback((phenomenon: MoonPhenomenon): number => {
-    const baseDuration = phenomenon.transitionSpeed * 2; // Double the transition as base
-    const entry = collection[phenomenon.id];
-    const boost = entry?.themeDurationBoost || 0;
-    return baseDuration + boost;
-  }, [collection]);
+  const getEffectiveThemeDuration = useCallback(
+    (phenomenon: MoonPhenomenon): number => {
+      const baseDuration = phenomenon.transitionSpeed * 2; // Double the transition as base
+      const entry = collection[phenomenon.id];
+      const boost = entry?.themeDurationBoost || 0;
+      return baseDuration + boost;
+    },
+    [collection],
+  );
 
   // Calculate collection stats
   const getStats = useCallback((): CollectionStats => {
     const allMoons = Object.keys(MOON_PHENOMENA);
     const discovered = Object.keys(collection);
-    
-    const countByRarity = (rarity: MoonRarity) => 
-      discovered.filter(id => MOON_PHENOMENA[id]?.rarity === rarity).length;
+
+    const countByRarity = (rarity: MoonRarity) =>
+      discovered.filter((id) => MOON_PHENOMENA[id]?.rarity === rarity).length;
 
     const totalEncounters = Object.values(collection).reduce(
       (sum, entry) => sum + entry.encounterCount,
-      0
+      0,
     );
 
     return {
@@ -306,15 +330,17 @@ export function useMythicCollection() {
       veryRareCount: countByRarity("very_rare"),
       rareCount: countByRarity("rare"),
       normalCount: countByRarity("normal"),
-      completionPercent: Math.round((discovered.length / allMoons.length) * 100),
+      completionPercent: Math.round(
+        (discovered.length / allMoons.length) * 100,
+      ),
     };
   }, [collection]);
 
   // Get all mythic moons with discovery status
   const getMythicMoons = useCallback(() => {
     return Object.values(MOON_PHENOMENA)
-      .filter(moon => moon.rarity === "mythic")
-      .map(moon => ({
+      .filter((moon) => moon.rarity === "mythic")
+      .map((moon) => ({
         ...moon,
         discovered: !!collection[moon.id],
         entry: collection[moon.id] || null,
@@ -323,14 +349,20 @@ export function useMythicCollection() {
   }, [collection]);
 
   // Get particle config for a moon
-  const getParticleConfig = useCallback((moonId: string): MythicParticleConfig | null => {
-    return MYTHIC_PARTICLE_CONFIGS[moonId] || null;
-  }, []);
+  const getParticleConfig = useCallback(
+    (moonId: string): MythicParticleConfig | null => {
+      return MYTHIC_PARTICLE_CONFIGS[moonId] || null;
+    },
+    [],
+  );
 
   // Check if moon is discovered
-  const isDiscovered = useCallback((moonId: string): boolean => {
-    return !!collection[moonId];
-  }, [collection]);
+  const isDiscovered = useCallback(
+    (moonId: string): boolean => {
+      return !!collection[moonId];
+    },
+    [collection],
+  );
 
   return {
     collection,

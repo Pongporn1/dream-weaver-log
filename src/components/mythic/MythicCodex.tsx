@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { MythicProgressBar } from "./MythicProgressBar";
-import { useMythicCollection, MYTHIC_PARTICLE_CONFIGS } from "@/hooks/useMythicCollection";
+import {
+  useMythicCollection,
+  MYTHIC_PARTICLE_CONFIGS,
+} from "@/hooks/useMythicCollection";
 import { MOON_PHENOMENA } from "@/data/moonPhenomena";
 import {
   Star,
@@ -43,14 +46,62 @@ const RARITY_LABELS = {
 
 // Pre-defined particle showcase configs (static to avoid re-renders)
 const PARTICLE_SHOWCASE = [
-  { type: "stars" as const, label: "Starfall", color: "#3b82f6", secondary: "#93c5fd", value: 75 },
-  { type: "fire" as const, label: "Inferno", color: "#f97316", secondary: "#fbbf24", value: 85 },
-  { type: "snow" as const, label: "Frostbite", color: "#38bdf8", secondary: "#e0f2fe", value: 70 },
-  { type: "crystals" as const, label: "Crystal", color: "#818cf8", secondary: "#c4b5fd", value: 80 },
-  { type: "void" as const, label: "Void", color: "#7c3aed", secondary: "#4c1d95", value: 65 },
-  { type: "aurora" as const, label: "Aurora", color: "#14b8a6", secondary: "#ec4899", value: 90 },
-  { type: "lightning" as const, label: "Thunder", color: "#fef08a", secondary: "#38bdf8", value: 78 },
-  { type: "blood" as const, label: "Crimson", color: "#dc2626", secondary: "#b91c1c", value: 72 },
+  {
+    type: "stars" as const,
+    label: "Starfall",
+    color: "#3b82f6",
+    secondary: "#93c5fd",
+    value: 75,
+  },
+  {
+    type: "fire" as const,
+    label: "Inferno",
+    color: "#f97316",
+    secondary: "#fbbf24",
+    value: 85,
+  },
+  {
+    type: "snow" as const,
+    label: "Frostbite",
+    color: "#38bdf8",
+    secondary: "#e0f2fe",
+    value: 70,
+  },
+  {
+    type: "crystals" as const,
+    label: "Crystal",
+    color: "#818cf8",
+    secondary: "#c4b5fd",
+    value: 80,
+  },
+  {
+    type: "void" as const,
+    label: "Void",
+    color: "#7c3aed",
+    secondary: "#4c1d95",
+    value: 65,
+  },
+  {
+    type: "aurora" as const,
+    label: "Aurora",
+    color: "#14b8a6",
+    secondary: "#ec4899",
+    value: 90,
+  },
+  {
+    type: "lightning" as const,
+    label: "Thunder",
+    color: "#fef08a",
+    secondary: "#38bdf8",
+    value: 78,
+  },
+  {
+    type: "blood" as const,
+    label: "Crimson",
+    color: "#dc2626",
+    secondary: "#b91c1c",
+    value: 72,
+  },
 ];
 
 // Memoized moon card component to prevent unnecessary re-renders
@@ -77,7 +128,7 @@ const MoonCard = React.memo(function MoonCard({
     <div
       className={cn(
         "rounded-xl border overflow-hidden",
-        "bg-gradient-to-br from-card via-card to-background"
+        "bg-gradient-to-br from-card via-card to-background",
       )}
       style={{
         borderColor: particles?.color + "40",
@@ -94,7 +145,7 @@ const MoonCard = React.memo(function MoonCard({
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
-            background: particles 
+            background: particles
               ? `linear-gradient(135deg, ${particles.color}, ${particles.secondaryColor || particles.color})`
               : "hsl(var(--primary))",
           }}
@@ -140,7 +191,9 @@ const MoonCard = React.memo(function MoonCard({
                 <span className="truncate">First seen:</span>
                 <span className="text-muted-foreground truncate">
                   {entry?.firstEncountered
-                    ? new Date(entry.firstEncountered).toLocaleDateString("th-TH")
+                    ? new Date(entry.firstEncountered).toLocaleDateString(
+                        "th-TH",
+                      )
                     : "-"}
                 </span>
               </div>
@@ -149,7 +202,9 @@ const MoonCard = React.memo(function MoonCard({
                 <span className="truncate">Last seen:</span>
                 <span className="text-muted-foreground truncate">
                   {entry?.lastEncountered
-                    ? new Date(entry.lastEncountered).toLocaleDateString("th-TH")
+                    ? new Date(entry.lastEncountered).toLocaleDateString(
+                        "th-TH",
+                      )
                     : "-"}
                 </span>
               </div>
@@ -175,7 +230,15 @@ const MoonCard = React.memo(function MoonCard({
                   size="sm"
                   variant="outline"
                   onClick={() => onAddBoost(3600)}
-                  disabled={(entry?.themeDurationBoost || 0) >= 86400}
+                  disabled={
+                    (entry?.encounterCount ?? 0) < 5 ||
+                    (entry?.themeDurationBoost || 0) >= 86400
+                  }
+                  title={
+                    (entry?.encounterCount ?? 0) < 5
+                      ? `ต้องเจออีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
+                      : undefined
+                  }
                   className="flex-1"
                 >
                   <Clock className="h-3 w-3 mr-1" />
@@ -185,7 +248,15 @@ const MoonCard = React.memo(function MoonCard({
                   size="sm"
                   variant="outline"
                   onClick={() => onAddBoost(21600)}
-                  disabled={(entry?.themeDurationBoost || 0) >= 86400}
+                  disabled={
+                    (entry?.encounterCount ?? 0) < 5 ||
+                    (entry?.themeDurationBoost || 0) >= 86400
+                  }
+                  title={
+                    (entry?.encounterCount ?? 0) < 5
+                      ? `ต้องเจออีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
+                      : undefined
+                  }
                   className="flex-1"
                 >
                   <Clock className="h-3 w-3 mr-1" />
@@ -201,10 +272,17 @@ const MoonCard = React.memo(function MoonCard({
                 size="sm"
                 variant={entry?.isLocked ? "default" : "outline"}
                 onClick={onToggleLock}
+                disabled={(entry?.encounterCount ?? 0) < 5 && !entry?.isLocked}
                 className={cn(
                   "flex-1",
-                  entry?.isLocked && "bg-amber-500 hover:bg-amber-600 text-white"
+                  entry?.isLocked &&
+                    "bg-amber-500 hover:bg-amber-600 text-white",
                 )}
+                title={
+                  (entry?.encounterCount ?? 0) < 5 && !entry?.isLocked
+                    ? `ต้องเจอดวงจันทร์นี้อีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
+                    : undefined
+                }
               >
                 {entry?.isLocked ? (
                   <>
@@ -214,7 +292,9 @@ const MoonCard = React.memo(function MoonCard({
                 ) : (
                   <>
                     <Unlock className="h-4 w-4 mr-2" />
-                    Lock Theme
+                    {(entry?.encounterCount ?? 0) < 5
+                      ? `Lock (${entry?.encounterCount ?? 0}/5)`
+                      : "Lock Theme"}
                   </>
                 )}
               </Button>
@@ -229,7 +309,7 @@ const MoonCard = React.memo(function MoonCard({
                 <Heart
                   className={cn(
                     "h-4 w-4 mr-2",
-                    entry?.isFavorite && "fill-current"
+                    entry?.isFavorite && "fill-current",
                   )}
                 />
                 {entry?.isFavorite ? "Unfavorite" : "Favorite"}
@@ -259,7 +339,8 @@ const MoonCard = React.memo(function MoonCard({
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+  if (seconds < 86400)
+    return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
   return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
 }
 
@@ -284,21 +365,39 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
 
   const discoveredMoons = useMemo(
     () => mythicMoons.filter((m) => m.discovered),
-    [mythicMoons]
+    [mythicMoons],
   );
   const undiscoveredMoons = useMemo(
     () => mythicMoons.filter((m) => !m.discovered),
-    [mythicMoons]
+    [mythicMoons],
   );
 
   // Memoize rarity counts
   const rarityCounts = useMemo(() => {
     return {
       mythic: { count: stats.mythicCount, max: mythicMoons.length },
-      legendary: { count: stats.legendaryCount, max: Object.values(MOON_PHENOMENA).filter(m => m.rarity === "legendary").length },
-      very_rare: { count: stats.veryRareCount, max: Object.values(MOON_PHENOMENA).filter(m => m.rarity === "very_rare").length },
-      rare: { count: stats.rareCount, max: Object.values(MOON_PHENOMENA).filter(m => m.rarity === "rare").length },
-      normal: { count: stats.normalCount, max: Object.values(MOON_PHENOMENA).filter(m => m.rarity === "normal").length },
+      legendary: {
+        count: stats.legendaryCount,
+        max: Object.values(MOON_PHENOMENA).filter(
+          (m) => m.rarity === "legendary",
+        ).length,
+      },
+      very_rare: {
+        count: stats.veryRareCount,
+        max: Object.values(MOON_PHENOMENA).filter(
+          (m) => m.rarity === "very_rare",
+        ).length,
+      },
+      rare: {
+        count: stats.rareCount,
+        max: Object.values(MOON_PHENOMENA).filter((m) => m.rarity === "rare")
+          .length,
+      },
+      normal: {
+        count: stats.normalCount,
+        max: Object.values(MOON_PHENOMENA).filter((m) => m.rarity === "normal")
+          .length,
+      },
     };
   }, [stats, mythicMoons.length]);
 
@@ -317,7 +416,10 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
         </div>
 
         {/* Compact progress - no particles for performance */}
-        <Progress value={(stats.mythicCount / mythicMoons.length) * 100} className="h-2" />
+        <Progress
+          value={(stats.mythicCount / mythicMoons.length) * 100}
+          className="h-2"
+        />
 
         {/* Mini moon grid */}
         <div className="flex flex-wrap gap-2">
@@ -328,7 +430,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                 "w-8 h-8 rounded-full flex items-center justify-center text-xs",
                 moon.discovered
                   ? "bg-gradient-to-br " + RARITY_COLORS.mythic
-                  : "bg-muted"
+                  : "bg-muted",
               )}
               title={moon.discovered ? moon.name : "???"}
             >
@@ -386,17 +488,21 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
 
         {/* Rarity breakdown - simplified progress bars */}
         <div className="space-y-3">
-          {(["mythic", "legendary", "very_rare", "rare", "normal"] as const).map((rarity) => {
+          {(
+            ["mythic", "legendary", "very_rare", "rare", "normal"] as const
+          ).map((rarity) => {
             const { count, max } = rarityCounts[rarity];
             const percent = max > 0 ? (count / max) * 100 : 0;
 
             return (
               <div key={rarity} className="space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className={cn(
-                    "font-medium px-2 py-0.5 rounded-full bg-gradient-to-r text-white",
-                    RARITY_COLORS[rarity]
-                  )}>
+                  <span
+                    className={cn(
+                      "font-medium px-2 py-0.5 rounded-full bg-gradient-to-r text-white",
+                      RARITY_COLORS[rarity],
+                    )}
+                  >
                     {RARITY_LABELS[rarity]}
                   </span>
                   <span className="text-muted-foreground">
@@ -405,10 +511,10 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                 </div>
                 {/* Use simple Progress instead of MythicProgressBar for performance */}
                 <div className="h-3 rounded-full overflow-hidden bg-secondary/50">
-                  <div 
+                  <div
                     className={cn(
                       "h-full rounded-full bg-gradient-to-r transition-all duration-500",
-                      RARITY_COLORS[rarity]
+                      RARITY_COLORS[rarity],
                     )}
                     style={{ width: `${percent}%` }}
                   />
@@ -434,7 +540,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
               <ChevronDown className="h-4 w-4" />
             )}
           </button>
-          
+
           {showParticleShowcase && (
             <div className="grid gap-3 mt-3 animate-fade-in">
               {PARTICLE_SHOWCASE.map((effect) => (
@@ -484,7 +590,9 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                 moon={moon}
                 entry={entry}
                 isExpanded={isExpanded}
-                onToggleExpand={() => setExpandedMoon(isExpanded ? null : moon.id)}
+                onToggleExpand={() =>
+                  setExpandedMoon(isExpanded ? null : moon.id)
+                }
                 onToggleFavorite={() => toggleFavorite(moon.id)}
                 onToggleLock={() => toggleLock(moon.id)}
                 onAddBoost={(seconds) => addDurationBoost(moon.id, seconds)}
@@ -530,7 +638,9 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                 className="p-3 rounded-lg bg-muted/50 border border-dashed flex items-center gap-2"
               >
                 <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm text-muted-foreground truncate">???</span>
+                <span className="text-sm text-muted-foreground truncate">
+                  ???
+                </span>
               </div>
             ))}
           </div>

@@ -3,7 +3,10 @@ import { Library as LibraryIcon, Moon, BookOpen } from "lucide-react";
 import { getDreamLogs } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
-import { getSessionPhenomenon, clearSessionPhenomenon } from "@/utils/raritySystem";
+import {
+  getSessionPhenomenon,
+  clearSessionPhenomenon,
+} from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 import { LibraryPageSkeleton } from "@/components/skeletons/LibrarySkeleton";
@@ -22,22 +25,25 @@ export default function Library() {
   const [activeTab, setActiveTab] = useState<LibraryTab>("dreams");
   const [dreamLogs, setDreamLogs] = useState<DreamLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     today: true,
     thisWeek: true,
     thisMonth: true,
     older: false,
   });
-  const [currentPhenomenon, setCurrentPhenomenon] = useState<MoonPhenomenon | null>(null);
+  const [currentPhenomenon, setCurrentPhenomenon] =
+    useState<MoonPhenomenon | null>(null);
 
   useEffect(() => {
-    const phenomenon = getSessionPhenomenon();
+    const { phenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(phenomenon);
   }, []);
 
   const changePhenomenon = () => {
     clearSessionPhenomenon();
-    const newPhenomenon = getSessionPhenomenon();
+    const { phenomenon: newPhenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
   };
@@ -62,9 +68,9 @@ export default function Library() {
       (dream) =>
         dream.world.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dream.entities.some((e) =>
-          e.toLowerCase().includes(searchQuery.toLowerCase())
+          e.toLowerCase().includes(searchQuery.toLowerCase()),
         ) ||
-        dream.notes?.toLowerCase().includes(searchQuery.toLowerCase())
+        dream.notes?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [dreamLogs, searchQuery]);
 
@@ -123,18 +129,22 @@ export default function Library() {
       />
 
       {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LibraryTab)} className="flex-1 flex flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as LibraryTab)}
+        className="flex-1 flex flex-col"
+      >
         <div className="px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <TabsList className="w-full h-12 bg-transparent gap-2">
-            <TabsTrigger 
-              value="dreams" 
+            <TabsTrigger
+              value="dreams"
               className="flex-1 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               <BookOpen className="h-4 w-4" />
               <span>Dream Logs</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="codex" 
+            <TabsTrigger
+              value="codex"
               className="flex-1 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               <Moon className="h-4 w-4" />
