@@ -21,7 +21,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   // Version for cache busting verification
-  const APP_VERSION = "2025.01.31.001";
+  const APP_VERSION = "2026.01.31.002";
 
   // Apply moon theme globally on app mount
   useEffect(() => {
