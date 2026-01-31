@@ -21,8 +21,13 @@ export function PullToRefresh({ children, onRefresh, className }: PullToRefreshP
   return (
     <div 
       ref={containerRef}
-      className={cn("relative overflow-auto", className)}
-      style={{ touchAction: isPulling ? 'none' : 'auto' }}
+      className={cn("relative", className)}
+      style={{ 
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
+      }}
     >
       {/* Pull Indicator */}
       <div 
