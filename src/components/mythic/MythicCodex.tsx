@@ -10,6 +10,7 @@ import { MOON_PHENOMENA } from "@/data/moonPhenomena";
 import {
   Star,
   Lock,
+  Unlock,
   Heart,
   Clock,
   Sparkles,
@@ -59,6 +60,7 @@ const MoonCard = React.memo(function MoonCard({
   isExpanded,
   onToggleExpand,
   onToggleFavorite,
+  onToggleLock,
   onAddBoost,
   particles,
 }: {
@@ -67,6 +69,7 @@ const MoonCard = React.memo(function MoonCard({
   isExpanded: boolean;
   onToggleExpand: () => void;
   onToggleFavorite: () => void;
+  onToggleLock: () => void;
   onAddBoost: (seconds: number) => void;
   particles: any;
 }) {
@@ -191,21 +194,60 @@ const MoonCard = React.memo(function MoonCard({
               </div>
             </div>
 
-            {/* Favorite toggle */}
-            <Button
-              size="sm"
-              variant={entry?.isFavorite ? "default" : "outline"}
-              onClick={onToggleFavorite}
-              className="w-full"
-            >
-              <Heart
+            {/* Lock & Favorite buttons */}
+            <div className="flex gap-2">
+              {/* Lock toggle - permanently lock this moon theme */}
+              <Button
+                size="sm"
+                variant={entry?.isLocked ? "default" : "outline"}
+                onClick={onToggleLock}
                 className={cn(
-                  "h-4 w-4 mr-2",
-                  entry?.isFavorite && "fill-current"
+                  "flex-1",
+                  entry?.isLocked && "bg-amber-500 hover:bg-amber-600 text-white"
                 )}
-              />
-              {entry?.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-            </Button>
+              >
+                {entry?.isLocked ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Unlock Theme
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="h-4 w-4 mr-2" />
+                    Lock Theme
+                  </>
+                )}
+              </Button>
+
+              {/* Favorite toggle */}
+              <Button
+                size="sm"
+                variant={entry?.isFavorite ? "default" : "outline"}
+                onClick={onToggleFavorite}
+                className="flex-1"
+              >
+                <Heart
+                  className={cn(
+                    "h-4 w-4 mr-2",
+                    entry?.isFavorite && "fill-current"
+                  )}
+                />
+                {entry?.isFavorite ? "Unfavorite" : "Favorite"}
+              </Button>
+            </div>
+
+            {/* Lock info */}
+            {entry?.isLocked && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Lock className="h-4 w-4" />
+                  <span className="font-medium">Theme Locked</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This moon will always be your theme. No random re-rolling.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -227,6 +269,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
     getMythicMoons,
     getStats,
     toggleFavorite,
+    toggleLock,
     addDurationBoost,
     getParticleConfig,
   } = useMythicCollection();
@@ -443,6 +486,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                 isExpanded={isExpanded}
                 onToggleExpand={() => setExpandedMoon(isExpanded ? null : moon.id)}
                 onToggleFavorite={() => toggleFavorite(moon.id)}
+                onToggleLock={() => toggleLock(moon.id)}
                 onAddBoost={(seconds) => addDurationBoost(moon.id, seconds)}
                 particles={particles}
               />
