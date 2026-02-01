@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { DreamLog } from "@/types/dream";
 import { supabase } from "@/integrations/supabase/client";
 
+export type SymbolType = "eye" | "moon" | "tree" | "gate" | "spiral" | "flame" | "void" | "crown" | "key" | "heart" | "skull" | "hourglass" | "compass" | "infinity" | "lotus";
+export type SymbolRotation = "none" | "slow" | "medium" | "pulse";
+
 export interface AICoverStyle {
   mood: string;
   primaryHue: number;
@@ -12,7 +15,9 @@ export interface AICoverStyle {
   pattern: "waves" | "circles" | "stars" | "lines" | "dots" | "crystals" | "smoke" | "spiral";
   particleStyle: "floating" | "falling" | "rising" | "orbiting" | "scattered" | "pulsing";
   gradientAngle: number;
-  symbolEmoji: string;
+  symbolType: SymbolType;
+  symbolComplexity: number;
+  symbolRotation: SymbolRotation;
   keywords: string[];
 }
 

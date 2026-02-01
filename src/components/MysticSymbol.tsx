@@ -1,193 +1,377 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import type { SymbolType, SymbolRotation } from "@/hooks/useCoverStyle";
 
 interface MysticSymbolProps {
-  environments: string[];
+  // Fallback: use environments for basic symbol
+  environments?: string[];
+  // AI-generated symbol settings
+  symbolType?: SymbolType | null;
+  complexity?: number;
+  rotation?: SymbolRotation;
   className?: string;
   color?: string;
   size?: number;
 }
 
-// Mystical geometric symbol generator based on environments
+// Animation classes for rotation
+const rotationClasses: Record<SymbolRotation, string> = {
+  none: "",
+  slow: "animate-[spin_30s_linear_infinite]",
+  medium: "animate-[spin_15s_linear_infinite]",
+  pulse: "animate-pulse",
+};
+
+// Mystical geometric symbol generator
 export function MysticSymbol({ 
-  environments, 
+  environments = [],
+  symbolType: aiSymbolType,
+  complexity = 3,
+  rotation = "slow",
   className, 
   color = "currentColor",
   size = 48 
 }: MysticSymbolProps) {
-  // Generate a unique symbol based on environments
+  
+  // Determine symbol type: AI-generated or fallback to environment-based
   const symbolType = useMemo(() => {
-    if (!environments || environments.length === 0) return "default";
+    if (aiSymbolType) return aiSymbolType;
     
-    // Primary environment determines base symbol
+    // Fallback: generate from environments
+    if (!environments || environments.length === 0) return "moon";
+    
     const primary = environments[0];
-    
-    const symbolMap: Record<string, string> = {
-      fog: "nebula",
-      sea: "wave",
-      mountain: "pyramid",
-      city: "circuit",
-      tunnel: "portal",
-      rain: "crystal",
-      night: "star",
-      sunset: "sun",
+    const symbolMap: Record<string, SymbolType> = {
+      fog: "void",
+      sea: "spiral",
+      mountain: "tree",
+      city: "gate",
+      tunnel: "gate",
+      rain: "lotus",
+      night: "moon",
+      sunset: "flame",
     };
     
-    return symbolMap[primary] || "default";
-  }, [environments]);
+    return symbolMap[primary] || "moon";
+  }, [aiSymbolType, environments]);
 
-  // Secondary modifiers based on additional environments
-  const modifiers = useMemo(() => {
-    if (!environments || environments.length <= 1) return [];
-    return environments.slice(1, 3);
-  }, [environments]);
+  // Complexity affects detail level (1-5)
+  const showInnerRing = complexity >= 2;
+  const showDecorations = complexity >= 3;
+  const showOrbits = complexity >= 4;
+  const showParticles = complexity >= 5;
 
-  const hasRing = modifiers.includes("night") || modifiers.includes("fog");
-  const hasDots = modifiers.includes("rain") || modifiers.includes("sea");
-  const hasLines = modifiers.includes("city") || modifiers.includes("tunnel");
+  const rotationClass = rotationClasses[rotation];
 
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 48 48"
-      className={cn("transition-all duration-500", className)}
+      className={cn("transition-all duration-500", rotationClass, className)}
       fill="none"
       stroke={color}
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {/* Outer ring modifier */}
-      {hasRing && (
+      {/* Outer decorations based on complexity */}
+      {showOrbits && (
         <circle 
           cx="24" 
           cy="24" 
           r="22" 
-          strokeDasharray="4 4" 
-          opacity="0.4"
-          className="animate-[spin_20s_linear_infinite]"
+          strokeDasharray="2 4" 
+          opacity="0.3"
         />
       )}
-
-      {/* Base symbols */}
-      {symbolType === "nebula" && (
-        <g className="animate-pulse">
-          <circle cx="24" cy="24" r="8" strokeWidth="1" />
-          <circle cx="24" cy="24" r="14" strokeWidth="0.5" opacity="0.6" />
-          <path d="M24 10 Q30 18 24 24 Q18 30 24 38" strokeWidth="1" />
-          <path d="M10 24 Q18 18 24 24 Q30 30 38 24" strokeWidth="1" />
+      
+      {showParticles && (
+        <g opacity="0.4">
+          <circle cx="8" cy="8" r="1" fill={color} />
+          <circle cx="40" cy="8" r="1" fill={color} />
+          <circle cx="8" cy="40" r="1" fill={color} />
+          <circle cx="40" cy="40" r="1" fill={color} />
+          <circle cx="24" cy="4" r="0.8" fill={color} />
+          <circle cx="24" cy="44" r="0.8" fill={color} />
+          <circle cx="4" cy="24" r="0.8" fill={color} />
+          <circle cx="44" cy="24" r="0.8" fill={color} />
         </g>
       )}
 
-      {symbolType === "wave" && (
+      {/* Eye Symbol - Mystery, Observation */}
+      {symbolType === "eye" && (
         <g>
-          <path d="M8 24 Q14 18 20 24 Q26 30 32 24 Q38 18 44 24" strokeWidth="1.5" />
-          <path d="M8 30 Q14 24 20 30 Q26 36 32 30 Q38 24 44 30" strokeWidth="1" opacity="0.6" />
-          <path d="M8 18 Q14 12 20 18 Q26 24 32 18 Q38 12 44 18" strokeWidth="1" opacity="0.4" />
-          <circle cx="24" cy="24" r="4" fill={color} opacity="0.3" />
+          <ellipse cx="24" cy="24" rx="16" ry="10" strokeWidth="1.5" />
+          <circle cx="24" cy="24" r="6" strokeWidth="1.5" />
+          <circle cx="24" cy="24" r="2.5" fill={color} />
+          {showInnerRing && (
+            <ellipse cx="24" cy="24" rx="12" ry="7" strokeWidth="0.5" opacity="0.5" />
+          )}
+          {showDecorations && (
+            <>
+              <path d="M8 24 L4 24" strokeWidth="1" opacity="0.6" />
+              <path d="M40 24 L44 24" strokeWidth="1" opacity="0.6" />
+              <path d="M24 14 L24 10" strokeWidth="1" opacity="0.4" />
+              <path d="M24 34 L24 38" strokeWidth="1" opacity="0.4" />
+            </>
+          )}
         </g>
       )}
 
-      {symbolType === "pyramid" && (
+      {/* Moon Symbol - Dreams, Night */}
+      {symbolType === "moon" && (
         <g>
-          <path d="M24 8 L40 38 L8 38 Z" strokeWidth="1.5" />
-          <path d="M24 8 L24 38" strokeWidth="0.5" opacity="0.4" />
-          <path d="M24 18 L18 28 L30 28 Z" strokeWidth="1" fill={color} fillOpacity="0.2" />
-          <circle cx="24" cy="24" r="3" fill={color} opacity="0.5" />
+          <path 
+            d="M28 8 A16 16 0 1 0 28 40 A12 12 0 1 1 28 8" 
+            strokeWidth="1.5" 
+            fill={color} 
+            fillOpacity="0.1"
+          />
+          {showInnerRing && (
+            <circle cx="20" cy="24" r="8" strokeWidth="0.5" opacity="0.4" strokeDasharray="2 2" />
+          )}
+          {showDecorations && (
+            <>
+              <circle cx="16" cy="18" r="1.5" fill={color} opacity="0.3" />
+              <circle cx="14" cy="28" r="1" fill={color} opacity="0.2" />
+              <circle cx="22" cy="32" r="0.8" fill={color} opacity="0.25" />
+            </>
+          )}
         </g>
       )}
 
-      {symbolType === "circuit" && (
+      {/* Tree Symbol - Growth, Life */}
+      {symbolType === "tree" && (
         <g>
-          <rect x="16" y="16" width="16" height="16" strokeWidth="1.5" rx="2" />
-          <path d="M8 24 L16 24" strokeWidth="1" />
-          <path d="M32 24 L40 24" strokeWidth="1" />
-          <path d="M24 8 L24 16" strokeWidth="1" />
-          <path d="M24 32 L24 40" strokeWidth="1" />
-          <circle cx="8" cy="24" r="2" fill={color} opacity="0.5" />
-          <circle cx="40" cy="24" r="2" fill={color} opacity="0.5" />
-          <circle cx="24" cy="8" r="2" fill={color} opacity="0.5" />
-          <circle cx="24" cy="40" r="2" fill={color} opacity="0.5" />
-          <circle cx="24" cy="24" r="4" strokeWidth="1" />
+          <path d="M24 40 L24 24" strokeWidth="2" />
+          <path d="M24 8 L16 20 L20 20 L14 28 L18 28 L12 36 L36 36 L30 28 L34 28 L28 20 L32 20 Z" strokeWidth="1.5" />
+          {showInnerRing && (
+            <circle cx="24" cy="20" r="6" strokeWidth="0.5" opacity="0.3" />
+          )}
+          {showDecorations && (
+            <>
+              <circle cx="24" cy="16" r="2" fill={color} opacity="0.2" />
+              <path d="M20 40 L20 38" strokeWidth="1" opacity="0.5" />
+              <path d="M28 40 L28 38" strokeWidth="1" opacity="0.5" />
+            </>
+          )}
         </g>
       )}
 
-      {symbolType === "portal" && (
-        <g className="animate-pulse">
-          <ellipse cx="24" cy="24" rx="16" ry="20" strokeWidth="1.5" />
-          <ellipse cx="24" cy="24" rx="10" ry="14" strokeWidth="1" opacity="0.6" />
-          <ellipse cx="24" cy="24" rx="4" ry="8" strokeWidth="0.5" opacity="0.4" />
-          <circle cx="24" cy="24" r="2" fill={color} opacity="0.8" />
-        </g>
-      )}
-
-      {symbolType === "crystal" && (
+      {/* Gate Symbol - Passage, Transition */}
+      {symbolType === "gate" && (
         <g>
-          <path d="M24 6 L30 18 L38 24 L30 30 L24 42 L18 30 L10 24 L18 18 Z" strokeWidth="1.5" />
-          <path d="M24 6 L24 42" strokeWidth="0.5" opacity="0.4" />
-          <path d="M10 24 L38 24" strokeWidth="0.5" opacity="0.4" />
-          <path d="M18 18 L30 30" strokeWidth="0.5" opacity="0.3" />
-          <path d="M30 18 L18 30" strokeWidth="0.5" opacity="0.3" />
-          <circle cx="24" cy="24" r="5" fill={color} fillOpacity="0.2" />
+          <rect x="12" y="10" width="24" height="32" rx="12" strokeWidth="1.5" />
+          <path d="M12 42 L36 42" strokeWidth="2" />
+          {showInnerRing && (
+            <rect x="18" y="16" width="12" height="20" rx="6" strokeWidth="0.5" opacity="0.5" />
+          )}
+          {showDecorations && (
+            <>
+              <circle cx="24" cy="34" r="2" fill={color} opacity="0.5" />
+              <path d="M20 10 L20 6" strokeWidth="1" opacity="0.5" />
+              <path d="M28 10 L28 6" strokeWidth="1" opacity="0.5" />
+            </>
+          )}
         </g>
       )}
 
-      {symbolType === "star" && (
+      {/* Spiral Symbol - Journey, Infinity */}
+      {symbolType === "spiral" && (
         <g>
-          <path d="M24 4 L28 18 L42 18 L30 28 L34 42 L24 34 L14 42 L18 28 L6 18 L20 18 Z" strokeWidth="1.5" />
-          <circle cx="24" cy="24" r="6" strokeWidth="1" opacity="0.5" />
-          <circle cx="24" cy="24" r="2" fill={color} opacity="0.8" />
+          <path 
+            d="M24 24 C24 20 28 18 30 22 C32 26 28 30 24 28 C20 26 18 22 22 18 C26 14 32 16 34 22 C36 28 30 34 24 32 C18 30 14 24 18 18 C22 12 30 14 34 20" 
+            strokeWidth="1.5" 
+            fill="none"
+          />
+          {showInnerRing && (
+            <circle cx="24" cy="24" r="3" fill={color} opacity="0.3" />
+          )}
+          {showDecorations && (
+            <circle cx="24" cy="24" r="1.5" fill={color} />
+          )}
         </g>
       )}
 
-      {symbolType === "sun" && (
+      {/* Flame Symbol - Power, Danger */}
+      {symbolType === "flame" && (
         <g>
-          <circle cx="24" cy="24" r="8" strokeWidth="1.5" />
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-            <line
-              key={angle}
-              x1={24 + Math.cos((angle * Math.PI) / 180) * 12}
-              y1={24 + Math.sin((angle * Math.PI) / 180) * 12}
-              x2={24 + Math.cos((angle * Math.PI) / 180) * 18}
-              y2={24 + Math.sin((angle * Math.PI) / 180) * 18}
-              strokeWidth={angle % 90 === 0 ? "2" : "1"}
-              opacity={angle % 90 === 0 ? "1" : "0.6"}
+          <path 
+            d="M24 6 C20 14 14 18 14 28 C14 34 18 40 24 40 C30 40 34 34 34 28 C34 18 28 14 24 6" 
+            strokeWidth="1.5"
+            fill={color}
+            fillOpacity="0.15"
+          />
+          {showInnerRing && (
+            <path 
+              d="M24 16 C22 20 18 22 18 28 C18 32 20 36 24 36 C28 36 30 32 30 28 C30 22 26 20 24 16" 
+              strokeWidth="0.8" 
+              opacity="0.5"
             />
-          ))}
-          <circle cx="24" cy="24" r="3" fill={color} opacity="0.5" />
+          )}
+          {showDecorations && (
+            <path 
+              d="M24 24 C23 26 21 27 21 30 C21 32 22 34 24 34 C26 34 27 32 27 30 C27 27 25 26 24 24" 
+              fill={color} 
+              opacity="0.4"
+              strokeWidth="0"
+            />
+          )}
         </g>
       )}
 
-      {symbolType === "default" && (
+      {/* Void Symbol - Emptiness, Black Hole */}
+      {symbolType === "void" && (
         <g>
-          <circle cx="24" cy="24" r="12" strokeWidth="1.5" />
-          <circle cx="24" cy="24" r="6" strokeWidth="1" opacity="0.6" />
-          <circle cx="24" cy="24" r="2" fill={color} opacity="0.8" />
-          <path d="M24 12 L24 8" strokeWidth="1" />
-          <path d="M24 36 L24 40" strokeWidth="1" />
-          <path d="M12 24 L8 24" strokeWidth="1" />
-          <path d="M36 24 L40 24" strokeWidth="1" />
+          <circle cx="24" cy="24" r="14" strokeWidth="1.5" />
+          <circle cx="24" cy="24" r="8" fill={color} fillOpacity="0.8" />
+          {showInnerRing && (
+            <circle cx="24" cy="24" r="11" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.5" />
+          )}
+          {showDecorations && (
+            <>
+              <path d="M24 4 L24 10" strokeWidth="1" opacity="0.4" />
+              <path d="M24 38 L24 44" strokeWidth="1" opacity="0.4" />
+              <path d="M4 24 L10 24" strokeWidth="1" opacity="0.4" />
+              <path d="M38 24 L44 24" strokeWidth="1" opacity="0.4" />
+            </>
+          )}
         </g>
       )}
 
-      {/* Dots modifier */}
-      {hasDots && (
-        <g opacity="0.5">
-          <circle cx="12" cy="12" r="1.5" fill={color} />
-          <circle cx="36" cy="12" r="1.5" fill={color} />
-          <circle cx="12" cy="36" r="1.5" fill={color} />
-          <circle cx="36" cy="36" r="1.5" fill={color} />
+      {/* Crown Symbol - Power, Victory */}
+      {symbolType === "crown" && (
+        <g>
+          <path d="M8 32 L12 16 L20 24 L24 12 L28 24 L36 16 L40 32 L8 32" strokeWidth="1.5" />
+          <rect x="8" y="32" width="32" height="6" strokeWidth="1.5" />
+          {showInnerRing && (
+            <path d="M12 32 L12 28" strokeWidth="1" opacity="0.5" />
+          )}
+          {showDecorations && (
+            <>
+              <circle cx="24" cy="16" r="2" fill={color} opacity="0.5" />
+              <circle cx="12" cy="20" r="1.5" fill={color} opacity="0.4" />
+              <circle cx="36" cy="20" r="1.5" fill={color} opacity="0.4" />
+            </>
+          )}
         </g>
       )}
 
-      {/* Lines modifier */}
-      {hasLines && (
-        <g opacity="0.3">
-          <line x1="4" y1="14" x2="10" y2="14" strokeWidth="1" />
-          <line x1="38" y1="14" x2="44" y2="14" strokeWidth="1" />
-          <line x1="4" y1="34" x2="10" y2="34" strokeWidth="1" />
-          <line x1="38" y1="34" x2="44" y2="34" strokeWidth="1" />
+      {/* Key Symbol - Secret, Unlock */}
+      {symbolType === "key" && (
+        <g>
+          <circle cx="18" cy="16" r="8" strokeWidth="1.5" />
+          <circle cx="18" cy="16" r="4" strokeWidth="1" opacity="0.5" />
+          <path d="M24 20 L40 36" strokeWidth="2" />
+          <path d="M36 32 L40 28" strokeWidth="2" />
+          <path d="M32 36 L36 40" strokeWidth="2" />
+          {showDecorations && (
+            <circle cx="18" cy="16" r="2" fill={color} opacity="0.5" />
+          )}
+        </g>
+      )}
+
+      {/* Heart Symbol - Emotion, Love */}
+      {symbolType === "heart" && (
+        <g>
+          <path 
+            d="M24 40 L12 28 C6 22 6 14 12 10 C18 6 24 12 24 16 C24 12 30 6 36 10 C42 14 42 22 36 28 L24 40" 
+            strokeWidth="1.5"
+            fill={color}
+            fillOpacity="0.15"
+          />
+          {showInnerRing && (
+            <path 
+              d="M24 34 L16 26 C12 22 12 18 16 15 C20 12 24 16 24 18 C24 16 28 12 32 15 C36 18 36 22 32 26 L24 34" 
+              strokeWidth="0.5" 
+              opacity="0.4"
+            />
+          )}
+        </g>
+      )}
+
+      {/* Skull Symbol - Death, Danger */}
+      {symbolType === "skull" && (
+        <g>
+          <ellipse cx="24" cy="20" rx="12" ry="14" strokeWidth="1.5" />
+          <rect x="18" y="32" width="12" height="8" strokeWidth="1.5" />
+          <circle cx="18" cy="18" r="4" fill={color} fillOpacity="0.8" />
+          <circle cx="30" cy="18" r="4" fill={color} fillOpacity="0.8" />
+          {showDecorations && (
+            <>
+              <path d="M20 28 L20 32" strokeWidth="1.5" />
+              <path d="M24 28 L24 32" strokeWidth="1.5" />
+              <path d="M28 28 L28 32" strokeWidth="1.5" />
+            </>
+          )}
+        </g>
+      )}
+
+      {/* Hourglass Symbol - Time */}
+      {symbolType === "hourglass" && (
+        <g>
+          <path d="M14 8 L34 8 L24 24 L34 40 L14 40 L24 24 L14 8" strokeWidth="1.5" />
+          <path d="M12 8 L36 8" strokeWidth="2" />
+          <path d="M12 40 L36 40" strokeWidth="2" />
+          {showDecorations && (
+            <>
+              <path d="M20 14 L28 14 L24 20 L20 14" fill={color} opacity="0.3" strokeWidth="0" />
+              <circle cx="24" cy="24" r="2" fill={color} opacity="0.5" />
+            </>
+          )}
+        </g>
+      )}
+
+      {/* Compass Symbol - Direction, Journey */}
+      {symbolType === "compass" && (
+        <g>
+          <circle cx="24" cy="24" r="16" strokeWidth="1.5" />
+          <circle cx="24" cy="24" r="3" strokeWidth="1" />
+          <path d="M24 8 L26 20 L24 24 L22 20 Z" fill={color} strokeWidth="0" />
+          <path d="M24 40 L22 28 L24 24 L26 28 Z" strokeWidth="1" opacity="0.5" />
+          <path d="M8 24 L20 22 L24 24 L20 26 Z" strokeWidth="1" opacity="0.5" />
+          <path d="M40 24 L28 26 L24 24 L28 22 Z" strokeWidth="1" opacity="0.5" />
+          {showDecorations && (
+            <>
+              <text x="24" y="6" textAnchor="middle" fontSize="4" fill={color} opacity="0.7">N</text>
+              <text x="24" y="44" textAnchor="middle" fontSize="4" fill={color} opacity="0.5">S</text>
+            </>
+          )}
+        </g>
+      )}
+
+      {/* Infinity Symbol */}
+      {symbolType === "infinity" && (
+        <g>
+          <path 
+            d="M12 24 C12 18 18 14 24 20 C30 26 36 22 36 16 C36 10 30 10 24 16 C18 22 12 18 12 12 C12 6 18 6 24 12 C30 18 36 14 36 8" 
+            strokeWidth="0"
+          />
+          <path 
+            d="M8 24 C8 16 14 12 24 24 C34 36 40 32 40 24 C40 16 34 12 24 24 C14 36 8 32 8 24" 
+            strokeWidth="1.5"
+          />
+          {showDecorations && (
+            <circle cx="24" cy="24" r="2" fill={color} opacity="0.5" />
+          )}
+        </g>
+      )}
+
+      {/* Lotus Symbol - Peace, Awakening */}
+      {symbolType === "lotus" && (
+        <g>
+          <ellipse cx="24" cy="38" rx="12" ry="4" strokeWidth="1" opacity="0.5" />
+          <path d="M24 38 L24 28" strokeWidth="1.5" />
+          <path d="M24 12 C24 18 28 22 24 28 C20 22 24 18 24 12" strokeWidth="1.5" fill={color} fillOpacity="0.2" />
+          <path d="M16 20 C20 22 22 26 24 28 C22 24 18 22 14 22 C14 18 16 16 16 20" strokeWidth="1.5" fill={color} fillOpacity="0.15" />
+          <path d="M32 20 C28 22 26 26 24 28 C26 24 30 22 34 22 C34 18 32 16 32 20" strokeWidth="1.5" fill={color} fillOpacity="0.15" />
+          {showDecorations && (
+            <>
+              <path d="M10 26 C14 26 18 28 24 28 C18 26 14 24 10 26" strokeWidth="1" opacity="0.4" />
+              <path d="M38 26 C34 26 30 28 24 28 C30 26 34 24 38 26" strokeWidth="1" opacity="0.4" />
+            </>
+          )}
         </g>
       )}
     </svg>

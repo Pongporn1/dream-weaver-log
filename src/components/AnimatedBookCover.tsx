@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import { DreamLog, ENVIRONMENTS } from "@/types/dream";
 import { MapPin, Users, Clock, Shield, LogOut, Sparkles } from "lucide-react";
-import { useCoverStyle, AICoverStyle } from "@/hooks/useCoverStyle";
+import { useCoverStyle, AICoverStyle, SymbolType, SymbolRotation } from "@/hooks/useCoverStyle";
 import { MysticSymbol } from "./MysticSymbol";
 
 interface Particle {
@@ -104,7 +104,7 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
       gradientAngle: aiStyle.gradientAngle,
       particleCount: 20 + dream.threatLevel * 4,
       patternType: aiPatternMap[aiStyle.pattern] || "grid",
-      patternSeed: hashString(aiStyle.mood + aiStyle.symbolEmoji),
+      patternSeed: hashString(aiStyle.mood + aiStyle.symbolType),
       timeEffect: timeSystemEffects[dream.timeSystem] || timeSystemEffects.unknown,
       exitStyle: exitVisuals[dream.exit] || exitVisuals.unknown,
       brightness,
@@ -112,7 +112,9 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
                  aiStyle.particleStyle === "orbiting" ? 0.6 : 0.4,
       aiEnhanced: true,
       aiMood: aiStyle.mood,
-      aiSymbol: aiStyle.symbolEmoji,
+      aiSymbolType: aiStyle.symbolType as SymbolType,
+      aiSymbolComplexity: aiStyle.symbolComplexity,
+      aiSymbolRotation: aiStyle.symbolRotation as SymbolRotation,
       aiKeywords: aiStyle.keywords,
       particleStyle: aiStyle.particleStyle,
     };
@@ -164,7 +166,9 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
     animSpeed: timeEffect.animSpeed * (1 + dream.threatLevel * 0.15),
     aiEnhanced: false,
     aiMood: null as string | null,
-    aiSymbol: null as string | null,
+    aiSymbolType: null as SymbolType | null,
+    aiSymbolComplexity: 3,
+    aiSymbolRotation: "slow" as SymbolRotation,
     aiKeywords: [] as string[],
     particleStyle: "floating" as const,
   };
@@ -507,12 +511,15 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-3">
-          {/* Mystic Symbol - geometric design based on environments */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40 animate-pulse">
+          {/* Mystic Symbol - AI-generated or environment-based */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50">
             <MysticSymbol 
               environments={dream.environments || []} 
+              symbolType={style.aiSymbolType}
+              complexity={style.aiSymbolComplexity}
+              rotation={style.aiSymbolRotation}
               color={style.accent}
-              size={56}
+              size={60}
             />
           </div>
 
