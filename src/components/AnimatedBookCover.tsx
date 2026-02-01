@@ -5,6 +5,7 @@ import { th } from "date-fns/locale";
 import { DreamLog, ENVIRONMENTS } from "@/types/dream";
 import { MapPin, Users, Clock, Shield, LogOut, Sparkles } from "lucide-react";
 import { useCoverStyle, AICoverStyle } from "@/hooks/useCoverStyle";
+import { MysticSymbol } from "./MysticSymbol";
 
 interface Particle {
   x: number;
@@ -506,12 +507,14 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-3">
-          {/* AI Symbol (if AI-enhanced) */}
-          {style.aiEnhanced && style.aiSymbol && (
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl opacity-30 animate-pulse">
-              {style.aiSymbol}
-            </div>
-          )}
+          {/* Mystic Symbol - geometric design based on environments */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40 animate-pulse">
+            <MysticSymbol 
+              environments={dream.environments || []} 
+              color={style.accent}
+              size={56}
+            />
+          </div>
 
           {/* World Name */}
           <h3 className="font-bold text-base sm:text-lg text-center leading-snug text-white drop-shadow-lg line-clamp-2 mb-2">
