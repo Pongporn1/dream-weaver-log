@@ -42,7 +42,9 @@ Return JSON format:
   "pattern": "waves|circles|stars|lines|dots|crystals|smoke|spiral",
   "particleStyle": "floating|falling|rising|orbiting|scattered|pulsing",
   "gradientAngle": 0-360,
-  "symbolEmoji": "emoji 1 ตัวที่แทนธีมหลัก",
+  "symbolType": "eye|moon|tree|gate|spiral|flame|void|crown|key|heart|skull|hourglass|compass|infinity|lotus",
+  "symbolComplexity": 1-5 (ความซับซ้อนของสัญลักษณ์),
+  "symbolRotation": "none|slow|medium|pulse" (รูปแบบการหมุน),
   "keywords": ["คำสำคัญ 3 คำที่อธิบายบรรยากาศ"]
 }
 
@@ -51,7 +53,9 @@ Return JSON format:
 - สีควรสะท้อนอารมณ์ของความฝัน
 - pattern ควรเข้ากับสภาพแวดล้อม
 - ถ้าฝันน่ากลัว ใช้สีเข้ม/แดง ถ้าสงบใช้สีเย็น
-- symbolEmoji ต้องเป็น emoji เดียวที่สื่อถึงฝันนั้น
+- symbolType: เลือกสัญลักษณ์ที่เหมาะกับเนื้อเรื่อง เช่น eye=ลึกลับ/สังเกต, moon=ความฝัน/คืน, gate=ทางผ่าน/การเปลี่ยนแปลง, flame=อันตราย/พลัง, void=ความว่างเปล่า/หลุมดำ, crown=อำนาจ/ชัยชนะ, key=ความลับ/การปลดล็อค, skull=ความตาย/อันตราย, lotus=ความสงบ/การตื่นรู้
+- symbolComplexity: 1=เรียบง่าย 5=ซับซ้อนมาก (ขึ้นอยู่กับความลึกซึ้งของความฝัน)
+- symbolRotation: none=ไม่หมุน, slow=หมุนช้าๆ, medium=หมุนปานกลาง, pulse=เต้นตามจังหวะ
 
 Return ONLY valid JSON.`;
 
@@ -100,6 +104,9 @@ Return ONLY valid JSON.`;
       parsed = JSON.parse(jsonText.trim());
       
       // Validate and sanitize
+      const validSymbolTypes = ["eye", "moon", "tree", "gate", "spiral", "flame", "void", "crown", "key", "heart", "skull", "hourglass", "compass", "infinity", "lotus"];
+      const validRotations = ["none", "slow", "medium", "pulse"];
+      
       parsed = {
         mood: parsed.mood || "mysterious",
         primaryHue: Math.max(0, Math.min(360, parsed.primaryHue || 240)),
@@ -110,7 +117,9 @@ Return ONLY valid JSON.`;
         pattern: parsed.pattern || "dots",
         particleStyle: parsed.particleStyle || "floating",
         gradientAngle: Math.max(0, Math.min(360, parsed.gradientAngle || 135)),
-        symbolEmoji: parsed.symbolEmoji || "✨",
+        symbolType: validSymbolTypes.includes(parsed.symbolType) ? parsed.symbolType : "moon",
+        symbolComplexity: Math.max(1, Math.min(5, parsed.symbolComplexity || 3)),
+        symbolRotation: validRotations.includes(parsed.symbolRotation) ? parsed.symbolRotation : "slow",
         keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 3) : [],
       };
     } catch {
@@ -141,7 +150,9 @@ function getDefaultStyle() {
     pattern: "dots",
     particleStyle: "floating",
     gradientAngle: 135,
-    symbolEmoji: "✨",
+    symbolType: "moon",
+    symbolComplexity: 3,
+    symbolRotation: "slow",
     keywords: [],
   };
 }
