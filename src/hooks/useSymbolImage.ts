@@ -62,7 +62,7 @@ export function useSymbolImage(dream: DreamLog, mood?: string | null): UseSymbol
           return;
         }
 
-        // Generate new symbol
+        // Generate new cover
         const { data, error: fnError } = await supabase.functions.invoke("generate-symbol", {
           body: {
             dreamId: dream.id,
@@ -71,6 +71,7 @@ export function useSymbolImage(dream: DreamLog, mood?: string | null): UseSymbol
             environments: dream.environments,
             threatLevel: dream.threatLevel,
             mood: mood,
+            entities: dream.entities,
           },
         });
 
