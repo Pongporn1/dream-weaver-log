@@ -10,7 +10,8 @@ import {
   SymbolType,
   SymbolRotation,
 } from "@/hooks/useCoverStyle";
-import { MysticSymbol } from "./MysticSymbol";
+import { AISymbol } from "./AISymbol";
+import { useSymbolImage } from "@/hooks/useSymbolImage";
 import { generateSymbolFromAI } from "@/utils/symbolGenerator";
 
 interface Particle {
@@ -243,6 +244,9 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
   // Use AI-generated cover style if notes are available
   const { style: aiStyle, loading: aiLoading } = useCoverStyle(dream);
+
+  // Use AI-generated symbol image
+  const symbolImage = useSymbolImage(dream, aiStyle?.mood);
 
   const style = useMemo(
     () => generateUniqueStyle(dream, aiStyle),
@@ -582,15 +586,17 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-3">
-          {/* Mystic Symbol - AI-generated or environment-based */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50">
-            <MysticSymbol
-              environments={dream.environments || []}
-              symbolType={style.aiSymbolType}
-              complexity={style.aiSymbolComplexity}
-              rotation={style.aiSymbolRotation}
+          {/* AI-generated Symbol or fallback to SVG */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60">
+            <AISymbol
+              symbolUrl={symbolImage.symbolUrl}
+              loading={symbolImage.loading}
+              fallbackType={style.aiSymbolType}
+              fallbackComplexity={style.aiSymbolComplexity}
+              fallbackRotation={style.aiSymbolRotation}
+              fallbackEnvironments={dream.environments || []}
               color={style.accent}
-              size={60}
+              size={80}
               id={dream.id}
             />
           </div>
