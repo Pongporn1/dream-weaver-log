@@ -528,15 +528,25 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
           boxShadow: `0 4px 24px ${style.accent}30, 0 0 40px ${style.exitStyle.glow}15`,
         }}
       >
-        {/* Animated Canvas Background */}
+        {/* AI-generated Cover Image (full background) */}
+        {symbolImage.symbolUrl && !symbolImage.loading && (
+          <img
+            src={symbolImage.symbolUrl}
+            alt="Dream cover"
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        )}
+
+        {/* Animated Canvas Background (fallback or overlay) */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
+          className={`absolute inset-0 w-full h-full ${symbolImage.symbolUrl ? 'opacity-0' : 'opacity-100'}`}
           style={{ width: "100%", height: "100%" }}
         />
 
         {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         {/* Top Bar - ID & Threat */}
         <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between">
@@ -586,20 +596,15 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-3">
-          {/* AI-generated Symbol or fallback to SVG */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60">
-            <AISymbol
-              symbolUrl={symbolImage.symbolUrl}
-              loading={symbolImage.loading}
-              fallbackType={style.aiSymbolType}
-              fallbackComplexity={style.aiSymbolComplexity}
-              fallbackRotation={style.aiSymbolRotation}
-              fallbackEnvironments={dream.environments || []}
-              color={style.accent}
-              size={80}
-              id={dream.id}
-            />
-          </div>
+          {/* Loading indicator for AI cover */}
+          {symbolImage.loading && (
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="flex flex-col items-center gap-2">
+                <Sparkles className="w-6 h-6 text-white/60 animate-pulse" />
+                <span className="text-[10px] text-white/40">กำลังสร้างปก...</span>
+              </div>
+            </div>
+          )}
 
           {/* World Name */}
           <h3 className="font-bold text-base sm:text-lg text-center leading-snug text-white drop-shadow-lg line-clamp-2 mb-2">

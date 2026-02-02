@@ -14,118 +14,75 @@ interface GenerateSymbolRequest {
   environments?: string[];
   threatLevel?: number;
   mood?: string;
+  entities?: string[];
 }
 
-function buildSymbolPrompt(data: GenerateSymbolRequest): string {
+function buildCoverPrompt(data: GenerateSymbolRequest): string {
   const parts: string[] = [];
 
-  // Base style - mystical geometric symbol
+  // Base style - dreamy book cover illustration
   parts.push(
-    "Create a mystical, futuristic geometric symbol icon. Abstract sacred geometry design."
+    "Create a beautiful fantasy book cover illustration. Dreamy, ethereal art style with soft colors and magical atmosphere."
   );
   parts.push(
-    "Style: Glowing neon lines on pure black background (#000000). Minimalist single-color design."
+    "Style: Digital painting, anime-influenced illustration, soft lighting, atmospheric depth."
   );
-  parts.push("The symbol should be centered, symmetrical, and ethereal.");
+  parts.push("Vertical composition (2:3 aspect ratio). No text or titles.");
 
-  // Analyze notes for theme
+  // Use the dream notes as the main scene description
   if (data.notes) {
-    const notesSample = data.notes.slice(0, 200).toLowerCase();
-
-    if (
-      notesSample.includes("dark") ||
-      notesSample.includes("shadow") ||
-      notesSample.includes("fear")
-    ) {
-      parts.push("Theme: Dark, ominous, sharp angular shapes, void-like.");
-    } else if (
-      notesSample.includes("light") ||
-      notesSample.includes("bright") ||
-      notesSample.includes("peaceful")
-    ) {
-      parts.push("Theme: Luminous, radiant, soft curves, celestial.");
-    } else if (
-      notesSample.includes("water") ||
-      notesSample.includes("sea") ||
-      notesSample.includes("ocean")
-    ) {
-      parts.push("Theme: Flowing, wave-like patterns, liquid geometry.");
-    } else if (
-      notesSample.includes("fire") ||
-      notesSample.includes("flame") ||
-      notesSample.includes("burn")
-    ) {
-      parts.push("Theme: Dynamic flames, ascending energy, phoenix-like.");
-    } else if (
-      notesSample.includes("nature") ||
-      notesSample.includes("tree") ||
-      notesSample.includes("forest")
-    ) {
-      parts.push("Theme: Organic patterns, tree of life, natural fractals.");
-    } else if (
-      notesSample.includes("space") ||
-      notesSample.includes("star") ||
-      notesSample.includes("cosmic")
-    ) {
-      parts.push("Theme: Cosmic, stellar, constellation patterns, nebula.");
-    } else if (
-      notesSample.includes("time") ||
-      notesSample.includes("clock") ||
-      notesSample.includes("past")
-    ) {
-      parts.push("Theme: Temporal, hourglass motifs, spiral time loops.");
-    } else if (
-      notesSample.includes("eye") ||
-      notesSample.includes("see") ||
-      notesSample.includes("vision")
-    ) {
-      parts.push("Theme: All-seeing eye, vision portals, mystical sight.");
-    } else {
-      parts.push("Theme: Mysterious, abstract sacred geometry, dream-like.");
-    }
+    const notesSample = data.notes.slice(0, 500);
+    parts.push(`Scene to illustrate: ${notesSample}`);
   }
 
-  // World influence
+  // World as setting
   if (data.world) {
-    parts.push(`Inspired by a dreamworld called "${data.world}".`);
+    parts.push(`Setting: A dreamworld called "${data.world}".`);
   }
 
-  // Environment influence
+  // Environments for atmosphere
   if (data.environments && data.environments.length > 0) {
     const envMap: Record<string, string> = {
-      fog: "misty, hazy edges",
-      sea: "wave patterns",
-      mountain: "triangular, peak shapes",
-      city: "circuit-like, tech patterns",
-      tunnel: "portal, vortex",
-      rain: "droplet patterns",
-      night: "star-like, crescent",
-      sunset: "radiating sun rays",
+      fog: "misty foggy atmosphere",
+      sea: "ocean waves, water, beach",
+      mountain: "majestic mountains, peaks",
+      city: "urban cityscape, buildings",
+      tunnel: "mysterious tunnel or cave",
+      rain: "rain falling, wet surfaces",
+      night: "night sky, stars, darkness",
+      sunset: "warm sunset colors, golden hour",
     };
     const envDescriptions = data.environments
       .map((e) => envMap[e] || e)
       .join(", ");
-    parts.push(`Incorporate: ${envDescriptions}.`);
+    parts.push(`Environment: ${envDescriptions}.`);
   }
 
-  // Mood/threat level
+  // Include entities/characters
+  if (data.entities && data.entities.length > 0) {
+    const entityList = data.entities.slice(0, 5).join(", ");
+    parts.push(`Characters/entities present: ${entityList}.`);
+  }
+
+  // Mood from AI analysis
   if (data.mood) {
     parts.push(`Overall mood: ${data.mood}.`);
   }
 
+  // Threat level affects atmosphere
   if (data.threatLevel !== undefined) {
     if (data.threatLevel >= 4) {
-      parts.push("Intense, dangerous energy. Sharp edges, warning symbols.");
+      parts.push("Dark, dangerous atmosphere. Ominous shadows, tension.");
     } else if (data.threatLevel >= 2) {
-      parts.push("Subtle tension, mysterious aura.");
+      parts.push("Mysterious, slightly tense atmosphere.");
     } else {
-      parts.push("Calm, protective, serene energy.");
+      parts.push("Calm, peaceful, serene atmosphere.");
     }
   }
 
-  // Final instructions
+  // Final quality instructions
   parts.push(
-    "Square format 512x512. Single glowing symbol. No text. Pure black background. Ethereal glow effect."
+    "High quality illustration, rich details, beautiful colors, professional book cover quality. Dreamy fantasy art style."
   );
 
   return parts.join(" ");
@@ -176,8 +133,8 @@ serve(async (req) => {
       );
     }
 
-    const prompt = buildSymbolPrompt(data);
-    console.log("Generating symbol with prompt:", prompt);
+    const prompt = buildCoverPrompt(data);
+    console.log("Generating cover with prompt:", prompt);
 
     // Generate image using AI
     const response = await fetch(
