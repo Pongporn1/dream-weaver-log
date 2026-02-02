@@ -538,10 +538,10 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
           />
         )}
 
-        {/* Animated Canvas Background (fallback or overlay) */}
+        {/* Animated Canvas Effects (overlay on top of AI image) */}
         <canvas
           ref={canvasRef}
-          className={`absolute inset-0 w-full h-full ${symbolImage.symbolUrl ? 'opacity-0' : 'opacity-100'}`}
+          className="absolute inset-0 w-full h-full mix-blend-overlay opacity-60"
           style={{ width: "100%", height: "100%" }}
         />
 
@@ -601,7 +601,9 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <div className="flex flex-col items-center gap-2">
                 <Sparkles className="w-6 h-6 text-white/60 animate-pulse" />
-                <span className="text-[10px] text-white/40">กำลังสร้างปก...</span>
+                <span className="text-[10px] text-white/40">
+                  กำลังสร้างปก...
+                </span>
               </div>
             </div>
           )}
