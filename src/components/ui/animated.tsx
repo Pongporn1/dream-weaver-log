@@ -135,7 +135,7 @@ export function StaggeredGrid({
     });
 
     return () => timeouts.forEach(clearTimeout);
-  }, [children.length, baseDelay, staggerDelay]);
+  }, [children, baseDelay, staggerDelay]);
 
   return (
     <div className={`${gridClassName} ${className}`}>

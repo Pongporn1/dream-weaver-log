@@ -10,6 +10,11 @@ import {
   MYTHIC_PARTICLE_CONFIGS,
 } from "@/hooks/useMythicCollection";
 import { MOON_PHENOMENA } from "@/data/moonPhenomena";
+import type {
+  MoonCollectionEntry,
+  MythicParticleConfig,
+} from "@/hooks/useMythicCollection";
+import type { MoonPhenomenon } from "@/data/moonPhenomena";
 import {
   Star,
   Lock,
@@ -137,6 +142,12 @@ const FADE_UP = {
   },
 };
 
+type MythicMoon = MoonPhenomenon & {
+  discovered: boolean;
+  entry: MoonCollectionEntry | null;
+  particles: MythicParticleConfig | null;
+};
+
 // Memoized moon card component to prevent unnecessary re-renders
 const MoonCard = React.memo(function MoonCard({
   moon,
@@ -148,14 +159,14 @@ const MoonCard = React.memo(function MoonCard({
   onAddBoost,
   particles,
 }: {
-  moon: any;
-  entry: any;
+  moon: MythicMoon;
+  entry: MoonCollectionEntry | null;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onToggleFavorite: () => void;
   onToggleLock: () => void;
   onAddBoost: (seconds: number) => void;
-  particles: any;
+  particles: MythicParticleConfig | null;
 }) {
   return (
     <div

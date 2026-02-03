@@ -45,7 +45,7 @@ export function StaggeredGrid({
     return () => {
       timeouts.forEach(clearTimeout);
     };
-  }, [children.length, staggerDelay, animationDuration, hasAnimated]);
+  }, [children, staggerDelay, animationDuration, hasAnimated]);
 
   return (
     <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 ${className}`}>

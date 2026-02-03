@@ -35,7 +35,16 @@ export const applyMoonTheme = (phenomenon: MoonPhenomenon): void => {
       );
 
       // Apply mythic theme colors via JavaScript to ensure immediate effect
-      const mythicThemes: Record<string, any> = {
+      const mythicThemes: Record<
+        string,
+        {
+          background: string;
+          foreground: string;
+          card: string;
+          primary: string;
+          bgColor: string;
+        }
+      > = {
         superBloodMoon: {
           background: "0 50% 5%",
           foreground: "0 100% 95%",

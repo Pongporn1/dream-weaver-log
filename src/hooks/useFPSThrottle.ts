@@ -1,5 +1,24 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 
+interface BatteryManager {
+  level: number;
+  charging: boolean;
+  addEventListener: (
+    type: "levelchange" | "chargingchange",
+    listener: () => void,
+  ) => void;
+  removeEventListener: (
+    type: "levelchange" | "chargingchange",
+    listener: () => void,
+  ) => void;
+}
+
+declare global {
+  interface Navigator {
+    getBattery?: () => Promise<BatteryManager>;
+  }
+}
+
 interface FPSThrottleOptions {
   targetFPS?: number;
   enableAdaptive?: boolean;
@@ -43,9 +62,15 @@ export function useFPSThrottle(options: FPSThrottleOptions = {}) {
   const [isLowPowerMode, setIsLowPowerMode] = useState(false);
 
   useEffect(() => {
-    // Check for battery API
-    if ("getBattery" in navigator) {
-      (navigator as any).getBattery().then((battery: any) => {
+    const getBattery = navigator.getBattery?.bind(navigator);
+    if (!getBattery) return;
+
+    let isActive = true;
+    let cleanup: (() => void) | undefined;
+
+    getBattery()
+      .then((battery) => {
+        if (!isActive) return;
         const updateBatteryStatus = () => {
           // Throttle when battery is low and not charging
           setIsLowPowerMode(battery.level < 0.2 && !battery.charging);
@@ -55,12 +80,19 @@ export function useFPSThrottle(options: FPSThrottleOptions = {}) {
         battery.addEventListener("levelchange", updateBatteryStatus);
         battery.addEventListener("chargingchange", updateBatteryStatus);
 
-        return () => {
+        cleanup = () => {
           battery.removeEventListener("levelchange", updateBatteryStatus);
           battery.removeEventListener("chargingchange", updateBatteryStatus);
         };
+      })
+      .catch((error) => {
+        console.warn("Battery API unavailable:", error);
       });
-    }
+
+    return () => {
+      isActive = false;
+      cleanup?.();
+    };
   }, []);
 
   // Calculate frame interval based on current target FPS

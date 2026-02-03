@@ -127,6 +127,14 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
     return Object.values(nodeMap).sort((a, b) => b.dreamCount - a.dreamCount);
   }, [dreams, worlds]);
 
+  const worldNameByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    worldMap.forEach((node) => {
+      map.set(node.key, node.world.name);
+    });
+    return map;
+  }, [worldMap]);
+
   if (worldMap.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -135,14 +143,6 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
       </div>
     );
   }
-
-  const worldNameByKey = useMemo(() => {
-    const map = new Map<string, string>();
-    worldMap.forEach((node) => {
-      map.set(node.key, node.world.name);
-    });
-    return map;
-  }, [worldMap]);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">

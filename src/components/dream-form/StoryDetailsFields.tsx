@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";

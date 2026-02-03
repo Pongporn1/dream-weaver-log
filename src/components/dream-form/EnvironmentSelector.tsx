@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ENVIRONMENTS } from "@/types/dream";
 
+type EnvironmentOption = (typeof ENVIRONMENTS)[number];
+
+const isStandardEnvironment = (value: string): value is EnvironmentOption =>
+  ENVIRONMENTS.includes(value as EnvironmentOption);
+
 interface EnvironmentSelectorProps {
   selectedEnvironments: string[];
   newEnvironment: string;
@@ -19,7 +24,7 @@ export function EnvironmentSelector({
   onAddEnvironment,
 }: EnvironmentSelectorProps) {
   const customEnvironments = selectedEnvironments.filter(
-    (env) => !ENVIRONMENTS.includes(env as any)
+    (env) => !isStandardEnvironment(env)
   );
 
   return (

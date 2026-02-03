@@ -304,6 +304,7 @@ export function AnimatedProfileHeader() {
     drawVoidEffects,
     drawEchoMoonsEffect,
     drawFirefliesEffect,
+    parallaxOffsetRef,
   ]);
 
   return (

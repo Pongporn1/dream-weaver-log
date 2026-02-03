@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  cacheDreamLogs, 
-  getCachedDreamLogs, 
-  cacheSleepLogs, 
+import { useState, useEffect, useCallback } from "react";
+import {
+  cacheDreamLogs,
+  getCachedDreamLogs,
+  cacheSleepLogs,
   getCachedSleepLogs,
   isOnline,
-  subscribeToOnlineStatus 
-} from '@/lib/db';
-import { getDreamLogs, getSleepLogs } from '@/lib/api';
+  subscribeToOnlineStatus,
+} from "@/lib/db";
+import { getDreamLogs, getSleepLogs } from "@/lib/api";
+import type { DreamLog, SleepLog } from "@/types/dream";
 
 export function useOnlineStatus() {
   const [online, setOnline] = useState(isOnline());
@@ -20,7 +21,7 @@ export function useOnlineStatus() {
 }
 
 export function useOfflineDreamLogs() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DreamLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isFromCache, setIsFromCache] = useState(false);
@@ -46,7 +47,7 @@ export function useOfflineDreamLogs() {
         setIsFromCache(true);
       }
     } catch (err) {
-      console.error('Failed to fetch dream logs:', err);
+      console.error("Failed to fetch dream logs:", err);
       
       // Try cache as fallback
       try {
@@ -80,7 +81,7 @@ export function useOfflineDreamLogs() {
 }
 
 export function useOfflineSleepLogs() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<SleepLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isFromCache, setIsFromCache] = useState(false);
@@ -106,7 +107,7 @@ export function useOfflineSleepLogs() {
         setIsFromCache(true);
       }
     } catch (err) {
-      console.error('Failed to fetch sleep logs:', err);
+      console.error("Failed to fetch sleep logs:", err);
       
       // Try cache as fallback
       try {
