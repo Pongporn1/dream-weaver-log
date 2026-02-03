@@ -1,4 +1,4 @@
-import { Info, Download, RefreshCw } from "lucide-react";
+import { Info, Download, RefreshCw, Loader2 } from "lucide-react";
 import { AnimatedSection } from "@/components/ui/animated";
 import { Button } from "@/components/ui/button";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
@@ -49,7 +49,11 @@ export default function About() {
               <div className="flex items-center gap-2">
                 {updateAvailable ? (
                   <Button onClick={applyUpdate} disabled={isUpdating}>
-                    <Download className="h-4 w-4 mr-2" />
+                    {isUpdating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
                     {isUpdating ? "กำลังดาวน์โหลด..." : "ดาวน์โหลดอัปเดต"}
                   </Button>
                 ) : (
@@ -58,16 +62,29 @@ export default function About() {
                     onClick={checkForUpdates}
                     disabled={isChecking}
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {isChecking ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
                     {isChecking ? "กำลังตรวจสอบ..." : "ตรวจสอบอัปเดต"}
                   </Button>
                 )}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {updateAvailable
-                ? "พบเวอร์ชันใหม่ พร้อมให้ดาวน์โหลดและรีโหลดหน้า"
-                : "ยังเป็นเวอร์ชันล่าสุด"}
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  updateAvailable
+                    ? "bg-emerald-400 animate-pulse"
+                    : "bg-muted-foreground/40"
+                }`}
+              />
+              {isChecking
+                ? "กำลังตรวจสอบเวอร์ชันล่าสุด..."
+                : updateAvailable
+                  ? "พบเวอร์ชันใหม่ พร้อมให้ดาวน์โหลดและรีโหลดหน้า"
+                  : "ยังเป็นเวอร์ชันล่าสุด"}
             </div>
             {lastCheckedAt && (
               <div className="text-xs text-muted-foreground">
