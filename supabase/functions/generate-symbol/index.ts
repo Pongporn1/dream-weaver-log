@@ -22,91 +22,70 @@ function buildCoverPrompt(data: GenerateSymbolRequest): string {
 
   // Art style - Cult of the Lamb / Adventure Time inspired
   parts.push(
-    "Create a whimsical cartoon illustration in the style of indie video game art (like Cult of the Lamb, Hollow Knight) mixed with Adventure Time."
+    "whimsical cartoon illustration, indie video game art style like Cult of the Lamb and Hollow Knight mixed with Adventure Time"
   );
   parts.push(
-    "Art style: Bold outlines, vibrant saturated colors, cute chibi-style characters with simple expressive faces, dreamy fantasy backgrounds with soft gradients."
+    "bold outlines, vibrant saturated colors, cute chibi characters with simple expressive faces, dreamy fantasy backgrounds"
   );
   parts.push(
-    "Aesthetic: Cozy yet mysterious, colorful pastel and neon accents, magical sparkles, floating elements, lush nature or surreal dreamscapes."
+    "cozy yet mysterious aesthetic, colorful pastel and neon accents, magical sparkles, floating elements"
   );
-  parts.push("Vertical composition (2:3 aspect ratio). No text, titles, or watermarks.");
 
   // Main scene from dream notes
   if (data.notes) {
-    const notesSample = data.notes.slice(0, 600);
-    parts.push(`The scene should depict: "${notesSample}"`);
-    parts.push("Interpret this dream narrative as a whimsical cartoon scene with cute stylized characters.");
+    const notesSample = data.notes.slice(0, 300);
+    parts.push(`scene depicting: ${notesSample}`);
   }
 
   // World as the main setting
   if (data.world) {
-    parts.push(`Setting: A dreamworld named "${data.world}" - make this the dominant visual theme.`);
+    parts.push(`dreamworld named ${data.world}`);
   }
 
-  // Environments for atmosphere and scenery
+  // Environments for atmosphere
   if (data.environments && data.environments.length > 0) {
     const envMap: Record<string, string> = {
-      fog: "soft misty fog swirling around, ethereal atmosphere",
-      sea: "beautiful ocean waves, sandy beach, seashells, cute sea creatures",
-      mountain: "majestic colorful mountains, fluffy clouds, adventure vibes",
-      city: "whimsical cartoon city, cute buildings, glowing windows",
-      tunnel: "mysterious glowing cave or tunnel with crystals",
-      rain: "gentle rain with sparkly droplets, cozy atmosphere",
-      night: "magical starry night sky, crescent moon, fireflies",
-      sunset: "warm golden sunset, cotton candy clouds, orange and pink sky",
+      fog: "misty ethereal fog",
+      sea: "beautiful ocean waves beach",
+      mountain: "majestic colorful mountains fluffy clouds",
+      city: "whimsical cartoon city glowing windows",
+      tunnel: "mysterious glowing cave crystals",
+      rain: "gentle sparkly rain cozy atmosphere",
+      night: "magical starry night sky crescent moon fireflies",
+      sunset: "warm golden sunset cotton candy clouds",
     };
     const envDescriptions = data.environments
       .map((e) => envMap[e] || e)
-      .join("; ");
-    parts.push(`Environment elements to include: ${envDescriptions}.`);
+      .join(", ");
+    parts.push(envDescriptions);
   }
 
   // Entities as cute cartoon characters
   if (data.entities && data.entities.length > 0) {
-    const entityList = data.entities.slice(0, 5).join(", ");
-    parts.push(
-      `Feature these characters/beings as cute cartoon versions: ${entityList}. Give them simple expressive faces (dot eyes, simple smile) like Cult of the Lamb or Adventure Time style.`
-    );
+    const entityList = data.entities.slice(0, 3).join(", ");
+    parts.push(`cute cartoon ${entityList} with simple dot eyes`);
   }
 
-  // Mood from AI analysis
+  // Mood
   if (data.mood) {
-    const moodMap: Record<string, string> = {
-      happy: "bright cheerful colors, sunshine, smiling elements",
-      sad: "soft blue tones, gentle rain, peaceful melancholy",
-      scary: "cute-scary balance, spooky but adorable elements, purple and green accents",
-      mysterious: "magical glowing elements, stars, mystical symbols",
-      peaceful: "soft pastels, gentle lighting, cozy atmosphere",
-      adventurous: "dynamic composition, exciting elements, treasure and exploration vibes",
-    };
-    const moodStyle = moodMap[data.mood.toLowerCase()] || data.mood;
-    parts.push(`Mood/atmosphere: ${moodStyle}.`);
+    parts.push(`${data.mood} mood atmosphere`);
   }
 
-  // Threat level affects color palette and elements
+  // Threat level affects style
   if (data.threatLevel !== undefined) {
     if (data.threatLevel >= 4) {
-      parts.push(
-        "Add subtle dark fantasy elements: ominous shadows, glowing red/purple accents, but keep it cute and stylized, not scary."
-      );
+      parts.push("dark fantasy elements, ominous but cute, purple red accents");
     } else if (data.threatLevel >= 2) {
-      parts.push(
-        "Slightly mysterious atmosphere with magical glowing elements, floating particles."
-      );
+      parts.push("mysterious magical glowing elements");
     } else {
-      parts.push(
-        "Very peaceful and cozy atmosphere, soft pastel colors, gentle lighting, comfort vibes."
-      );
+      parts.push("peaceful cozy soft pastel colors");
     }
   }
 
-  // Quality instructions
-  parts.push(
-    "High quality digital illustration. Rich saturated colors, clean linework, professional indie game art quality. Dreamy, magical, whimsical. Think: If Studio Ghibli made a cartoon video game. Ultra detailed backgrounds with cute foreground characters."
-  );
+  // Quality
+  parts.push("high quality digital art, Studio Ghibli cartoon style, vertical composition");
 
-  return parts.join(" ");
+  return parts.join(", ");
 }
 
 serve(async (req) => {
@@ -116,13 +95,8 @@ serve(async (req) => {
 
   try {
     const data: GenerateSymbolRequest = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("Supabase configuration missing");
@@ -155,76 +129,22 @@ serve(async (req) => {
     }
 
     const prompt = buildCoverPrompt(data);
-    console.log("Generating cover with prompt:", prompt);
+    console.log("Generating cover with Pollinations:", prompt);
 
-    // Generate image using AI
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          modalities: ["image", "text"],
-        }),
-      }
-    );
+    // Use Pollinations.ai - FREE AI image generation (no API key needed!)
+    // Pollinations returns an image directly from URL
+    const encodedPrompt = encodeURIComponent(prompt);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=768&seed=${Date.now()}&nologo=true`;
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({
-            error: "Rate limit exceeded. Please try again later.",
-          }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits." }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+    // Fetch the image from Pollinations
+    const imageResponse = await fetch(pollinationsUrl);
+    
+    if (!imageResponse.ok) {
+      console.error("Pollinations error:", imageResponse.status);
+      throw new Error(`Pollinations API error: ${imageResponse.status}`);
     }
 
-    const result = await response.json();
-    const imageDataUrl =
-      result.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageDataUrl) {
-      console.error("No image in response:", JSON.stringify(result));
-      throw new Error("Failed to generate image");
-    }
-
-    // Extract base64 data from data URL
-    const base64Match = imageDataUrl.match(/^data:image\/\w+;base64,(.+)$/);
-    if (!base64Match) {
-      throw new Error("Invalid image data URL format");
-    }
-
-    const base64Data = base64Match[1];
-    const imageBuffer = Uint8Array.from(atob(base64Data), (c) =>
-      c.charCodeAt(0)
-    );
+    const imageBuffer = new Uint8Array(await imageResponse.arrayBuffer());
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
