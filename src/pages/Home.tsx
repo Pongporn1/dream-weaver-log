@@ -13,6 +13,7 @@ import { QuickActions } from "@/components/home/QuickActions";
 import { RecentDreams } from "@/components/home/RecentDreams";
 
 export default function Home() {
+  const [allDreams, setAllDreams] = useState<DreamLog[]>([]);
   const [recentDreams, setRecentDreams] = useState<DreamLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [existingWorlds, setExistingWorlds] = useState<string[]>([]);
@@ -25,6 +26,7 @@ export default function Home() {
         getWorlds(),
         getEntities(),
       ]);
+      setAllDreams(dreams);
       setRecentDreams(dreams.slice(0, 5));
       setExistingWorlds(worlds.map((w) => w.name));
       setExistingEntities(entities.map((e) => e.name));
@@ -47,7 +49,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <OfflineIndicator />
-      <AnimatedProfileHeader />
+      <AnimatedProfileHeader dreams={allDreams} />
 
       <PullToRefresh onRefresh={handleRefresh} className="flex-1">
         <div className="space-y-8 py-4 pb-28 container-app">

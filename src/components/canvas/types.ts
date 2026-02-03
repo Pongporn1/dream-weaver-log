@@ -10,6 +10,11 @@ export interface Star {
   twinklePhase: number;
 }
 
+export interface Constellation {
+  starIndices: number[];
+  intensity: number;
+}
+
 export interface Cloud {
   x: number;
   y: number;
@@ -71,6 +76,11 @@ export interface MoonRendererProps extends RendererProps {
 
 export interface StarRendererProps extends RendererProps {
   stars: Star[];
+  constellations?: Constellation[];
+  timeMs?: number;
+  constellationScale?: number;
+  constellationIntensity?: number;
+  constellationReveal?: number;
 }
 
 export interface CloudRendererProps extends RendererProps {
