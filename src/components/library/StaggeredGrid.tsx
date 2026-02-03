@@ -55,9 +55,8 @@ export function StaggeredGrid({
           className="transition-all"
           style={{
             opacity: visibleItems.has(index) ? 1 : 0,
-            transform: visibleItems.has(index) 
-              ? "translateY(0) scale(1)" 
-              : "translateY(20px) scale(0.95)",
+            marginTop: visibleItems.has(index) ? "0px" : "12px",
+            transitionProperty: "opacity, margin-top",
             transitionDuration: `${animationDuration}ms`,
             transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}

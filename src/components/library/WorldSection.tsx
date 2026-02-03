@@ -33,7 +33,7 @@ export function WorldSection({ worldName, dreams, isExpanded, onToggle }: WorldS
         )}
       </button>
       {isExpanded && (
-        <div className="p-4 pt-0">
+        <div className="p-4 pt-0 relative overflow-hidden isolate">
           <StaggeredGrid staggerDelay={60} animationDuration={350}>
             {dreams.map((dream) => (
               <AnimatedBookCover key={dream.id} dream={dream} />
