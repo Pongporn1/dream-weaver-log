@@ -101,7 +101,8 @@ export async function getCachedDreamLogs(): Promise<DreamLog[]> {
   
   // Check if cache is still valid
   const lastSync = await getMeta("dreamLogs_lastSync");
-  if (lastSync && Date.now() - lastSync > CACHE_DURATION) {
+  const lastSyncTime = typeof lastSync === "number" ? lastSync : null;
+  if (lastSyncTime && Date.now() - lastSyncTime > CACHE_DURATION) {
     return []; // Cache expired
   }
   
@@ -139,7 +140,8 @@ export async function getCachedSleepLogs(): Promise<SleepLog[]> {
   
   // Check if cache is still valid
   const lastSync = await getMeta("sleepLogs_lastSync");
-  if (lastSync && Date.now() - lastSync > CACHE_DURATION) {
+  const lastSyncTime = typeof lastSync === "number" ? lastSync : null;
+  if (lastSyncTime && Date.now() - lastSyncTime > CACHE_DURATION) {
     return []; // Cache expired
   }
   

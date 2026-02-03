@@ -1017,7 +1017,7 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
         />
 
         <div 
-          className="aspect-[2/3] rounded-xl overflow-hidden relative z-10 isolate transition-shadow duration-300 border border-white/10"
+          className="aspect-[2/3] rounded-2xl overflow-hidden relative z-10 isolate transition-shadow duration-300 border border-white/10"
           style={{ 
             boxShadow: "0 6px 16px rgba(2, 6, 23, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.06)"
           }}
@@ -1026,15 +1026,15 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
           {/* Animated Canvas Background */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full rounded-[inherit]"
             style={{ width: "100%", height: "100%" }}
           />
 
           {/* Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-white/5 to-transparent opacity-70 mix-blend-screen pointer-events-none" />
+          <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+          <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/25 via-white/5 to-transparent opacity-70 mix-blend-screen pointer-events-none" />
           <div
-            className="absolute inset-0 rounded-xl pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),inset_0_-18px_32px_rgba(0,0,0,0.35)]"
+            className="absolute inset-0 rounded-[inherit] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),inset_0_-18px_32px_rgba(0,0,0,0.35)]"
           />
 
           {/* Top Bar - ID & Threat */}
@@ -1147,9 +1147,9 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
           </div>
 
           {/* Hover Effects */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/0 to-transparent group-hover:via-white/20 transition-all duration-700 transform translate-x-full group-hover:translate-x-0" />
+          <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-tr from-transparent via-white/0 to-transparent group-hover:via-white/20 transition-all duration-700 transform translate-x-full group-hover:translate-x-0" />
           <div 
-            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            className="absolute inset-0 rounded-[inherit] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
             style={{ boxShadow: `inset 0 0 40px ${accentGlow}` }}
           />
         </div>
