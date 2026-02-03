@@ -104,6 +104,39 @@ const PARTICLE_SHOWCASE = [
   },
 ];
 
+const CODEX_THEME = {
+  "--codex-ink": "9, 11, 23",
+  "--codex-aurora": "90, 209, 255",
+  "--codex-ember": "255, 183, 110",
+  "--codex-orchid": "194, 132, 255",
+} as React.CSSProperties;
+
+const CODEX_TITLE_STYLE = {
+  fontFamily: '"DM Serif Display", "Space Grotesk", serif',
+} as React.CSSProperties;
+
+const CODEX_BODY_STYLE = {
+  fontFamily: '"Space Grotesk", "Inter", sans-serif',
+} as React.CSSProperties;
+
+const STAGGER_CONTAINER = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const FADE_UP = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 // Memoized moon card component to prevent unnecessary re-renders
 const MoonCard = React.memo(function MoonCard({
   moon,
@@ -127,8 +160,9 @@ const MoonCard = React.memo(function MoonCard({
   return (
     <div
       className={cn(
-        "rounded-xl border overflow-hidden",
-        "bg-gradient-to-br from-card via-card to-background",
+        "rounded-2xl border overflow-hidden",
+        "bg-white/5 backdrop-blur-sm",
+        "shadow-[0_12px_40px_rgba(6,8,20,0.45)]",
       )}
       style={{
         borderColor: particles?.color + "40",
@@ -140,7 +174,7 @@ const MoonCard = React.memo(function MoonCard({
       {/* Moon header */}
       <button
         onClick={onToggleExpand}
-        className="w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors"
+        className="w-full p-4 flex items-center gap-3 hover:bg-white/10 transition-colors"
       >
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -148,14 +182,17 @@ const MoonCard = React.memo(function MoonCard({
             background: particles
               ? `linear-gradient(135deg, ${particles.color}, ${particles.secondaryColor || particles.color})`
               : "hsl(var(--primary))",
+            boxShadow: particles?.glow
+              ? `0 0 14px ${particles.color}55`
+              : "0 0 12px rgba(255,255,255,0.15)",
           }}
         >
           <span className="text-lg">🌙</span>
         </div>
 
         <div className="flex-1 text-left min-w-0">
-          <div className="font-medium truncate">{moon.name}</div>
-          <div className="text-xs text-muted-foreground truncate">
+          <div className="font-semibold text-white truncate">{moon.name}</div>
+          <div className="text-xs text-white/60 truncate">
             {moon.nameEn}
           </div>
         </div>
@@ -163,7 +200,7 @@ const MoonCard = React.memo(function MoonCard({
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-purple-500/20 to-pink-500/20"
+            className="bg-gradient-to-r from-cyan-400/20 to-amber-300/20 text-white"
           >
             ×{entry?.encounterCount || 0}
           </Badge>
@@ -403,7 +440,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
 
   if (compact) {
     return (
-      <div className={cn("space-y-3", className)}>
+      <div className={cn("space-y-3", className)} style={CODEX_BODY_STYLE}>
         {/* Compact stats header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -452,200 +489,364 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* Header with stats */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Mythic Codex</h3>
-              <p className="text-xs text-muted-foreground">
-                {stats.totalEncounters} total encounters
-              </p>
-            </div>
-          </div>
-          <Badge
-            variant="outline"
-            className="bg-gradient-to-r from-purple-500/10 to-pink-500/10"
+    <section
+      className={cn(
+        "relative overflow-hidden rounded-[28px] border border-white/10 p-5 sm:p-8 text-white",
+        className,
+      )}
+      style={CODEX_THEME}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(900px 480px at 10% -10%, rgba(var(--codex-aurora), 0.35), transparent 60%), radial-gradient(700px 420px at 90% 5%, rgba(var(--codex-orchid), 0.28), transparent 55%), linear-gradient(160deg, rgba(var(--codex-ink), 1) 0%, rgba(11, 10, 26, 1) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0 opacity-30 mix-blend-screen"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+      <div
+        className="absolute inset-0 opacity-60 mix-blend-screen animate-[auroraShift_18s_linear_infinite]"
+        style={{
+          backgroundImage:
+            "linear-gradient(120deg, rgba(var(--codex-aurora),0.25), rgba(var(--codex-ember),0.18), rgba(var(--codex-orchid),0.22))",
+          backgroundSize: "200% 200%",
+        }}
+      />
+      <div className="absolute -top-24 -right-20 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-amber-300/10 blur-[90px]" />
+
+      <div className="relative z-10 space-y-10" style={CODEX_BODY_STYLE}>
+        <motion.div
+          className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+          variants={STAGGER_CONTAINER}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div
+            variants={FADE_UP}
+            className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 backdrop-blur-md"
           >
-            {stats.completionPercent}% Complete
-          </Badge>
-        </div>
-
-        {/* Overall progress - simple version */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Collection Progress</span>
-            <span>
-              {stats.totalDiscovered} / {Object.keys(MOON_PHENOMENA).length}
-            </span>
-          </div>
-          <Progress value={stats.completionPercent} className="h-2" />
-        </div>
-
-        {/* Rarity breakdown - simplified progress bars */}
-        <div className="space-y-3">
-          {(
-            ["mythic", "legendary", "very_rare", "rare", "normal"] as const
-          ).map((rarity) => {
-            const { count, max } = rarityCounts[rarity];
-            const percent = max > 0 ? (count / max) * 100 : 0;
-
-            return (
-              <div key={rarity} className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span
-                    className={cn(
-                      "font-medium px-2 py-0.5 rounded-full bg-gradient-to-r text-white",
-                      RARITY_COLORS[rarity],
-                    )}
-                  >
-                    {RARITY_LABELS[rarity]}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {count} / {max}
-                  </span>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="h-14 w-14 rounded-2xl border border-white/20 bg-gradient-to-br from-cyan-300/30 via-white/10 to-amber-200/20 flex items-center justify-center shadow-[0_0_20px_rgba(90,209,255,0.25)]">
+                    <span className="text-2xl">☾</span>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 h-6 w-6 rounded-full border border-white/30 bg-white/10 backdrop-blur" />
                 </div>
-                {/* Use simple Progress instead of MythicProgressBar for performance */}
-                <div className="h-3 rounded-full overflow-hidden bg-secondary/50">
-                  <div
-                    className={cn(
-                      "h-full rounded-full bg-gradient-to-r transition-all duration-500",
-                      RARITY_COLORS[rarity],
-                    )}
-                    style={{ width: `${percent}%` }}
-                  />
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">
+                    Mythic Archive
+                  </p>
+                  <h3
+                    className="text-3xl sm:text-4xl text-white"
+                    style={CODEX_TITLE_STYLE}
+                  >
+                    Mythic Codex
+                  </h3>
+                  <p className="text-sm text-white/70 max-w-md">
+                    A living ledger of lunar anomalies. Each encounter reshapes
+                    your mythic signature.
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80">
+                  Rank {stats.completionPercent}%
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80">
+                  {stats.totalEncounters} Encounters
+                </span>
+              </div>
+            </div>
 
-        {/* Collapsible particle showcase */}
-        <div className="pt-4 border-t">
-          <button
-            onClick={() => setShowParticleShowcase(!showParticleShowcase)}
-            className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <Sparkles className="h-3 w-3" />
-              Particle Effect Showcase
-            </span>
-            {showParticleShowcase ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
-
-          {showParticleShowcase && (
-            <div className="grid gap-3 mt-3 animate-fade-in">
-              {PARTICLE_SHOWCASE.map((effect) => (
-                <div key={effect.type} className="space-y-1">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                    {effect.label}
-                  </span>
-                  <MythicProgressBar
-                    value={effect.value}
-                    max={100}
-                    variant={effect.type}
-                    height={14}
-                    showGlow
-                    animated
-                    particleConfig={{
-                      type: effect.type,
-                      color: effect.color,
-                      secondaryColor: effect.secondary,
-                      density: 0.6, // Reduced density for performance
-                      speed: 1.2,
-                      glow: true,
-                    }}
-                  />
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                {
+                  label: "Total Encounters",
+                  value: stats.totalEncounters,
+                  hint: "dream logs",
+                  tint: "rgba(var(--codex-ember),0.18)",
+                },
+                {
+                  label: "Completion",
+                  value: `${stats.completionPercent}%`,
+                  hint: "overall",
+                  tint: "rgba(var(--codex-aurora),0.18)",
+                },
+                {
+                  label: "Discovered",
+                  value: stats.totalDiscovered,
+                  hint: `of ${Object.keys(MOON_PHENOMENA).length}`,
+                  tint: "rgba(var(--codex-orchid),0.18)",
+                },
+                {
+                  label: "Mythic",
+                  value: stats.mythicCount,
+                  hint: `${mythicMoons.length} total`,
+                  tint: "rgba(var(--codex-ember),0.12)",
+                },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-white/10 px-3 py-3"
+                  style={{
+                    background: `linear-gradient(135deg, ${stat.tint} 0%, rgba(255,255,255,0.03) 65%)`,
+                  }}
+                >
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/50">
+                    {stat.label}
+                  </div>
+                  <div className="mt-2 text-xl font-semibold text-white">
+                    {stat.value}
+                  </div>
+                  <div className="text-[11px] text-white/55">{stat.hint}</div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
+          </motion.div>
 
-      {/* Discovered Mythic Moons */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium flex items-center gap-2">
-          <Star className="h-4 w-4 text-amber-500" />
-          Discovered Mythic Moons ({discoveredMoons.length})
-        </h4>
+          <motion.div
+            variants={FADE_UP}
+            className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 backdrop-blur-md"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">
+                  Collection Status
+                </p>
+                <h4 className="text-lg font-semibold text-white">
+                  Lunar Registry
+                </h4>
+              </div>
+              <Badge className="bg-white/10 text-white border border-white/15">
+                {stats.completionPercent}% Complete
+              </Badge>
+            </div>
 
-        <div className="space-y-3">
-          {discoveredMoons.map((moon) => {
-            const entry = collection[moon.id];
-            const isExpanded = expandedMoon === moon.id;
-            const particles = getParticleConfig(moon.id);
-
-            return (
-              <MoonCard
-                key={moon.id}
-                moon={moon}
-                entry={entry}
-                isExpanded={isExpanded}
-                onToggleExpand={() =>
-                  setExpandedMoon(isExpanded ? null : moon.id)
-                }
-                onToggleFavorite={() => toggleFavorite(moon.id)}
-                onToggleLock={() => toggleLock(moon.id)}
-                onAddBoost={(seconds) => addDurationBoost(moon.id, seconds)}
-                particles={particles}
-              />
-            );
-          })}
-        </div>
-
-        {discoveredMoons.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No Mythic moons discovered yet</p>
-            <p className="text-xs mt-1">
-              Keep exploring to find rare moon phenomena!
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Undiscovered section */}
-      <div className="space-y-3">
-        <button
-          onClick={() => setShowUndiscovered(!showUndiscovered)}
-          className="w-full flex items-center justify-between text-sm font-medium"
-        >
-          <span className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" />
-            Undiscovered ({undiscoveredMoons.length})
-          </span>
-          {showUndiscovered ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-
-        {showUndiscovered && (
-          <div className="grid grid-cols-2 gap-2 animate-fade-in">
-            {undiscoveredMoons.map((moon) => (
-              <div
-                key={moon.id}
-                className="p-3 rounded-lg bg-muted/50 border border-dashed flex items-center gap-2"
-              >
-                <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm text-muted-foreground truncate">
-                  ???
+            <div className="mt-5 space-y-3">
+              <div className="flex justify-between text-xs text-white/70">
+                <span>Collection Progress</span>
+                <span>
+                  {stats.totalDiscovered} / {Object.keys(MOON_PHENOMENA).length}
                 </span>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-indigo-300 to-amber-200 transition-all duration-500"
+                  style={{ width: `${stats.completionPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {(
+                ["mythic", "legendary", "very_rare", "rare", "normal"] as const
+              ).map((rarity) => {
+                const { count, max } = rarityCounts[rarity];
+                const percent = max > 0 ? (count / max) * 100 : 0;
+
+                return (
+                  <div
+                    key={rarity}
+                    className="rounded-2xl border border-white/10 bg-black/30 px-3 py-3"
+                  >
+                    <div className="flex items-center justify-between text-xs text-white/70">
+                      <span
+                        className={cn(
+                          "font-medium px-2 py-0.5 rounded-full bg-gradient-to-r text-white",
+                          RARITY_COLORS[rarity],
+                        )}
+                      >
+                        {RARITY_LABELS[rarity]}
+                      </span>
+                      <span>
+                        {count} / {max}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full bg-gradient-to-r transition-all duration-500",
+                          RARITY_COLORS[rarity],
+                        )}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          variants={STAGGER_CONTAINER}
+          initial="hidden"
+          animate="show"
+          className="space-y-8"
+        >
+          <motion.div
+            variants={FADE_UP}
+            className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 backdrop-blur-md"
+          >
+            <button
+              onClick={() => setShowParticleShowcase(!showParticleShowcase)}
+              className="w-full flex items-center justify-between text-xs font-medium text-white/70 hover:text-white transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-3 w-3" />
+                Particle Effect Showcase
+              </span>
+              {showParticleShowcase ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+
+            <AnimatePresence initial={false}>
+              {showParticleShowcase && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid gap-3 mt-4">
+                    {PARTICLE_SHOWCASE.map((effect) => (
+                      <div key={effect.type} className="space-y-1">
+                        <span className="text-[10px] text-white/50 uppercase tracking-wider">
+                          {effect.label}
+                        </span>
+                        <MythicProgressBar
+                          value={effect.value}
+                          max={100}
+                          variant={effect.type}
+                          height={14}
+                          showGlow
+                          animated
+                          particleConfig={{
+                            type: effect.type,
+                            color: effect.color,
+                            secondaryColor: effect.secondary,
+                            density: 0.6,
+                            speed: 1.2,
+                            glow: true,
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          <motion.div
+            variants={FADE_UP}
+            className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 backdrop-blur-md"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-300" />
+                Discovered Mythic Moons ({discoveredMoons.length})
+              </h4>
+              <span className="text-xs text-white/60">
+                Tap a moon to reveal its archive
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {discoveredMoons.map((moon) => {
+                const entry = collection[moon.id];
+                const isExpanded = expandedMoon === moon.id;
+                const particles = getParticleConfig(moon.id);
+
+                return (
+                  <MoonCard
+                    key={moon.id}
+                    moon={moon}
+                    entry={entry}
+                    isExpanded={isExpanded}
+                    onToggleExpand={() =>
+                      setExpandedMoon(isExpanded ? null : moon.id)
+                    }
+                    onToggleFavorite={() => toggleFavorite(moon.id)}
+                    onToggleLock={() => toggleLock(moon.id)}
+                    onAddBoost={(seconds) => addDurationBoost(moon.id, seconds)}
+                    particles={particles}
+                  />
+                );
+              })}
+            </div>
+
+            {discoveredMoons.length === 0 && (
+              <div className="text-center py-10 text-white/60">
+                <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-70" />
+                <p>No Mythic moons discovered yet</p>
+                <p className="text-xs mt-1">
+                  Keep exploring to find rare moon phenomena!
+                </p>
+              </div>
+            )}
+          </motion.div>
+
+          <motion.div
+            variants={FADE_UP}
+            className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 backdrop-blur-md"
+          >
+            <button
+              onClick={() => setShowUndiscovered(!showUndiscovered)}
+              className="w-full flex items-center justify-between text-sm font-medium text-white"
+            >
+              <span className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-white/70" />
+                Undiscovered ({undiscoveredMoons.length})
+              </span>
+              {showUndiscovered ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+
+            <AnimatePresence initial={false}>
+              {showUndiscovered && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    {undiscoveredMoons.map((moon) => (
+                      <div
+                        key={moon.id}
+                        className="p-3 rounded-2xl bg-black/30 border border-dashed border-white/15 flex items-center gap-2"
+                      >
+                        <Lock className="h-4 w-4 text-white/50 flex-shrink-0" />
+                        <span className="text-sm text-white/60 truncate">
+                          ???
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 }

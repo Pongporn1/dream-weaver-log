@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      injectRegister: null,
+      registerType: "prompt",
       includeAssets: ["favicon.svg", "robots.txt", "hero-wallpaper.png"],
       manifest: {
         name: "Dream book by Bon",
@@ -40,8 +41,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Cache busting - force immediate update
-        skipWaiting: true,
+        // Manual update prompt
+        skipWaiting: false,
         clientsClaim: true,
         // Clean old caches
         cleanupOutdatedCaches: true,

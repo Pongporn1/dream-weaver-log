@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { DreamLog, World } from "@/types/dream";
-import { Map, MapPin, TrendingUp } from "lucide-react";
+import { Map as MapIcon, MapPin, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { isLikelySame, normalizeText } from "@/lib/storyMatching";
 
 interface Props {
   dreams: DreamLog[];
@@ -9,6 +10,7 @@ interface Props {
 }
 
 interface WorldNode {
+  key: string;
   world: World;
   dreamCount: number;
   connections: Record<string, number>;
@@ -18,11 +20,55 @@ interface WorldNode {
 
 export function DreamUniverseMap({ dreams, worlds }: Props) {
   const worldMap = useMemo(() => {
+    const worldIndex = new Map<string, World>();
+    worlds.forEach((world) => {
+      const key = normalizeText(world.name);
+      if (key) worldIndex.set(key, world);
+    });
+
+    const resolveWorldKey = (worldName: string) => {
+      const directKey = normalizeText(worldName);
+      if (!directKey) return "";
+      if (worldIndex.has(directKey)) return directKey;
+
+      for (const world of worlds) {
+        if (isLikelySame(world.name, worldName)) {
+          return normalizeText(world.name);
+        }
+      }
+
+      return directKey;
+    };
+
+    const dreamGroups = new Map<string, DreamLog[]>();
+    const dreamKeyList = dreams.map((dream) => {
+      const key = resolveWorldKey(dream.world);
+      if (key) {
+        const group = dreamGroups.get(key) ?? [];
+        group.push(dream);
+        dreamGroups.set(key, group);
+      }
+      return { dream, key };
+    });
+
+    const makeFallbackWorld = (key: string, sampleDream?: DreamLog): World => ({
+      id: `virtual-${key}`,
+      name: sampleDream?.world || "Unknown",
+      type: "transient",
+      stability: 3,
+      dreamIds: [],
+    });
+
     const nodeMap: Record<string, WorldNode> = {};
+    const allKeys = new Set<string>([
+      ...worldIndex.keys(),
+      ...dreamGroups.keys(),
+    ]);
 
     // Initialize nodes
-    worlds.forEach((world) => {
-      const worldDreams = dreams.filter((d) => d.world === world.name);
+    allKeys.forEach((key) => {
+      const world = worldIndex.get(key);
+      const worldDreams = dreamGroups.get(key) ?? [];
       const avgThreat =
         worldDreams.length > 0
           ? worldDreams.reduce((sum, d) => sum + d.threatLevel, 0) /
@@ -30,21 +76,30 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
           : 0;
 
       // Get common entities in this world
-      const entityCounts: Record<string, number> = {};
+      const entityCounts: Record<string, { label: string; count: number }> = {};
       worldDreams.forEach((d) => {
         d.entities.forEach((e) => {
-          entityCounts[e] = (entityCounts[e] || 0) + 1;
+          const normalized = normalizeText(e);
+          if (!normalized) return;
+          if (!entityCounts[normalized]) {
+            entityCounts[normalized] = { label: e, count: 0 };
+          }
+          entityCounts[normalized].count += 1;
         });
       });
 
-      const commonEntities = Object.entries(entityCounts)
-        .filter(([_, count]) => count >= 2)
-        .sort((a, b) => b[1] - a[1])
-        .map(([entity]) => entity)
+      const commonEntities = Object.values(entityCounts)
+        .filter((entry) => entry.count >= 2)
+        .sort((a, b) => b.count - a.count)
+        .map((entry) => entry.label)
         .slice(0, 5);
 
-      nodeMap[world.name] = {
-        world,
+      const resolvedWorld =
+        world || makeFallbackWorld(key, worldDreams[0]);
+
+      nodeMap[key] = {
+        key,
+        world: resolvedWorld,
         dreamCount: worldDreams.length,
         connections: {},
         avgThreat,
@@ -53,19 +108,19 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
     });
 
     // Find connections (sequential world transitions)
-    const sortedDreams = [...dreams].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    const sortedDreams = [...dreamKeyList].sort(
+      (a, b) =>
+        new Date(a.dream.date).getTime() - new Date(b.dream.date).getTime(),
     );
 
     for (let i = 0; i < sortedDreams.length - 1; i++) {
-      const from = sortedDreams[i].world;
-      const to = sortedDreams[i + 1].world;
+      const fromKey = sortedDreams[i].key;
+      const toKey = sortedDreams[i + 1].key;
 
-      if (from !== to) {
-        const node = nodeMap[from];
-        if (node) {
-          node.connections[to] = (node.connections[to] || 0) + 1;
-        }
+      if (!fromKey || !toKey || fromKey === toKey) continue;
+      const node = nodeMap[fromKey];
+      if (node) {
+        node.connections[toKey] = (node.connections[toKey] || 0) + 1;
       }
     }
 
@@ -75,16 +130,24 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
   if (worldMap.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <Map className="w-12 h-12 mx-auto mb-3 opacity-50" />
+        <MapIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
         <p>ยังไม่มีโลกในจักรวาลความฝัน</p>
       </div>
     );
   }
 
+  const worldNameByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    worldMap.forEach((node) => {
+      map.set(node.key, node.world.name);
+    });
+    return map;
+  }, [worldMap]);
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Map className="w-5 h-5 text-primary" />
+        <MapIcon className="w-5 h-5 text-primary" />
         <h2 className="text-lg font-semibold">
           จักรวาลความฝัน ({worldMap.length} โลก)
         </h2>
@@ -177,7 +240,7 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
                         className="flex items-center justify-between text-xs"
                       >
                         <span className="text-muted-foreground">
-                          → {toWorld}
+                          → {worldNameByKey.get(toWorld) || toWorld}
                         </span>
                         <Badge variant="outline" className="text-xs">
                           {count}x

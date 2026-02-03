@@ -1,8 +1,8 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { th } from "date-fns/locale";
-import { DreamLog, ENVIRONMENTS } from "@/types/dream";
+import { DreamLog } from "@/types/dream";
 import { MapPin, Users, Clock, Shield, LogOut, Sparkles } from "lucide-react";
 import { useCoverStyle, AICoverStyle, SymbolType, SymbolRotation } from "@/hooks/useCoverStyle";
 
@@ -31,6 +31,17 @@ interface FogLayer {
 
 interface AnimatedBookCoverProps {
   dream: DreamLog;
+}
+
+interface DreamStyleInput {
+  id: DreamLog["id"];
+  world: DreamLog["world"];
+  threatLevel: DreamLog["threatLevel"];
+  timeSystem: DreamLog["timeSystem"];
+  safetyOverride: DreamLog["safetyOverride"];
+  exit: DreamLog["exit"];
+  environments: string[];
+  entityCount: number;
 }
 
 interface MagneticEntry {
@@ -115,6 +126,33 @@ function hashString(str: string): number {
   return str.split("").reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeHue(value: number): number {
+  const mod = value % 360;
+  return mod < 0 ? mod + 360 : mod;
+}
+
+function toValidDate(value: DreamLog["date"] | Date | number | null | undefined): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return isValid(value) ? value : null;
+  }
+  if (typeof value === "string") {
+    const iso = parseISO(value);
+    if (isValid(iso)) return iso;
+    const parsed = new Date(value);
+    return isValid(parsed) ? parsed : null;
+  }
+  if (typeof value === "number") {
+    const parsed = new Date(value);
+    return isValid(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function withAlpha(color: string, alpha: number): string {
   const safeAlpha = Math.min(1, Math.max(0, alpha));
 
@@ -144,11 +182,17 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 // Generate unique colors based on all dream data - enhanced with AI style
-function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
+function generateUniqueStyle(dream: DreamStyleInput, aiStyle?: AICoverStyle | null) {
   // If AI style is available, use it as the primary source
   if (aiStyle) {
     const brightnessMap = { dim: 0.6, normal: 1.0, bright: 1.2, glowing: 1.5 };
     const brightness = brightnessMap[aiStyle.brightness] || 1.0;
+    const baseSaturation = clamp(aiStyle.saturation, 0, 100);
+    const secondarySaturation = clamp(aiStyle.saturation - 10, 0, 100);
+    const accentSaturation = clamp(baseSaturation + 20, 0, 90);
+    const primaryHue = normalizeHue(aiStyle.primaryHue);
+    const secondaryHue = normalizeHue(aiStyle.secondaryHue);
+    const accentHue = normalizeHue(aiStyle.accentHue);
     
     // Map AI pattern to internal pattern type
     const aiPatternMap: Record<string, typeof safetyPatterns[keyof typeof safetyPatterns]> = {
@@ -162,15 +206,15 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
       spiral: "circular",
     };
     
-    const primary = `hsl(${aiStyle.primaryHue}, ${aiStyle.saturation}%, 25%)`;
-    const secondary = `hsl(${aiStyle.secondaryHue}, ${aiStyle.saturation - 10}%, 35%)`;
-    const accent = `hsl(${aiStyle.accentHue}, ${Math.min(90, aiStyle.saturation + 20)}%, 60%)`;
+    const primary = `hsl(${primaryHue}, ${baseSaturation}%, 25%)`;
+    const secondary = `hsl(${secondaryHue}, ${secondarySaturation}%, 35%)`;
+    const accent = `hsl(${accentHue}, ${accentSaturation}%, 60%)`;
     
     return {
       primary,
       secondary,
       accent,
-      gradientAngle: aiStyle.gradientAngle,
+      gradientAngle: normalizeHue(aiStyle.gradientAngle),
       particleCount: 20 + dream.threatLevel * 4,
       patternType: aiPatternMap[aiStyle.pattern] || "grid",
       patternSeed: hashString(aiStyle.mood + aiStyle.symbolType),
@@ -205,7 +249,7 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
   const timeEffect = timeSystemEffects[dream.timeSystem] || timeSystemEffects.unknown;
   const patternType = safetyPatterns[dream.safetyOverride] || safetyPatterns.unknown;
   const exitStyle = exitVisuals[dream.exit] || exitVisuals.unknown;
-  const entityCount = dream.entities?.length || 0;
+  const entityCount = dream.entityCount;
   const particleCount = 10 + entityCount * 3 + dream.threatLevel * 4;
   
   const worldHash = hashString(dream.world || "unknown");
@@ -244,22 +288,26 @@ function generateUniqueStyle(dream: DreamLog, aiStyle?: AICoverStyle | null) {
 }
 
 // Generate particle types based on entities and environments
-function generateParticleTypes(dream: DreamLog): Particle["type"][] {
+function generateParticleTypes(
+  environments: string[],
+  threatLevel: DreamLog["threatLevel"],
+  entityCount: number
+): Particle["type"][] {
   const types: Particle["type"][] = ["dot"];
   
-  if (dream.environments?.includes("night") || dream.environments?.includes("sunset")) {
+  if (environments.includes("night") || environments.includes("sunset")) {
     types.push("star");
   }
-  if (dream.environments?.includes("fog") || dream.environments?.includes("sea")) {
+  if (environments.includes("fog") || environments.includes("sea")) {
     types.push("ring");
   }
-  if (dream.threatLevel >= 3) {
+  if (threatLevel >= 3) {
     types.push("triangle");
   }
-  if (dream.threatLevel >= 4) {
+  if (threatLevel >= 4) {
     types.push("diamond");
   }
-  if (dream.entities && dream.entities.length > 0) {
+  if (entityCount > 0) {
     types.push("star", "ring");
   }
   
@@ -277,31 +325,130 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
   const lastFrameRef = useRef(0);
   const sizeRef = useRef({ width: 0, height: 0, fieldWidth: 0, fieldHeight: 0 });
   const isVisibleRef = useRef(true);
-  const magneticId = useMemo(() => `dream-${dream.id}`, [dream.id]);
+  const dreamId = dream.id;
+  const dreamWorld = dream.world;
+  const dreamThreatLevel = dream.threatLevel;
+  const dreamTimeSystem = dream.timeSystem;
+  const dreamSafetyOverride = dream.safetyOverride;
+  const dreamExit = dream.exit;
+  const dreamEnvironmentKey = (dream.environments ?? []).join("|");
+  const dreamEntityCount = dream.entities?.length ?? 0;
+  const dreamDate = useMemo(() => toValidDate(dream.date), [dream.date]);
+  const magneticId = useMemo(() => `dream-${dreamId}`, [dreamId]);
   
   // Use AI-generated cover style if notes are available
-  const { style: aiStyle, loading: aiLoading } = useCoverStyle(dream);
-  
-  const style = useMemo(() => generateUniqueStyle(dream, aiStyle), [dream, aiStyle]);
-  const particleTypes = useMemo(() => generateParticleTypes(dream), [dream]);
-  const perfConfig = useMemo(() => {
-    if (typeof window === "undefined") {
-      return {
-        particleScale: 0.8,
-        maxDpr: 1.5,
-        fps: 30,
-        spill: 14,
-        speedScale: 1,
-        enableSpill: true,
-        enablePattern: true,
-      };
-    }
+  const { style: aiStyle } = useCoverStyle(dream);
+
+  const aiHasStyle = aiStyle != null;
+  const aiPrimaryHue = aiStyle?.primaryHue;
+  const aiSecondaryHue = aiStyle?.secondaryHue;
+  const aiAccentHue = aiStyle?.accentHue;
+  const aiSaturation = aiStyle?.saturation;
+  const aiBrightness = aiStyle?.brightness;
+  const aiPattern = aiStyle?.pattern;
+  const aiParticleStyle = aiStyle?.particleStyle;
+  const aiGradientAngle = aiStyle?.gradientAngle;
+  const aiMood = aiStyle?.mood;
+  const aiSymbolType = aiStyle?.symbolType;
+  const aiSymbolComplexity = aiStyle?.symbolComplexity;
+  const aiSymbolRotation = aiStyle?.symbolRotation;
+  const aiKeywordsKey = aiStyle?.keywords?.join("\u0001") ?? "";
+
+  const aiStyleSnapshot = useMemo<AICoverStyle | null>(() => {
+    if (!aiHasStyle) return null;
+    return {
+      mood: aiMood ?? "",
+      primaryHue: aiPrimaryHue ?? 0,
+      secondaryHue: aiSecondaryHue ?? 0,
+      accentHue: aiAccentHue ?? 0,
+      saturation: aiSaturation ?? 0,
+      brightness: aiBrightness ?? "normal",
+      pattern: aiPattern ?? "dots",
+      particleStyle: aiParticleStyle ?? "floating",
+      gradientAngle: aiGradientAngle ?? 0,
+      symbolType: aiSymbolType ?? "moon",
+      symbolComplexity: aiSymbolComplexity ?? 1,
+      symbolRotation: aiSymbolRotation ?? "none",
+      keywords: aiKeywordsKey ? aiKeywordsKey.split("\u0001") : [],
+    };
+  }, [
+    aiHasStyle,
+    aiMood,
+    aiPrimaryHue,
+    aiSecondaryHue,
+    aiAccentHue,
+    aiSaturation,
+    aiBrightness,
+    aiPattern,
+    aiParticleStyle,
+    aiGradientAngle,
+    aiSymbolType,
+    aiSymbolComplexity,
+    aiSymbolRotation,
+    aiKeywordsKey,
+  ]);
+
+  const dreamEnvironments = useMemo(
+    () => (dreamEnvironmentKey ? dreamEnvironmentKey.split("|") : []),
+    [dreamEnvironmentKey]
+  );
+
+  const dreamStyleInput = useMemo<DreamStyleInput>(
+    () => ({
+      id: dreamId,
+      world: dreamWorld,
+      threatLevel: dreamThreatLevel,
+      timeSystem: dreamTimeSystem,
+      safetyOverride: dreamSafetyOverride,
+      exit: dreamExit,
+      environments: dreamEnvironments,
+      entityCount: dreamEntityCount,
+    }),
+    [
+      dreamId,
+      dreamWorld,
+      dreamThreatLevel,
+      dreamTimeSystem,
+      dreamSafetyOverride,
+      dreamExit,
+      dreamEnvironments,
+      dreamEntityCount,
+    ]
+  );
+
+  const style = useMemo(
+    () => generateUniqueStyle(dreamStyleInput, aiStyleSnapshot),
+    [dreamStyleInput, aiStyleSnapshot]
+  );
+  const particleTypes = useMemo(
+    () => generateParticleTypes(dreamEnvironments, dreamThreatLevel, dreamEntityCount),
+    [dreamEnvironments, dreamThreatLevel, dreamEntityCount]
+  );
+  const [perfConfig, setPerfConfig] = useState(() => ({
+    particleScale: 0.75,
+    maxDpr: 1.5,
+    fps: 30,
+    spill: 14,
+    speedScale: 1,
+    enableSpill: true,
+    enablePattern: true,
+    enableMagnetic: true,
+    magneticStrength: 0.0026,
+    magneticRadiusScale: 1.1,
+    enableFog: true,
+    fogLayerCount: 4,
+    fogSpeedScale: 1,
+    fogOpacity: 1,
+  }));
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
     const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const cores = navigator.hardwareConcurrency || 8;
     const lowPower = cores <= 4;
 
-    return {
+    const nextConfig = {
       particleScale: prefersReduced ? 0.35 : lowPower ? 0.55 : 0.75,
       maxDpr: prefersReduced ? 1 : lowPower ? 1.25 : 1.5,
       fps: prefersReduced ? 18 : lowPower ? 24 : 30,
@@ -317,6 +464,13 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
       fogSpeedScale: lowPower ? 0.8 : 1,
       fogOpacity: lowPower ? 0.8 : 1,
     };
+
+    setPerfConfig((prev) => {
+      const isSame = (Object.keys(nextConfig) as Array<keyof typeof nextConfig>).every(
+        (key) => prev[key] === nextConfig[key]
+      );
+      return isSame ? prev : nextConfig;
+    });
   }, []);
   const spillSize = perfConfig.spill;
 
@@ -984,7 +1138,7 @@ export function AnimatedBookCover({ dream }: AnimatedBookCoverProps) {
           {/* Date & Time */}
           <div className="text-center space-y-0.5">
             <p className="text-[10px] text-white/60 font-light tracking-wider">
-              {format(new Date(dream.date), "d MMM yyyy", { locale: th })}
+              {dreamDate ? format(dreamDate, "d MMM yyyy", { locale: th }) : "-"}
             </p>
             {dream.wakeTime && (
               <p className="text-[9px] text-white/40">{dream.wakeTime}</p>

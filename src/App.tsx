@@ -16,13 +16,12 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
+import { APP_VERSION } from "@/config/appVersion";
+import { AppUpdateProvider } from "@/hooks/useAppUpdate";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Version for cache busting verification
-  const APP_VERSION = "2026.01.31.002";
-
   // Apply moon theme globally on app mount
   useEffect(() => {
     const { phenomenon } = getSessionPhenomenon();
@@ -34,45 +33,47 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter
-          basename={
-            import.meta.env.MODE === "production" ? "/dream-weaver-log" : "/"
-          }
-        >
-          <Routes>
-            {/* Home page without Layout for full-screen hero */}
-            <Route path="/" element={<Home />} />
+    <AppUpdateProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter
+            basename={
+              import.meta.env.MODE === "production" ? "/dream-weaver-log" : "/"
+            }
+          >
+            <Routes>
+              {/* Home page without Layout for full-screen hero */}
+              <Route path="/" element={<Home />} />
 
-            {/* Library page without Layout for full-screen experience */}
-            <Route path="/library" element={<Library />} />
+              {/* Library page without Layout for full-screen experience */}
+              <Route path="/library" element={<Library />} />
 
-            {/* Story Mode page without Layout for full-screen experience */}
-            <Route path="/story" element={<StoryModePage />} />
+              {/* Story Mode page without Layout for full-screen experience */}
+              <Route path="/story" element={<StoryModePage />} />
 
-            {/* Other pages with Layout */}
-            <Route
-              path="/*"
-              element={
-                <Layout>
-                  <Routes>
-                    <Route path="/logs" element={<DreamLogs />} />
-                    <Route path="/logs/new" element={<NewDreamLog />} />
-                    <Route path="/logs/:id" element={<DreamDetail />} />
-                    <Route path="/statistics" element={<Statistics />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+              {/* Other pages with Layout */}
+              <Route
+                path="/*"
+                element={
+                  <Layout>
+                    <Routes>
+                      <Route path="/logs" element={<DreamLogs />} />
+                      <Route path="/logs/new" element={<NewDreamLog />} />
+                      <Route path="/logs/:id" element={<DreamDetail />} />
+                      <Route path="/statistics" element={<Statistics />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Layout>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AppUpdateProvider>
   );
 };
 

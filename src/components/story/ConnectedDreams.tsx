@@ -3,6 +3,7 @@ import { DreamLog, World } from "@/types/dream";
 import { Network, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { findCommonValues, isLikelySame } from "@/lib/storyMatching";
 
 interface Props {
   dreams: DreamLog[];
@@ -13,38 +14,53 @@ interface Connection {
   dream1: DreamLog;
   dream2: DreamLog;
   connections: string[];
-  strength: number;
+  score: number;
 }
 
 export function ConnectedDreams({ dreams, worlds }: Props) {
   const connections = useMemo(() => {
     const result: Connection[] = [];
+    const scoreWeights = {
+      world: 3,
+      entity: 2,
+      environment: 1,
+      threat: 1,
+      timeSystem: 0.75,
+      safety: 0.75,
+      exit: 0.75,
+    };
+    const minimumScore = 3;
 
     for (let i = 0; i < dreams.length; i++) {
       for (let j = i + 1; j < dreams.length; j++) {
         const d1 = dreams[i];
         const d2 = dreams[j];
         const conn: string[] = [];
+        let score = 0;
 
         // Same world
-        if (d1.world === d2.world) {
-          conn.push(`โลกเดียวกัน: ${d1.world}`);
+        const sameWorld = isLikelySame(d1.world, d2.world);
+        if (sameWorld) {
+          const worldLabel = d1.world || d2.world || "Unknown";
+          conn.push(`โลกเดียวกัน: ${worldLabel}`);
+          score += scoreWeights.world;
         }
 
         // Common entities
-        const commonEntities = d1.entities.filter((e) =>
-          d2.entities.includes(e),
-        );
+        const commonEntities = findCommonValues(d1.entities || [], d2.entities || []);
         if (commonEntities.length > 0) {
           conn.push(`ตัวละครเดียวกัน: ${commonEntities.join(", ")}`);
+          score += Math.min(commonEntities.length, 3) * scoreWeights.entity;
         }
 
         // Common environments
-        const commonEnvs = d1.environments.filter((e) =>
-          d2.environments.includes(e),
+        const commonEnvs = findCommonValues(
+          d1.environments || [],
+          d2.environments || [],
         );
         if (commonEnvs.length > 0) {
           conn.push(`สภาพแวดล้อมเดียวกัน: ${commonEnvs.join(", ")}`);
+          score += Math.min(commonEnvs.length, 3) * scoreWeights.environment;
         }
 
         // Similar threat level
@@ -52,25 +68,46 @@ export function ConnectedDreams({ dreams, worlds }: Props) {
           conn.push(
             `ระดับภัยคุกคามใกล้เคียง (${d1.threatLevel}-${d2.threatLevel})`,
           );
+          score += scoreWeights.threat;
         }
 
         // Same time system
         if (d1.timeSystem === d2.timeSystem && d1.timeSystem !== "unknown") {
           conn.push(`Time System: ${d1.timeSystem}`);
+          score += scoreWeights.timeSystem;
         }
 
-        if (conn.length >= 2) {
+        // Same safety override
+        if (
+          d1.safetyOverride === d2.safetyOverride &&
+          d1.safetyOverride !== "unknown" &&
+          d1.safetyOverride !== "none"
+        ) {
+          conn.push(`Safety Override: ${d1.safetyOverride}`);
+          score += scoreWeights.safety;
+        }
+
+        // Same exit type
+        if (d1.exit === d2.exit && d1.exit !== "unknown") {
+          conn.push(`Exit: ${d1.exit}`);
+          score += scoreWeights.exit;
+        }
+
+        const hasStrongLink =
+          sameWorld || commonEntities.length > 0 || commonEnvs.length > 0;
+
+        if (hasStrongLink && score >= minimumScore) {
           result.push({
             dream1: d1,
             dream2: d2,
             connections: conn,
-            strength: conn.length,
+            score,
           });
         }
       }
     }
 
-    return result.sort((a, b) => b.strength - a.strength).slice(0, 15);
+    return result.sort((a, b) => b.score - a.score).slice(0, 15);
   }, [dreams]);
 
   if (connections.length === 0) {
@@ -99,7 +136,7 @@ export function ConnectedDreams({ dreams, worlds }: Props) {
           {/* Connection Strength */}
           <div className="flex items-center justify-between mb-3">
             <Badge variant="secondary" className="text-xs">
-              ความเชื่อมโยง: {conn.strength} จุด
+              คะแนนเชื่อมโยง: {conn.score.toFixed(1)}
             </Badge>
           </div>
 
