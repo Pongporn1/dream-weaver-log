@@ -2,12 +2,7 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-  ],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -89,52 +84,11 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-8px)" },
-        },
-        blink: {
-          "0%, 49%, 100%": { opacity: "1" },
-          "50%, 99%": { opacity: "0.3" },
-        },
-        flicker: {
-          "0%, 19%, 21%, 23%, 25%, 54%, 56%, 100%": { opacity: "1" },
-          "20%, 24%, 55%": { opacity: "0.4" },
-        },
-        heartbeat: {
-          "0%, 100%": { transform: "scale(1)" },
-          "14%": { transform: "scale(1.15)" },
-          "28%": { transform: "scale(1)" },
-        },
-        sway: {
-          "0%, 100%": { transform: "rotate(-2deg)" },
-          "50%": { transform: "rotate(2deg)" },
-        },
-        grow: {
-          "0%, 100%": { transform: "scaleY(1)" },
-          "50%": { transform: "scaleY(1.1)" },
-        },
-        gateWave: {
-          "0%, 100%": { transform: "scaleX(1)" },
-          "50%": { transform: "scaleX(0.95)" },
-        },
-        crown: {
-          "0%, 100%": { transform: "rotate(0deg) translateY(0)" },
-          "50%": { transform: "rotate(1deg) translateY(-2px)" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
-        float: "float 6s ease-in-out infinite",
-        blink: "blink 3s steps(2,end) infinite",
-        flicker: "flicker 2s ease-in-out infinite",
-        heartbeat: "heartbeat 1.5s ease-in-out infinite",
-        sway: "sway 4s ease-in-out infinite",
-        grow: "grow 5s ease-in-out infinite",
-        gateWave: "gateWave 3s ease-in-out infinite",
-        crown: "crown 4s ease-in-out infinite",
       },
     },
   },
