@@ -15,6 +15,7 @@ import { LibraryHeader, DateSection, WorldSection } from "@/components/library";
 import { MythicCodex } from "@/components/mythic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 type GroupBy = "date" | "world";
 type LibraryTab = "dreams" | "codex";
@@ -35,10 +36,22 @@ export default function Library() {
   });
   const [currentPhenomenon, setCurrentPhenomenon] =
     useState<MoonPhenomenon | null>(null);
+  const [isDebugSuperBlue, setIsDebugSuperBlue] = useState(false);
+  const [isDebugPixel, setIsDebugPixel] = useState(false);
+
+  const debugMoonId = "superBlueBloodMoon";
+  const pixelMoonId = "pixelDreamMoon";
+  const lockedMoonKey = "mythic-locked-moon";
 
   useEffect(() => {
     const { phenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(phenomenon);
+    setIsDebugSuperBlue(
+      localStorage.getItem(lockedMoonKey) === debugMoonId,
+    );
+    setIsDebugPixel(
+      localStorage.getItem(lockedMoonKey) === pixelMoonId,
+    );
   }, []);
 
   const changePhenomenon = () => {
@@ -46,6 +59,44 @@ export default function Library() {
     const { phenomenon: newPhenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
+  };
+
+  const toggleDebugSuperBlue = () => {
+    if (isDebugSuperBlue) {
+      localStorage.removeItem(lockedMoonKey);
+      clearSessionPhenomenon();
+      const { phenomenon: newPhenomenon } = getSessionPhenomenon();
+      setCurrentPhenomenon(newPhenomenon);
+      applyMoonTheme(newPhenomenon);
+      setIsDebugSuperBlue(false);
+      return;
+    }
+
+    localStorage.setItem(lockedMoonKey, debugMoonId);
+    const { phenomenon: lockedPhenomenon } = getSessionPhenomenon();
+    setCurrentPhenomenon(lockedPhenomenon);
+    applyMoonTheme(lockedPhenomenon);
+    setIsDebugSuperBlue(true);
+    setIsDebugPixel(false);
+  };
+
+  const toggleDebugPixelMoon = () => {
+    if (localStorage.getItem(lockedMoonKey) === pixelMoonId) {
+      localStorage.removeItem(lockedMoonKey);
+      clearSessionPhenomenon();
+      const { phenomenon: newPhenomenon } = getSessionPhenomenon();
+      setCurrentPhenomenon(newPhenomenon);
+      applyMoonTheme(newPhenomenon);
+      setIsDebugPixel(false);
+      return;
+    }
+
+    localStorage.setItem(lockedMoonKey, pixelMoonId);
+    const { phenomenon: lockedPhenomenon } = getSessionPhenomenon();
+    setCurrentPhenomenon(lockedPhenomenon);
+    applyMoonTheme(lockedPhenomenon);
+    setIsDebugSuperBlue(false);
+    setIsDebugPixel(true);
   };
 
   useEffect(() => {
@@ -127,6 +178,39 @@ export default function Library() {
         onChangePhenomenon={changePhenomenon}
         showDreamFilters={activeTab === "dreams"}
       />
+      {import.meta.env.DEV && (
+        <div className="px-4 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={isDebugSuperBlue ? "default" : "outline"}
+                size="sm"
+                onClick={toggleDebugSuperBlue}
+                className="h-8"
+                title="Debug: สลับเป็น Super Blue Blood Moon ชั่วคราว"
+              >
+                {isDebugSuperBlue
+                  ? "Debug: Super Blue Blood (ON)"
+                  : "Debug: Super Blue Blood"}
+              </Button>
+              <Button
+                variant={isDebugPixel ? "default" : "outline"}
+                size="sm"
+                onClick={toggleDebugPixelMoon}
+                className="h-8"
+                title="Debug: ล็อก Pixel Dream Moon ชั่วคราว"
+              >
+                {isDebugPixel
+                  ? "Debug: Pixel Dream (ON)"
+                  : "Debug: Pixel Dream"}
+              </Button>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              เฉพาะ dev • ชั่วคราว
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <Tabs

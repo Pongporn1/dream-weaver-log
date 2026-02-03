@@ -14,16 +14,24 @@ const SHOOTING_STAR_COLORS = [
   "#E6E6FA",
 ];
 
+const SHOOTING_STAR_DIRECTION: "right" | "left" = "right";
+const SHOOTING_STAR_BASE_ANGLE = Math.PI / 4.6;
+const SHOOTING_STAR_ANGLE_VARIANCE = 0.16;
+
 export function initShootingStars(
   width: number,
   height: number
 ): ShootingStar[] {
+  const startX =
+    SHOOTING_STAR_DIRECTION === "right" ? -100 : width + 100;
   return Array.from({ length: 10 }, (_, i) => ({
-    x: width + Math.random() * 100,
-    y: Math.random() * height * 0.6,
+    x: startX + Math.random() * 120,
+    y: -80 - Math.random() * 140,
     length: Math.random() * 60 + 40,
     speed: Math.random() * 1.5 + 1,
-    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+    angle:
+      SHOOTING_STAR_BASE_ANGLE +
+      (Math.random() - 0.5) * SHOOTING_STAR_ANGLE_VARIANCE,
     color: SHOOTING_STAR_COLORS[i],
     opacity: Math.random() * 0.3 + 0.7,
     isActive: false,
@@ -45,11 +53,20 @@ export function drawShootingStars(
     if (!star.isActive) return;
 
     // Move shooting star
-    star.x -= Math.cos(star.angle) * star.speed;
+    star.x +=
+      (SHOOTING_STAR_DIRECTION === "right" ? 1 : -1) *
+      Math.cos(star.angle) *
+      star.speed;
     star.y += Math.sin(star.angle) * star.speed;
 
     // Check if out of bounds
-    if (star.x < -star.trailLength || star.y > height + star.trailLength) {
+    if (
+      (SHOOTING_STAR_DIRECTION === "right" &&
+        star.x > width + star.trailLength) ||
+      (SHOOTING_STAR_DIRECTION === "left" &&
+        star.x < -star.trailLength) ||
+      star.y > height + star.trailLength
+    ) {
       star.isActive = false;
       return;
     }
@@ -60,7 +77,7 @@ export function drawShootingStars(
     const gradient = ctx.createLinearGradient(
       star.x,
       star.y,
-      star.x + Math.cos(star.angle) * star.trailLength,
+      star.x - Math.cos(star.angle) * star.trailLength,
       star.y - Math.sin(star.angle) * star.trailLength
     );
     gradient.addColorStop(0, star.color);
@@ -75,7 +92,7 @@ export function drawShootingStars(
     ctx.beginPath();
     ctx.moveTo(star.x, star.y);
     ctx.lineTo(
-      star.x + Math.cos(star.angle) * star.trailLength,
+      star.x - Math.cos(star.angle) * star.trailLength,
       star.y - Math.sin(star.angle) * star.trailLength
     );
     ctx.stroke();
@@ -129,8 +146,11 @@ export function drawShootingStars(
         )[0];
         const star = shootingStars[idx];
         star.isActive = true;
-        star.x = width + Math.random() * 100;
-        star.y = -50 - Math.random() * 100;
+        star.x =
+          SHOOTING_STAR_DIRECTION === "right"
+            ? -120 - Math.random() * 120
+            : width + 120 + Math.random() * 120;
+        star.y = -80 - Math.random() * 140;
       }
     }
   }

@@ -28,6 +28,7 @@ export type SpecialEffect =
   | "shootingStars"
   | "starfield"
   | "nebula"
+  | "pixel"
   | "prismLights"
   | null;
 
@@ -1031,6 +1032,26 @@ export const MOON_PHENOMENA: Record<string, MoonPhenomenon> = {
     effectIntensity: 0.9,
     emotionTag: "dreamy",
     subtitle: "ล่องลอยในเมฆก๊าซแห่งความฝัน",
+  },
+
+  pixelDreamMoon: {
+    id: "pixelDreamMoon",
+    name: "ดวงจันทร์พิกเซล",
+    nameEn: "Pixel Dream Moon",
+    rarity: "mythic",
+    moonTint: "#5fffd2",
+    skyPalette: ["#070614", "#140a2a", "#241042"],
+    uiAccent: "#ff8fd6",
+    transitionSpeed: 62,
+    starDensity: 1.0,
+    cloudOpacity: 0.36,
+    cloudSpeed: 0.35,
+    shootingStarChance: 0.18,
+    moonSize: 1.55,
+    specialEffect: "pixel",
+    effectIntensity: 1.0,
+    emotionTag: "pixel_dream",
+    subtitle: "จักรวาลพิกเซลที่ส่องประกาย",
   },
 };
 

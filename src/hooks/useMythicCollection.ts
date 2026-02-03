@@ -35,7 +35,8 @@ export interface MythicParticleConfig {
     | "void"
     | "blood"
     | "aurora"
-    | "lightning";
+    | "lightning"
+    | "pixels";
   color: string;
   secondaryColor?: string;
   speed: number;
@@ -151,6 +152,14 @@ export const MYTHIC_PARTICLE_CONFIGS: Record<string, MythicParticleConfig> = {
     speed: 0.9,
     density: 0.6,
     glow: true,
+  },
+  pixelDreamMoon: {
+    type: "pixels",
+    color: "#FFBFA3",
+    secondaryColor: "#FF8FD6",
+    speed: 0.6,
+    density: 0.5,
+    glow: false,
   },
 };
 

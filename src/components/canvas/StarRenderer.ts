@@ -1,6 +1,15 @@
 import type { StarRendererProps, Star, Constellation } from "./types";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
+const PIXEL_STAR_PALETTE = [
+  "#ffd7a6",
+  "#ff9ad5",
+  "#b882ff",
+  "#6fffd0",
+  "#9ad0ff",
+  "#ffffff",
+];
+
 function hashString(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -25,6 +34,9 @@ export function initStars(
   phenomenon: MoonPhenomenon,
   dreamCount = 0
 ): Star[] {
+  const isPixelTheme = phenomenon.specialEffect === "pixel";
+  const grid = isPixelTheme ? 3 : 1;
+  const snap = (value: number) => Math.round(value / grid) * grid;
   const densityBoost = Math.min(0.6, dreamCount / 200);
   const baseCount = Math.floor(120 * phenomenon.starDensity * (1 + densityBoost));
   const extraCount = Math.min(80, Math.floor(dreamCount * 0.6));
@@ -32,12 +44,21 @@ export function initStars(
   return Array.from(
     { length: totalCount },
     () => ({
-      x: Math.random() * width,
-      y: Math.random() * height * 0.6,
-      size: Math.random() * 2 + 0.5,
+      x: isPixelTheme ? snap(Math.random() * width) : Math.random() * width,
+      y: isPixelTheme
+        ? snap(Math.random() * height * 0.6)
+        : Math.random() * height * 0.6,
+      size: isPixelTheme ? Math.random() * 2 + 1 : Math.random() * 2 + 0.5,
       opacity: Math.random() * 0.8 + 0.2,
-      twinkleSpeed: Math.random() * 0.02 + 0.01,
+      twinkleSpeed: isPixelTheme
+        ? Math.random() * 0.015 + 0.004
+        : Math.random() * 0.02 + 0.01,
       twinklePhase: Math.random() * Math.PI * 2,
+      color: isPixelTheme
+        ? PIXEL_STAR_PALETTE[
+            Math.floor(Math.random() * PIXEL_STAR_PALETTE.length)
+          ]
+        : undefined,
     })
   );
 }
@@ -105,13 +126,17 @@ export function drawStars({
 }: StarRendererProps): void {
   if (phenomenon.starDensity === 0) return;
 
+  const isPixelTheme = phenomenon.specialEffect === "pixel";
+  const pixelGrid = isPixelTheme ? 3 : 1;
+  const snap = (value: number) => Math.round(value / pixelGrid) * pixelGrid;
+
   // Parallax for stars (Furthest layer - moves slowly)
   const pX = parallaxOffset.x * 0.5;
   const pY = parallaxOffset.y * 0.5;
   const time = (timeMs ?? 0) * 0.001;
   const pulse = 0.6 + Math.sin(time * 0.8) * 0.4;
 
-  if (constellations && constellations.length > 0) {
+  if (!isPixelTheme && constellations && constellations.length > 0) {
     ctx.save();
     const scale = Math.min(1.8, Math.max(0.8, constellationScale ?? 1));
     const intensityBoost = Math.min(
@@ -249,6 +274,26 @@ export function drawStars({
   stars.forEach((star) => {
     star.twinklePhase += star.twinkleSpeed;
     const opacity = star.opacity * (Math.sin(star.twinklePhase) * 0.5 + 0.5);
+
+    if (isPixelTheme) {
+      const starX = snap(star.x + pX);
+      const starY = snap(star.y + pY);
+      const size = Math.max(1, Math.round(star.size));
+      const color = star.color ?? "#ffffff";
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = opacity;
+      ctx.fillRect(starX, starY, size, size);
+
+      if (star.size > 1.6) {
+        ctx.fillRect(starX - size, starY, size * 3, size);
+        ctx.fillRect(starX, starY - size, size, size * 3);
+      }
+      ctx.restore();
+      return;
+    }
 
     const starX = star.x + pX;
     const starY = star.y + pY;

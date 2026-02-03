@@ -8,6 +8,7 @@ export interface Star {
   opacity: number;
   twinkleSpeed: number;
   twinklePhase: number;
+  color?: string;
 }
 
 export interface Constellation {
@@ -22,6 +23,7 @@ export interface Cloud {
   height: number;
   speed: number;
   opacity: number;
+  seed: number;
 }
 
 export interface ShootingStar {

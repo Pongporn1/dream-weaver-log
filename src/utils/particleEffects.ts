@@ -104,7 +104,18 @@ export interface MeteorShowerParticle {
   vy: number;
   length: number;
   opacity: number;
-  color: string;
+  coreColor: string;
+  midColor: string;
+  tailColor: string;
+  glowColor: string;
+  width: number;
+  headSize: number;
+  life: number;
+  maxLife: number;
+  flickerPhase: number;
+  flickerSpeed: number;
+  offset: number;
+  kind: "hero" | "streak";
   active: boolean;
 }
 export interface FrozenTimeParticle {
@@ -226,8 +237,18 @@ export interface ShootingStar {
   vy: number;
   length: number;
   opacity: number;
-  trailLength: number;
-  color: string;
+  coreColor: string;
+  midColor: string;
+  tailColor: string;
+  glowColor: string;
+  width: number;
+  headSize: number;
+  life: number;
+  maxLife: number;
+  flickerPhase: number;
+  flickerSpeed: number;
+  offset: number;
+  kind: "hero" | "streak";
 }
 
 // =================== NEW VISUAL EFFECTS INTERFACES ===================
@@ -874,22 +895,307 @@ export const drawFog = (
   });
 };
 
+const METEOR_COLOR_SCHEMES = [
+  {
+    core: "#fff4d6",
+    mid: "#ffd28a",
+    tail: "#7ac9ff",
+    glow: "#ffe0b3",
+  },
+  {
+    core: "#fff0ff",
+    mid: "#ff8dd4",
+    tail: "#8a6bff",
+    glow: "#ffb7e8",
+  },
+  {
+    core: "#f7fbff",
+    mid: "#9fe6ff",
+    tail: "#5aa8ff",
+    glow: "#d2f4ff",
+  },
+  {
+    core: "#f9f2ff",
+    mid: "#c7a3ff",
+    tail: "#6f5bff",
+    glow: "#d9c2ff",
+  },
+  {
+    core: "#fff2e6",
+    mid: "#ffb07a",
+    tail: "#ff6a8f",
+    glow: "#ffd3b8",
+  },
+];
+
+const METEOR_DIRECTION: "right" | "left" = "right";
+const METEOR_BASE_ANGLE = Math.PI / 4.6;
+const METEOR_ANGLE_VARIANCE = 0.16;
+const METEOR_ACTIVE_RANGE: [number, number] = [420, 720];
+const METEOR_COOLDOWN_RANGE: [number, number] = [900, 1800];
+const LEGENDARY_ACTIVE_RANGE: [number, number] = [360, 600];
+const LEGENDARY_COOLDOWN_RANGE: [number, number] = [900, 1500];
+
+type ShowerCycle = {
+  active: boolean;
+  timer: number;
+  activeDuration: number;
+  cooldownDuration: number;
+};
+
+const meteorShowerCycles = new WeakMap<MeteorShowerParticle[], ShowerCycle>();
+const legendaryShowerCycles = new WeakMap<ShootingStar[], ShowerCycle>();
+
+const randomInRange = (range: [number, number]) =>
+  range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+
+const getShowerCycle = <T extends object>(
+  map: WeakMap<T, ShowerCycle>,
+  key: T,
+  activeRange: [number, number],
+  cooldownRange: [number, number],
+) => {
+  const existing = map.get(key);
+  if (existing) return existing;
+
+  const startActive = Math.random() < 0.6;
+  const activeDuration = randomInRange(activeRange);
+  const cooldownDuration = randomInRange(cooldownRange);
+  const timer = Math.floor(
+    Math.random() * (startActive ? activeDuration : cooldownDuration),
+  );
+
+  const cycle: ShowerCycle = {
+    active: startActive,
+    timer,
+    activeDuration,
+    cooldownDuration,
+  };
+  map.set(key, cycle);
+  return cycle;
+};
+
+const getMeteorAngle = () => {
+  const jitter = (Math.random() - 0.5) * METEOR_ANGLE_VARIANCE;
+  return METEOR_DIRECTION === "right"
+    ? METEOR_BASE_ANGLE + jitter
+    : Math.PI - METEOR_BASE_ANGLE + jitter;
+};
+
+const getMeteorSpawnPoint = (canvasWidth: number, canvasHeight: number) => {
+  const margin = Math.max(canvasWidth, canvasHeight) * 0.14;
+  const spawnFromTop = Math.random() < 0.65;
+
+  if (METEOR_DIRECTION === "right") {
+    if (spawnFromTop) {
+      return {
+        x: Math.random() * (canvasWidth * 0.65 + margin) - margin,
+        y: -margin - Math.random() * margin,
+      };
+    }
+    return {
+      x: -margin - Math.random() * margin,
+      y: Math.random() * (canvasHeight * 0.65 + margin) - margin * 0.2,
+    };
+  }
+
+  if (spawnFromTop) {
+    return {
+      x: canvasWidth - Math.random() * (canvasWidth * 0.65 + margin) + margin,
+      y: -margin - Math.random() * margin,
+    };
+  }
+  return {
+    x: canvasWidth + margin + Math.random() * margin,
+    y: Math.random() * (canvasHeight * 0.65 + margin) - margin * 0.2,
+  };
+};
+
+const withAlpha = (hex: string, alpha: number) => {
+  const clamped = Math.min(1, Math.max(0, alpha));
+  return `${hex}${Math.round(clamped * 255)
+    .toString(16)
+    .padStart(2, "0")}`;
+};
+
+const createMeteorShowerParticle = (
+  canvasWidth: number,
+  canvasHeight: number,
+  forceActive = false,
+): MeteorShowerParticle => {
+  const kind = Math.random() < 0.22 ? "hero" : "streak";
+  const palette =
+    METEOR_COLOR_SCHEMES[
+      Math.floor(Math.random() * METEOR_COLOR_SCHEMES.length)
+    ];
+  const angle = getMeteorAngle();
+  const speed =
+    (kind === "hero" ? 9 : 6) + Math.random() * (kind === "hero" ? 6 : 4);
+  const vx = Math.cos(angle) * speed;
+  const vy = Math.sin(angle) * speed;
+
+  const length =
+    kind === "hero" ? 180 + Math.random() * 120 : 90 + Math.random() * 80;
+  const width =
+    kind === "hero" ? 2.4 + Math.random() * 1.4 : 1.1 + Math.random() * 0.7;
+  const headSize =
+    kind === "hero" ? 7 + Math.random() * 5 : 4 + Math.random() * 3;
+
+  const spawnPoint = getMeteorSpawnPoint(canvasWidth, canvasHeight);
+  const x = spawnPoint.x;
+  const y = spawnPoint.y;
+
+  const maxLife =
+    kind === "hero" ? 140 + Math.random() * 70 : 95 + Math.random() * 60;
+  const life = Math.random() * maxLife * 0.6;
+
+  return {
+    x,
+    y,
+    vx,
+    vy,
+    length,
+    opacity: 0.5 + Math.random() * 0.3,
+    coreColor: palette.core,
+    midColor: palette.mid,
+    tailColor: palette.tail,
+    glowColor: palette.glow,
+    width,
+    headSize,
+    life,
+    maxLife,
+    flickerPhase: Math.random() * Math.PI * 2,
+    flickerSpeed: 0.02 + Math.random() * 0.03,
+    offset: (Math.random() - 0.5) * (kind === "hero" ? 3.5 : 2),
+    kind,
+    active: forceActive ? true : Math.random() < 0.7,
+  };
+};
+
+const drawMeteorTrail = (
+  ctx: CanvasRenderingContext2D,
+  meteor: {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    length: number;
+    width: number;
+    headSize: number;
+    offset: number;
+    coreColor: string;
+    midColor: string;
+    tailColor: string;
+    glowColor: string;
+  },
+  alpha: number,
+  sparkleChance: number,
+) => {
+  if (alpha <= 0) return;
+
+  const speed = Math.hypot(meteor.vx, meteor.vy);
+  if (speed <= 0.001) return;
+
+  const dx = meteor.vx / speed;
+  const dy = meteor.vy / speed;
+  const tailX = meteor.x - dx * meteor.length;
+  const tailY = meteor.y - dy * meteor.length;
+  const nx = -dy;
+  const ny = dx;
+  const offsetX = nx * meteor.offset;
+  const offsetY = ny * meteor.offset;
+  const headX = meteor.x + offsetX;
+  const headY = meteor.y + offsetY;
+  const tailX2 = tailX + offsetX;
+  const tailY2 = tailY + offsetY;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.globalAlpha = alpha;
+
+  const gradient = ctx.createLinearGradient(headX, headY, tailX2, tailY2);
+  gradient.addColorStop(0, withAlpha(meteor.coreColor, 0.95));
+  gradient.addColorStop(0.35, withAlpha(meteor.midColor, 0.8));
+  gradient.addColorStop(0.7, withAlpha(meteor.tailColor, 0.55));
+  gradient.addColorStop(1, withAlpha(meteor.tailColor, 0));
+
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = meteor.width;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(headX, headY);
+  ctx.lineTo(tailX2, tailY2);
+  ctx.stroke();
+
+  ctx.strokeStyle = withAlpha(meteor.tailColor, 0.4);
+  ctx.lineWidth = Math.max(0.45, meteor.width * 0.4);
+  ctx.beginPath();
+  ctx.moveTo(headX - offsetX * 0.3, headY - offsetY * 0.3);
+  ctx.lineTo(tailX2 - offsetX * 0.3, tailY2 - offsetY * 0.3);
+  ctx.stroke();
+
+  ctx.strokeStyle = withAlpha("#ffffff", 0.9);
+  ctx.lineWidth = Math.max(0.4, meteor.width * 0.35);
+  ctx.beginPath();
+  ctx.moveTo(headX, headY);
+  ctx.lineTo(tailX2, tailY2);
+  ctx.stroke();
+
+  const glow = ctx.createRadialGradient(
+    headX,
+    headY,
+    0,
+    headX,
+    headY,
+    meteor.headSize * 2.6,
+  );
+  glow.addColorStop(0, withAlpha("#ffffff", 0.95));
+  glow.addColorStop(0.4, withAlpha(meteor.glowColor, 0.8));
+  glow.addColorStop(1, withAlpha(meteor.glowColor, 0));
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(headX, headY, meteor.headSize * 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = withAlpha("#ffffff", 0.9);
+  ctx.beginPath();
+  ctx.arc(headX, headY, Math.max(1.2, meteor.headSize * 0.25), 0, Math.PI * 2);
+  ctx.fill();
+
+  if (Math.random() < sparkleChance) {
+    const t = Math.random() * 0.6 + 0.15;
+    const sparkleX = headX - dx * meteor.length * t;
+    const sparkleY = headY - dy * meteor.length * t;
+    const sparkleSize = meteor.width * (0.8 + Math.random() * 0.8);
+    const sparkle = ctx.createRadialGradient(
+      sparkleX,
+      sparkleY,
+      0,
+      sparkleX,
+      sparkleY,
+      sparkleSize * 4,
+    );
+    sparkle.addColorStop(0, withAlpha("#ffffff", 0.8));
+    sparkle.addColorStop(0.4, withAlpha(meteor.tailColor, 0.6));
+    sparkle.addColorStop(1, withAlpha(meteor.tailColor, 0));
+    ctx.fillStyle = sparkle;
+    ctx.beginPath();
+    ctx.arc(sparkleX, sparkleY, sparkleSize * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+};
+
 export const initMeteorShower = (
   canvasWidth: number,
   canvasHeight: number,
   count = 15,
 ): MeteorShowerParticle[] => {
-  const colors = ["#ff9966", "#ffcc66", "#ff6666", "#ffaa88", "#ff8844"];
-  return Array.from({ length: count }, (_, i) => ({
-    x: canvasWidth * 0.5 + Math.random() * canvasWidth * 0.5,
-    y: -Math.random() * 300 - i * 20,
-    vx: -4 - Math.random() * 3,
-    vy: 6 + Math.random() * 3,
-    length: 50 + Math.random() * 80,
-    opacity: 0.8 + Math.random() * 0.2,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    active: i < count * 0.6,
-  }));
+  const density = Math.max(10, Math.round(count * 1.05));
+  return Array.from({ length: density }, () =>
+    createMeteorShowerParticle(canvasWidth, canvasHeight),
+  );
 };
 
 export const drawMeteorShower = (
@@ -898,46 +1204,76 @@ export const drawMeteorShower = (
   canvasWidth: number,
   canvasHeight: number,
 ) => {
-  meteors.forEach((m) => {
+  const cycle = getShowerCycle(
+    meteorShowerCycles,
+    meteors,
+    METEOR_ACTIVE_RANGE,
+    METEOR_COOLDOWN_RANGE,
+  );
+  cycle.timer += 1;
+  if (cycle.active && cycle.timer >= cycle.activeDuration) {
+    cycle.active = false;
+    cycle.timer = 0;
+    cycle.cooldownDuration = randomInRange(METEOR_COOLDOWN_RANGE);
+  } else if (!cycle.active && cycle.timer >= cycle.cooldownDuration) {
+    cycle.active = true;
+    cycle.timer = 0;
+    cycle.activeDuration = randomInRange(METEOR_ACTIVE_RANGE);
+  }
+
+  const allowSpawn = cycle.active;
+  const boundMargin = Math.max(canvasWidth, canvasHeight) * 0.25;
+
+  for (let i = 0; i < meteors.length; i += 1) {
+    const m = meteors[i];
     if (!m.active) {
-      if (Math.random() < 0.02) m.active = true;
-      return;
+      if (allowSpawn && Math.random() < 0.03) {
+        meteors[i] = createMeteorShowerParticle(
+          canvasWidth,
+          canvasHeight,
+          true,
+        );
+      }
+      continue;
     }
+
     m.x += m.vx;
     m.y += m.vy;
-    if (m.x < -m.length || m.y > canvasHeight + 50) {
-      m.x = canvasWidth * 0.7 + Math.random() * canvasWidth * 0.3;
-      m.y = -Math.random() * 200;
-      m.active = true;
+    m.life += 1;
+    m.flickerPhase += m.flickerSpeed;
+
+    const lifeT = m.life / m.maxLife;
+    const fadeIn = lifeT < 0.12 ? lifeT / 0.12 : 1;
+    const fadeOut = lifeT > 0.85 ? (1 - lifeT) / 0.15 : 1;
+    const fade = Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
+    const flicker = 0.85 + Math.sin(m.flickerPhase) * 0.15;
+    const alpha = m.opacity * fade * flicker;
+
+    if (alpha > 0.02) {
+      drawMeteorTrail(
+        ctx,
+        m,
+        alpha * 0.7,
+        m.kind === "hero" ? 0.14 : 0.08,
+      );
     }
-    ctx.save();
-    ctx.globalAlpha = m.opacity;
-    const g = ctx.createLinearGradient(
-      m.x,
-      m.y,
-      m.x - m.vx * 10,
-      m.y - m.vy * 10,
-    );
-    g.addColorStop(0, m.color);
-    g.addColorStop(0.5, `${m.color}aa`);
-    g.addColorStop(1, `${m.color}00`);
-    ctx.strokeStyle = g;
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(m.x, m.y);
-    ctx.lineTo(m.x - m.vx * 10, m.y - m.vy * 10);
-    ctx.stroke();
-    const gg = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 6);
-    gg.addColorStop(0, "#fff");
-    gg.addColorStop(0.3, m.color);
-    gg.addColorStop(1, `${m.color}00`);
-    ctx.fillStyle = gg;
-    ctx.beginPath();
-    ctx.arc(m.x, m.y, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
+
+    if (
+      m.x > canvasWidth + boundMargin ||
+      m.y > canvasHeight + boundMargin ||
+      m.life >= m.maxLife
+    ) {
+      if (allowSpawn) {
+        meteors[i] = createMeteorShowerParticle(
+          canvasWidth,
+          canvasHeight,
+          true,
+        );
+      } else {
+        m.active = false;
+      }
+    }
+  }
 };
 
 export const initFrozenTime = (
@@ -2208,6 +2544,57 @@ export const drawLightRays = (
 };
 
 // Shooting Stars Effect
+const createLegendaryShootingStar = (
+  canvasWidth: number,
+  canvasHeight: number,
+): ShootingStar => {
+  const kind = Math.random() < 0.35 ? "hero" : "streak";
+  const palette =
+    METEOR_COLOR_SCHEMES[
+      Math.floor(Math.random() * METEOR_COLOR_SCHEMES.length)
+    ];
+  const angle = getMeteorAngle();
+  const speed =
+    (kind === "hero" ? 12 : 9) + Math.random() * (kind === "hero" ? 7 : 5);
+  const vx = Math.cos(angle) * speed;
+  const vy = Math.sin(angle) * speed;
+
+  const length =
+    kind === "hero" ? 220 + Math.random() * 140 : 120 + Math.random() * 100;
+  const width =
+    kind === "hero" ? 2.8 + Math.random() * 1.6 : 1.2 + Math.random() * 0.8;
+  const headSize =
+    kind === "hero" ? 8 + Math.random() * 6 : 5 + Math.random() * 3;
+
+  const spawnPoint = getMeteorSpawnPoint(canvasWidth, canvasHeight);
+  const x = spawnPoint.x;
+  const y = spawnPoint.y;
+
+  const maxLife =
+    kind === "hero" ? 120 + Math.random() * 80 : 90 + Math.random() * 60;
+
+  return {
+    x,
+    y,
+    vx,
+    vy,
+    length,
+    opacity: 0.7 + Math.random() * 0.3,
+    coreColor: palette.core,
+    midColor: palette.mid,
+    tailColor: palette.tail,
+    glowColor: palette.glow,
+    width,
+    headSize,
+    life: 0,
+    maxLife,
+    flickerPhase: Math.random() * Math.PI * 2,
+    flickerSpeed: 0.018 + Math.random() * 0.03,
+    offset: (Math.random() - 0.5) * (kind === "hero" ? 3.8 : 2.2),
+    kind,
+  };
+};
+
 export const initShootingStars = (): ShootingStar[] => {
   return [];
 };
@@ -2218,75 +2605,65 @@ export const drawShootingStars = (
   canvasWidth: number,
   canvasHeight: number,
 ): ShootingStar[] => {
-  // Spawn new shooting stars
-  // INCREASED INTENSITY: Spawn more frequently for "Shower" effect
-  if (Math.random() < 0.3) {
-    const angle = Math.PI / 4 + Math.random() * (Math.PI / 6); // 45-75 degrees
-    const speed = 15 + Math.random() * 10; // Fast!
-    stars.push({
-      x: Math.random() * canvasWidth, // Start anywhere across the width
-      y: -50 - Math.random() * 100, // Start from above the screen
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      length: 50 + Math.random() * 50, // Longer
-      opacity: Math.random() * 0.4 + 0.6,
-      trailLength: 100 + Math.random() * 80,
-      color: "#FFFFFF",
-    });
+  const cycle = getShowerCycle(
+    legendaryShowerCycles,
+    stars,
+    LEGENDARY_ACTIVE_RANGE,
+    LEGENDARY_COOLDOWN_RANGE,
+  );
+  cycle.timer += 1;
+  if (cycle.active && cycle.timer >= cycle.activeDuration) {
+    cycle.active = false;
+    cycle.timer = 0;
+    cycle.cooldownDuration = randomInRange(LEGENDARY_COOLDOWN_RANGE);
+  } else if (!cycle.active && cycle.timer >= cycle.cooldownDuration) {
+    cycle.active = true;
+    cycle.timer = 0;
+    cycle.activeDuration = randomInRange(LEGENDARY_ACTIVE_RANGE);
   }
+
+  if (cycle.active) {
+    const spawnChance = 0.18;
+    if (Math.random() < spawnChance) {
+      const burst = Math.random() < 0.4 ? 2 : 1;
+      for (let i = 0; i < burst; i += 1) {
+        stars.push(createLegendaryShootingStar(canvasWidth, canvasHeight));
+      }
+    }
+  }
+
+  const boundMargin = Math.max(canvasWidth, canvasHeight) * 0.25;
 
   return stars
     .map((star) => {
       star.x += star.vx;
       star.y += star.vy;
-      star.opacity -= 0.008;
+      star.life += 1;
+      star.flickerPhase += star.flickerSpeed;
 
-      if (star.opacity > 0.05) {
-        // Trail
-        const gradient = ctx.createLinearGradient(
-          star.x,
-          star.y,
-          star.x - star.vx * 3,
-          star.y - star.vy * 3,
-        );
-        gradient.addColorStop(
-          0,
-          `${star.color}${Math.floor(star.opacity * 255)
-            .toString(16)
-            .padStart(2, "0")}`,
-        );
-        gradient.addColorStop(
-          0.5,
-          `${star.color}${Math.floor(star.opacity * 128)
-            .toString(16)
-            .padStart(2, "0")}`,
-        );
-        gradient.addColorStop(1, `${star.color}00`);
+      const lifeT = star.life / star.maxLife;
+      const fadeIn = lifeT < 0.12 ? lifeT / 0.12 : 1;
+      const fadeOut = lifeT > 0.82 ? (1 - lifeT) / 0.18 : 1;
+      const fade = Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
+      const flicker = 0.85 + Math.sin(star.flickerPhase) * 0.15;
+      const alpha = star.opacity * fade * flicker;
 
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(star.x, star.y);
-        ctx.lineTo(star.x - star.vx * 3, star.y - star.vy * 3);
-        ctx.stroke();
-
-        // Head
-        ctx.fillStyle = `${star.color}${Math.floor(star.opacity * 255)
-          .toString(16)
-          .padStart(2, "0")}`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
-        ctx.fill();
+      if (alpha > 0.02) {
+        drawMeteorTrail(
+          ctx,
+          star,
+          alpha,
+          star.kind === "hero" ? 0.2 : 0.1,
+        );
       }
 
       return star;
     })
     .filter(
       (star) =>
-        star.opacity > 0.05 &&
-        star.x < canvasWidth + 50 &&
-        star.y < canvasHeight + 50,
+        star.life < star.maxLife &&
+        star.x < canvasWidth + boundMargin &&
+        star.y < canvasHeight + boundMargin,
     );
 };
 
@@ -2520,18 +2897,40 @@ export const drawStarfield = (
 
 // =================== NEBULA EFFECT ===================
 
+type NebulaOptions = {
+  palettes?: string[][];
+  opacityRange?: [number, number];
+  sizeRange?: [number, number];
+  rotationSpeedRange?: [number, number];
+  pulseSpeedRange?: [number, number];
+};
+
+const DEFAULT_NEBULA_PALETTES = [
+  ["#FF6B9D", "#C44569", "#8B3A62"], // Pink/Purple
+  ["#4A90E2", "#7B68EE", "#9370DB"], // Blue/Purple
+  ["#00D9FF", "#0099CC", "#006699"], // Cyan
+  ["#FF8C42", "#FF6B35", "#C44536"], // Orange/Red
+  ["#6BCF7F", "#4ECDC4", "#44A08D"], // Green/Teal
+];
+
+const METEOR_NEBULA_PALETTES = [
+  ["#7e4bff", "#b07cff", "#f2b6ff"], // Violet glow
+  ["#5a2dff", "#8a4fff", "#c58bff"], // Deep indigo
+  ["#a450ff", "#d284ff", "#ffb4e8"], // Magenta haze
+  ["#3b2b8f", "#6a3bb0", "#b071ff"], // Night purple
+];
+
 export const initNebula = (
   canvasWidth: number,
   canvasHeight: number,
   count = 4,
+  options: NebulaOptions = {},
 ): NebulaCloud[] => {
-  const colorPalettes = [
-    ["#FF6B9D", "#C44569", "#8B3A62"], // Pink/Purple
-    ["#4A90E2", "#7B68EE", "#9370DB"], // Blue/Purple
-    ["#00D9FF", "#0099CC", "#006699"], // Cyan
-    ["#FF8C42", "#FF6B35", "#C44536"], // Orange/Red
-    ["#6BCF7F", "#4ECDC4", "#44A08D"], // Green/Teal
-  ];
+  const colorPalettes = options.palettes ?? DEFAULT_NEBULA_PALETTES;
+  const [minOpacity, maxOpacity] = options.opacityRange ?? [0.15, 0.3];
+  const [minSize, maxSize] = options.sizeRange ?? [150, 400];
+  const [minRot, maxRot] = options.rotationSpeedRange ?? [0.0002, 0.0005];
+  const [minPulse, maxPulse] = options.pulseSpeedRange ?? [0.01, 0.02];
 
   return Array.from({ length: count }, () => {
     const palette =
@@ -2539,14 +2938,28 @@ export const initNebula = (
     return {
       x: Math.random() * canvasWidth,
       y: Math.random() * canvasHeight,
-      size: 150 + Math.random() * 250,
+      size: minSize + Math.random() * (maxSize - minSize),
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.0005,
+      rotationSpeed:
+        (Math.random() * (maxRot - minRot) + minRot) *
+        (Math.random() < 0.5 ? -1 : 1),
       colors: palette,
-      opacity: 0.15 + Math.random() * 0.15,
+      opacity: minOpacity + Math.random() * (maxOpacity - minOpacity),
       pulsePhase: Math.random() * Math.PI * 2,
-      pulseSpeed: 0.01 + Math.random() * 0.01,
+      pulseSpeed: minPulse + Math.random() * (maxPulse - minPulse),
     };
+  });
+};
+
+export const initMeteorNebula = (
+  canvasWidth: number,
+  canvasHeight: number,
+  count = 6,
+): NebulaCloud[] => {
+  return initNebula(canvasWidth, canvasHeight, count, {
+    palettes: METEOR_NEBULA_PALETTES,
+    opacityRange: [0.18, 0.34],
+    sizeRange: [220, 460],
   });
 };
 

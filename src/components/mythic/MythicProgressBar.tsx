@@ -26,6 +26,7 @@ export type BarVariant =
   | "blood" 
   | "aurora" 
   | "lightning"
+  | "pixels"
   | "mythic"
   | "legendary"
   | "very_rare"
@@ -91,6 +92,12 @@ const VARIANT_STYLES: Record<BarVariant, {
     glowColor: "#fef08a",
     innerPattern: "linear-gradient(135deg, transparent 40%, rgba(254,240,138,0.3) 45%, transparent 50%)",
   },
+  pixels: {
+    gradient: "linear-gradient(90deg, #2b1152, #5c2a8a, #ff9ad5, #ffcf9b)",
+    glowColor: "#ff9ad5",
+    borderStyle: "2px solid rgba(255,190,140,0.5)",
+    innerPattern: "repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0 2px, rgba(255,255,255,0) 2px 6px)",
+  },
   mythic: {
     gradient: "linear-gradient(90deg, #581c87, #9333ea, #c026d3, #f472b6)",
     glowColor: "#c026d3",
@@ -136,6 +143,7 @@ const VARIANT_ANIMATIONS: Record<BarVariant, {
   blood: { shimmerDuration: 1.5, waveAnimation: true },
   aurora: { shimmerDuration: 6, waveAnimation: true },
   lightning: { shimmerDuration: 0.3, sparkleAnimation: true },
+  pixels: { shimmerDuration: 2.2, sparkleAnimation: true },
   mythic: { shimmerDuration: 2, pulseAnimation: true, sparkleAnimation: true },
   legendary: { shimmerDuration: 1.5, waveAnimation: true, sparkleAnimation: true },
   very_rare: { shimmerDuration: 2.5, sparkleAnimation: true },
@@ -161,6 +169,7 @@ export function MythicProgressBar({
 
   // Determine variant from particleConfig if not provided
   const effectiveVariant = variant || (particleConfig?.type as BarVariant) || "normal";
+  const isPixelVariant = effectiveVariant === "pixels";
   const styles = VARIANT_STYLES[effectiveVariant] || VARIANT_STYLES.normal;
   const animations = VARIANT_ANIMATIONS[effectiveVariant] || VARIANT_ANIMATIONS.normal;
 
@@ -226,6 +235,11 @@ export function MythicProgressBar({
           vy = (Math.random() - 0.5) * config.speed * 4;
           size = Math.random() * 2 + 1;
           break;
+        case "pixels":
+          vx = (Math.random() - 0.5) * config.speed * 0.6;
+          vy = (Math.random() - 0.7) * config.speed * 0.6;
+          size = Math.random() * 3 + 2;
+          break;
       }
       
       return {
@@ -251,6 +265,9 @@ export function MythicProgressBar({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    if (particleConfig.type === "pixels") {
+      ctx.imageSmoothingEnabled = false;
+    }
     
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * window.devicePixelRatio;
@@ -336,6 +353,12 @@ export function MythicProgressBar({
               ctx.stroke();
             }
             break;
+          case "pixels":
+            ctx.imageSmoothingEnabled = false;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.fillStyle = "rgba(255,255,255,0.5)";
+            ctx.fillRect(-p.size / 2 + 1, -p.size / 2 + 1, Math.max(1, p.size * 0.4), Math.max(1, p.size * 0.4));
+            break;
           case "fire":
             // Teardrop shape for fire
             ctx.beginPath();
@@ -415,6 +438,11 @@ export function MythicProgressBar({
   const effectiveGradient = particleConfig 
     ? styles.gradient 
     : "hsl(var(--primary))";
+  const radiusClass = isPixelVariant ? "rounded-md" : "rounded-full";
+  const barClass = isPixelVariant ? "pixel-bar" : "";
+  const backgroundPattern = isPixelVariant
+    ? "repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 2px, rgba(255,255,255,0) 2px 6px)"
+    : "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)";
 
   return (
     <div className={cn("relative w-full", className)}>
@@ -426,7 +454,11 @@ export function MythicProgressBar({
       )}
       
       <div
-        className="relative overflow-hidden rounded-full bg-secondary/50 backdrop-blur-sm"
+        className={cn(
+          "relative overflow-hidden bg-secondary/50 backdrop-blur-sm",
+          radiusClass,
+          barClass
+        )}
         style={{ 
           height,
           border: styles.borderStyle,
@@ -437,13 +469,13 @@ export function MythicProgressBar({
         <div 
           className="absolute inset-0 opacity-30"
           style={{
-            background: "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)",
+            background: backgroundPattern,
           }}
         />
 
         {/* Progress fill with motion */}
         <motion.div
-          className="h-full rounded-full relative overflow-hidden"
+          className={cn("h-full relative overflow-hidden", radiusClass)}
           initial={{ width: 0 }}
           animate={{ width: `${progressPercent}%` }}
           transition={{ duration: 0.8, ease: "easeOut" }}

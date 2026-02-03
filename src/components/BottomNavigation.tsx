@@ -136,6 +136,17 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
     backdropFilter: "blur(20px)",
     animation: "nebulaSwirl 6s ease-in-out infinite",
   },
+  pixelDreamMoon: {
+    background:
+      "linear-gradient(135deg, rgba(18, 8, 38, 0.95), rgba(48, 18, 76, 0.9))",
+    borderTop: "2px solid rgba(255, 190, 140, 0.6)",
+    boxShadow:
+      "0 -8px 28px rgba(255, 160, 210, 0.45), inset 0 0 12px rgba(255, 190, 140, 0.2)",
+    backgroundImage:
+      "repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 6px)",
+    animation: "pixelFlicker 3s steps(6) infinite",
+    backdropFilter: "blur(12px) saturate(120%)",
+  },
 };
 
 export function BottomNavigation() {

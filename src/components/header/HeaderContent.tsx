@@ -20,6 +20,7 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
         emptySky: "'Nosifer', cursive",
         crystalMoon: "'Poiret One', cursive",
         shatteredMoon: "'Creepster', cursive",
+        pixelDreamMoon: "'Press Start 2P', 'Space Grotesk', sans-serif",
       };
       return mythicFonts[phenomenon.id] || "'Cinzel', serif";
     }
@@ -36,6 +37,7 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
 
   const getTitleSize = () => {
     if (!phenomenon) return "text-4xl";
+    if (phenomenon.id === "pixelDreamMoon") return "text-5xl md:text-6xl";
     if (phenomenon.rarity === "mythic") return "text-6xl";
     if (phenomenon.rarity === "legendary" || phenomenon.rarity === "very_rare") return "text-5xl";
     return "text-4xl";
@@ -45,6 +47,9 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
     if (!phenomenon) return "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5)";
 
     if (phenomenon.rarity === "mythic") {
+      if (phenomenon.id === "pixelDreamMoon") {
+        return "2px 2px 0 rgba(20, 10, 40, 0.9), 0 0 12px rgba(255, 170, 220, 0.6)";
+      }
       return `0 0 5px ${phenomenon.uiAccent}99, 0 0 12px ${phenomenon.uiAccent}55, 0 3px 8px rgba(0, 0, 0, 0.8)`;
     }
     if (phenomenon.rarity === "legendary") {
@@ -72,6 +77,7 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
 
   const getTitleAnimation = () => {
     if (!phenomenon) return "none";
+    if (phenomenon.id === "pixelDreamMoon") return "pixelFlicker 3s steps(6) infinite";
     if (phenomenon.rarity === "mythic") return "pulse 3s ease-in-out infinite";
     if (phenomenon.rarity === "legendary") return "pulse 4s ease-in-out infinite";
     return "none";
@@ -79,6 +85,9 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
 
   const getSubtitleFont = () => {
     if (!phenomenon) return "'Inter', sans-serif";
+    if (phenomenon.id === "pixelDreamMoon") {
+      return "'Chakra Petch', 'Space Grotesk', sans-serif";
+    }
     if (phenomenon.rarity === "mythic" || phenomenon.rarity === "legendary") {
       return "'Cormorant Garamond', serif";
     }
@@ -90,6 +99,9 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
     if (!phenomenon) return "0 0 10px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5)";
 
     if (phenomenon.rarity === "mythic") {
+      if (phenomenon.id === "pixelDreamMoon") {
+        return "1px 1px 0 rgba(15, 8, 30, 0.9), 0 0 8px rgba(255, 190, 140, 0.6)";
+      }
       return `0 0 12px ${phenomenon.uiAccent}aa, 0 0 25px ${phenomenon.uiAccent}44, 0 2px 6px rgba(0, 0, 0, 0.7)`;
     }
     if (phenomenon.rarity === "legendary") {
@@ -111,6 +123,7 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
 
   const getSubtitleSize = () => {
     if (!phenomenon) return "text-lg";
+    if (phenomenon.id === "pixelDreamMoon") return "text-base md:text-lg";
     if (phenomenon.rarity === "mythic") return "text-xl";
     return "text-lg";
   };
@@ -124,17 +137,21 @@ export function HeaderContent({ phenomenon }: HeaderContentProps) {
           textShadow: getTitleShadow(),
           color: getTitleColor(),
           animation: getTitleAnimation(),
+          letterSpacing: phenomenon?.id === "pixelDreamMoon" ? "0.18em" : undefined,
+          textTransform: phenomenon?.id === "pixelDreamMoon" ? "uppercase" : undefined,
         }}
       >
         Dream book
       </h1>
       {phenomenon && (
         <p
-          className={`italic font-light transition-all duration-500 ${getSubtitleSize()}`}
+          className={`font-light transition-all duration-500 ${getSubtitleSize()}`}
           style={{
             fontFamily: getSubtitleFont(),
             textShadow: getSubtitleShadow(),
             color: getSubtitleColor(),
+            letterSpacing: phenomenon?.id === "pixelDreamMoon" ? "0.08em" : undefined,
+            fontStyle: phenomenon?.id === "pixelDreamMoon" ? "normal" : "italic",
           }}
         >
           {phenomenon.subtitle}

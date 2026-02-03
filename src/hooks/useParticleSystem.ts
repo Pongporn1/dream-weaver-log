@@ -50,6 +50,7 @@ import {
   drawStarfield,
   initNebula,
   drawNebula,
+  initMeteorNebula,
   initPrismLights,
   drawPrismLights,
   type MoonFlash,
@@ -142,7 +143,14 @@ export function useParticleSystem() {
     else if (effect === "fireflies") firefliesRef.current = initFireflies(width, height, Math.floor((10 + intensity * 20) * rarityScale));
     else if (effect === "snow") snowflakesRef.current = initSnowflakes(width, Math.floor((30 + intensity * 70) * rarityScale));
     else if (effect === "fog") fogLayersRef.current = initFogLayers(width, height);
-    else if (effect === "meteorShower") meteorShowerRef.current = initMeteorShower(width, height, Math.floor((10 + intensity * 15) * rarityScale));
+    else if (effect === "meteorShower") {
+      meteorShowerRef.current = initMeteorShower(
+        width,
+        height,
+        Math.floor((10 + intensity * 15) * rarityScale),
+      );
+      nebulaRef.current = initMeteorNebula(width, height, 6);
+    }
     else if (effect === "frozenTime") frozenTimeRef.current = initFrozenTime(width, height, Math.floor((20 + intensity * 20) * rarityScale));
     else if (effect === "voidRipples") voidRipplesRef.current = initVoidRipples();
     else if (effect === "shattered") {
@@ -169,8 +177,18 @@ export function useParticleSystem() {
     height: number,
     scrollOffset: { x: number; y: number }
   ) => {
-    if (phenomenon.specialEffect === "nebula" && nebulaRef.current.length > 0) {
+    if (
+      (phenomenon.specialEffect === "nebula" ||
+        phenomenon.specialEffect === "meteorShower") &&
+      nebulaRef.current.length > 0
+    ) {
       nebulaRef.current = drawNebula(ctx, nebulaRef.current, width, height, scrollOffset.x, scrollOffset.y);
+    }
+    if (
+      phenomenon.specialEffect === "meteorShower" &&
+      meteorShowerRef.current.length > 0
+    ) {
+      drawMeteorShower(ctx, meteorShowerRef.current, width, height);
     }
     if (phenomenon.specialEffect === "starfield" && starfieldRef.current.length > 0) {
       starfieldRef.current = drawStarfield(ctx, starfieldRef.current, width, height);
@@ -283,9 +301,6 @@ export function useParticleSystem() {
   ) => {
     if (phenomenon.specialEffect === "snow" && snowflakesRef.current.length > 0) {
       drawSnowflakes(ctx, snowflakesRef.current, width, height);
-    }
-    if (phenomenon.specialEffect === "meteorShower" && meteorShowerRef.current.length > 0) {
-      drawMeteorShower(ctx, meteorShowerRef.current, width, height);
     }
     if (phenomenon.specialEffect === "frozenTime" && frozenTimeRef.current.length > 0) {
       drawFrozenTime(ctx, frozenTimeRef.current);

@@ -1,6 +1,173 @@
 import type { MoonRendererProps, MoonPosition } from "./types";
 import { adjustBrightness } from "@/utils/colorUtils";
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const pixelHash = (x: number, y: number, seed: number) => {
+  const value = Math.sin(x * 12.9898 + y * 78.233 + seed * 0.17) * 43758.5453;
+  return value - Math.floor(value);
+};
+
+const drawPixelDreamMoon = (
+  ctx: CanvasRenderingContext2D,
+  moonX: number,
+  moonY: number,
+  radius: number,
+  phase: number,
+) => {
+  const grid = 3;
+  const radiusSq = radius * radius;
+  const baseColor = "#0b1222";
+  const innerColor = "#101b30";
+  const rimColor = "#5fffd2";
+  const glowColor = "#86ffe6";
+  const crescentEdge = 0.55;
+  const pulse = 1 + Math.sin(phase * 1.4) * 0.05;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  for (let y = -radius; y <= radius; y += grid) {
+    for (let x = -radius; x <= radius; x += grid) {
+      const cx = x + grid * 0.5;
+      const cy = y + grid * 0.5;
+      const distSq = cx * cx + cy * cy;
+      if (distSq > radiusSq) continue;
+
+      const dist = Math.sqrt(distSq);
+      const edge = dist / radius;
+      const lightFactor = clamp((cx / radius - crescentEdge) / (1 - crescentEdge), 0, 1);
+      const crescent = Math.pow(lightFactor, 1.8);
+      const rimBoost = edge > 0.82 ? (edge - 0.82) / 0.18 : 0;
+      const rimStrength = Math.max(crescent, rimBoost * 0.7);
+
+      const shadowFactor = clamp(0.6 + (cx / radius) * 0.25, 0.35, 1);
+      const innerMix = clamp(1 - edge, 0, 1);
+
+      let colorBase = baseColor;
+      let brightness = 0.75 * shadowFactor + innerMix * 0.25;
+
+      if (rimStrength > 0.12) {
+        colorBase = rimColor;
+        brightness = 0.75 + rimStrength * 0.7;
+      } else {
+        colorBase = innerColor;
+        brightness = 0.7 + innerMix * 0.35;
+      }
+
+      const speckle = pixelHash(Math.round(cx / grid), Math.round(cy / grid), 42);
+      if (speckle > 0.982 && edge < 0.82 && cx < radius * 0.35) {
+        colorBase = "#9ad0ff";
+        brightness = 1.2;
+      } else if (speckle > 0.988 && edge < 0.85 && cx < radius * 0.4) {
+        colorBase = "#ffb0e4";
+        brightness = 1.15;
+      }
+
+      ctx.fillStyle = adjustBrightness(colorBase, brightness * pulse);
+      ctx.fillRect(moonX + x, moonY + y, grid, grid);
+    }
+  }
+
+  // Pixel halo
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = adjustBrightness(glowColor, 1.05);
+  for (let y = -radius - grid * 2; y <= radius + grid * 2; y += grid * 2) {
+    for (let x = -radius - grid * 2; x <= radius + grid * 2; x += grid * 2) {
+      const cx = x + grid;
+      const cy = y + grid;
+      const dist = Math.sqrt(cx * cx + cy * cy);
+      if (dist > radius * 1.28 || dist < radius * 1.05) continue;
+      ctx.fillRect(moonX + x, moonY + y, grid * 1.5, grid * 1.5);
+    }
+  }
+
+  ctx.restore();
+};
+
+const drawPixelMoon = (
+  ctx: CanvasRenderingContext2D,
+  moonX: number,
+  moonY: number,
+  radius: number,
+  phenomenon: MoonRendererProps["phenomenon"],
+  phase: number,
+) => {
+  if (phenomenon.id === "pixelDreamMoon") {
+    drawPixelDreamMoon(ctx, moonX, moonY, radius, phase);
+    return;
+  }
+
+  const grid = 3;
+  const radiusSq = radius * radius;
+  const rimThreshold = radius - grid * 1.2;
+  const baseColor = phenomenon.moonTint;
+  const rimColor = phenomenon.uiAccent;
+
+  let shadowBoundary = 0;
+  let shadowLeft = false;
+  let shadowRight = false;
+  if (phase < 0.5) {
+    shadowBoundary = radius * (1 - 4 * phase);
+    shadowLeft = true;
+  } else if (phase > 0.5) {
+    shadowBoundary = -radius + (phase - 0.5) * 4 * radius;
+    shadowRight = true;
+  }
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  for (let y = -radius; y <= radius; y += grid) {
+    for (let x = -radius; x <= radius; x += grid) {
+      const cx = x + grid * 0.5;
+      const cy = y + grid * 0.5;
+      if (cx * cx + cy * cy > radiusSq) continue;
+
+      const light = clamp(
+        0.85 + (-cx * 0.5 - cy * 0.4) / (radius * 2),
+        0.6,
+        1.2,
+      );
+
+      let shadowFactor = 1;
+      if (shadowLeft) {
+        if (cx < shadowBoundary - grid) shadowFactor = 0.35;
+        else if (cx < shadowBoundary + grid) shadowFactor = 0.6;
+      } else if (shadowRight) {
+        if (cx > shadowBoundary + grid) shadowFactor = 0.35;
+        else if (cx > shadowBoundary - grid) shadowFactor = 0.6;
+      }
+
+      const dist = Math.sqrt(cx * cx + cy * cy);
+      const rimBoost = dist > rimThreshold ? 0.12 : 0;
+      const colorBase = dist > rimThreshold ? rimColor : baseColor;
+      const color = adjustBrightness(
+        colorBase,
+        clamp(light * shadowFactor + rimBoost, 0.35, 1.35),
+      );
+
+      ctx.fillStyle = color;
+      ctx.fillRect(moonX + x, moonY + y, grid, grid);
+    }
+  }
+
+  // Subtle pixel halo
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = adjustBrightness(rimColor, 1.1);
+  for (let y = -radius - grid * 2; y <= radius + grid * 2; y += grid * 2) {
+    for (let x = -radius - grid * 2; x <= radius + grid * 2; x += grid * 2) {
+      const cx = x + grid;
+      const cy = y + grid;
+      const dist = Math.sqrt(cx * cx + cy * cy);
+      if (dist > radius * 1.25 || dist < radius * 1.05) continue;
+      ctx.fillRect(moonX + x, moonY + y, grid * 1.5, grid * 1.5);
+    }
+  }
+  ctx.restore();
+};
+
 // Helper function to draw realistic moon phase shadow with gradient
 function drawMoonPhaseShadow(
   ctx: CanvasRenderingContext2D,
@@ -99,6 +266,11 @@ export function drawMoon({
   const moonX = moon.x + pX;
   const moonY = moon.y + pY;
   const moonRadius = calculateMoonRadius(phenomenon);
+
+  if (phenomenon.specialEffect === "pixel") {
+    drawPixelMoon(ctx, moonX, moonY + offsetY, moonRadius, phenomenon, moonPhase.phase);
+    return moon;
+  }
 
   // Outer glow
   const glowColor = phenomenon.moonTint;

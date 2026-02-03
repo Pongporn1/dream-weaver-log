@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600&family=DM+Serif+Display&family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -20,6 +20,22 @@
     opacity: 0;
     border-width: 0px;
   }
+}
+
+@keyframes pixelTwinkle {
+  0% { opacity: 0.25; filter: brightness(0.9); }
+  50% { opacity: 0.45; filter: brightness(1.1); }
+  100% { opacity: 0.3; filter: brightness(1); }
+}
+
+@keyframes pixelScan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+@keyframes pixelFlicker {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
 }
 
 @keyframes echoFlood {

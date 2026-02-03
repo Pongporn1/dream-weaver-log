@@ -136,6 +136,13 @@ export const applyMoonTheme = (phenomenon: MoonPhenomenon): void => {
           primary: "290 70% 70%",
           bgColor: "#150a25",
         },
+        pixelDreamMoon: {
+          background: "270 55% 6%",
+          foreground: "300 80% 95%",
+          card: "270 40% 10%",
+          primary: "320 90% 70%",
+          bgColor: "#120826",
+        },
       };
 
       const theme = mythicThemes[phenomenon.id];

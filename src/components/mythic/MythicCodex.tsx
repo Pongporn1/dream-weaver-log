@@ -107,6 +107,13 @@ const PARTICLE_SHOWCASE = [
     secondary: "#b91c1c",
     value: 72,
   },
+  {
+    type: "pixels" as const,
+    label: "Pixel Dream",
+    color: "#ffbfa3",
+    secondary: "#ff8fd6",
+    value: 88,
+  },
 ];
 
 const CODEX_THEME = {
