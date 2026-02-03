@@ -49,7 +49,7 @@ export function LibraryHeader({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={onChangePhenomenon}
@@ -57,7 +57,7 @@ export function LibraryHeader({
               title="เปลี่ยนปรากฏการณ์ดวงจันทร์"
             >
               <Shuffle className="w-4 h-4" />
-            </Button>
+            </Button> */}
             <div className="text-sm text-muted-foreground">
               {totalDreams} ความฝัน
             </div>
