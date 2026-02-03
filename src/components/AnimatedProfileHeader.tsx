@@ -40,7 +40,7 @@ export function AnimatedProfileHeader() {
   const parallaxOffsetRef = useParallax();
 
   // Mythic collection hook
-  const { recordEncounter, getEffectiveThemeDuration } = useMythicCollection();
+  const { recordEncounter } = useMythicCollection();
 
   // Performance hooks
   const prefersReducedMotion = useReducedMotion();
@@ -146,11 +146,13 @@ export function AnimatedProfileHeader() {
       recordEncounter(sessionPhenomenon);
     }
 
-    console.log(
-      "🌙 Moon Phenomenon:",
-      sessionPhenomenon.name,
-      `(${sessionPhenomenon.rarity})`,
-    );
+    if (import.meta.env.DEV) {
+      console.log(
+        "🌙 Moon Phenomenon:",
+        sessionPhenomenon.name,
+        `(${sessionPhenomenon.rarity})`,
+      );
+    }
   }, [recordEncounter]);
 
   // Main animation effect
@@ -163,31 +165,38 @@ export function AnimatedProfileHeader() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const sizeRef = { width: 0, height: 0, dpr: 1 };
+
     // Setup canvas
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      sizeRef.width = rect.width;
+      sizeRef.height = rect.height;
+      sizeRef.dpr = dpr;
+
+      // Initialize basic elements
+      starsRef.current = initStars(rect.width, rect.height, phenomenon);
+      cloudsRef.current = initClouds(rect.width, rect.height, phenomenon);
+      shootingStarsRef.current = initShootingStars(rect.width, rect.height);
+      moonPositionRef.current = {
+        x: rect.width * 0.7,
+        y: rect.height * 0.25,
+        phase: 0,
+      };
+      moonPhaseRef.current = getMoonPhase();
+
+      const moon = moonPositionRef.current;
+      const moonRadius = calculateMoonRadius(phenomenon);
+
+      // Initialize particle effects based on phenomenon
+      initializeParticleEffects(phenomenon, moon, moonRadius, rect.width, rect.height);
     };
     resizeCanvas();
-
-    const rect = canvas.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-
-    // Initialize basic elements
-    starsRef.current = initStars(width, height, phenomenon);
-    cloudsRef.current = initClouds(width, height, phenomenon);
-    shootingStarsRef.current = initShootingStars(width, height);
-    moonPositionRef.current = { x: width * 0.7, y: height * 0.25, phase: 0 };
-    moonPhaseRef.current = getMoonPhase();
-
-    const moon = moonPositionRef.current;
-    const moonRadius = calculateMoonRadius(phenomenon);
-
-    // Initialize particle effects based on phenomenon
-    initializeParticleEffects(phenomenon, moon, moonRadius, width, height);
 
     // Scroll handler
     const handleScroll = () => {
@@ -202,6 +211,8 @@ export function AnimatedProfileHeader() {
         return;
       }
 
+      const width = sizeRef.width;
+      const height = sizeRef.height;
       ctx.clearRect(0, 0, width, height);
 
       const baseProps = {
@@ -218,13 +229,13 @@ export function AnimatedProfileHeader() {
       drawSky(baseProps);
 
       if (!prefersReducedMotion) {
-        drawBackgroundEffects(
-          ctx,
-          phenomenon,
-          width,
-          height,
-          scrollOffsetRef.current,
-        );
+      drawBackgroundEffects(
+        ctx,
+        phenomenon,
+        width,
+        height,
+        scrollOffsetRef.current,
+      );
         drawAtmosphericEffects(ctx, phenomenon, width);
       }
 
@@ -251,6 +262,7 @@ export function AnimatedProfileHeader() {
       });
 
       if (!prefersReducedMotion) {
+        const moonRadius = calculateMoonRadius(phenomenon);
         drawShatteredEffects(ctx, phenomenon, moonPositionRef.current);
         drawSpecialEffects(
           ctx,
@@ -284,10 +296,22 @@ export function AnimatedProfileHeader() {
 
     animationFrameRef.current = requestAnimationFrame(animate);
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        resizeCanvas();
+      });
+      resizeObserver.observe(canvas);
+    } else {
+      window.addEventListener("resize", resizeCanvas);
+    }
+
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("scroll", handleScroll);
     };
   }, [
