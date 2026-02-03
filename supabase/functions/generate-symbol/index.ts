@@ -20,69 +20,90 @@ interface GenerateSymbolRequest {
 function buildCoverPrompt(data: GenerateSymbolRequest): string {
   const parts: string[] = [];
 
-  // Base style - dreamy book cover illustration
+  // Art style - Cult of the Lamb / Adventure Time inspired
   parts.push(
-    "Create a beautiful fantasy book cover illustration. Dreamy, ethereal art style with soft colors and magical atmosphere."
+    "Create a whimsical cartoon illustration in the style of indie video game art (like Cult of the Lamb, Hollow Knight) mixed with Adventure Time."
   );
   parts.push(
-    "Style: Digital painting, anime-influenced illustration, soft lighting, atmospheric depth."
+    "Art style: Bold outlines, vibrant saturated colors, cute chibi-style characters with simple expressive faces, dreamy fantasy backgrounds with soft gradients."
   );
-  parts.push("Vertical composition (2:3 aspect ratio). No text or titles.");
+  parts.push(
+    "Aesthetic: Cozy yet mysterious, colorful pastel and neon accents, magical sparkles, floating elements, lush nature or surreal dreamscapes."
+  );
+  parts.push("Vertical composition (2:3 aspect ratio). No text, titles, or watermarks.");
 
-  // Use the dream notes as the main scene description
+  // Main scene from dream notes
   if (data.notes) {
-    const notesSample = data.notes.slice(0, 500);
-    parts.push(`Scene to illustrate: ${notesSample}`);
+    const notesSample = data.notes.slice(0, 600);
+    parts.push(`The scene should depict: "${notesSample}"`);
+    parts.push("Interpret this dream narrative as a whimsical cartoon scene with cute stylized characters.");
   }
 
-  // World as setting
+  // World as the main setting
   if (data.world) {
-    parts.push(`Setting: A dreamworld called "${data.world}".`);
+    parts.push(`Setting: A dreamworld named "${data.world}" - make this the dominant visual theme.`);
   }
 
-  // Environments for atmosphere
+  // Environments for atmosphere and scenery
   if (data.environments && data.environments.length > 0) {
     const envMap: Record<string, string> = {
-      fog: "misty foggy atmosphere",
-      sea: "ocean waves, water, beach",
-      mountain: "majestic mountains, peaks",
-      city: "urban cityscape, buildings",
-      tunnel: "mysterious tunnel or cave",
-      rain: "rain falling, wet surfaces",
-      night: "night sky, stars, darkness",
-      sunset: "warm sunset colors, golden hour",
+      fog: "soft misty fog swirling around, ethereal atmosphere",
+      sea: "beautiful ocean waves, sandy beach, seashells, cute sea creatures",
+      mountain: "majestic colorful mountains, fluffy clouds, adventure vibes",
+      city: "whimsical cartoon city, cute buildings, glowing windows",
+      tunnel: "mysterious glowing cave or tunnel with crystals",
+      rain: "gentle rain with sparkly droplets, cozy atmosphere",
+      night: "magical starry night sky, crescent moon, fireflies",
+      sunset: "warm golden sunset, cotton candy clouds, orange and pink sky",
     };
     const envDescriptions = data.environments
       .map((e) => envMap[e] || e)
-      .join(", ");
-    parts.push(`Environment: ${envDescriptions}.`);
+      .join("; ");
+    parts.push(`Environment elements to include: ${envDescriptions}.`);
   }
 
-  // Include entities/characters
+  // Entities as cute cartoon characters
   if (data.entities && data.entities.length > 0) {
     const entityList = data.entities.slice(0, 5).join(", ");
-    parts.push(`Characters/entities present: ${entityList}.`);
+    parts.push(
+      `Feature these characters/beings as cute cartoon versions: ${entityList}. Give them simple expressive faces (dot eyes, simple smile) like Cult of the Lamb or Adventure Time style.`
+    );
   }
 
   // Mood from AI analysis
   if (data.mood) {
-    parts.push(`Overall mood: ${data.mood}.`);
+    const moodMap: Record<string, string> = {
+      happy: "bright cheerful colors, sunshine, smiling elements",
+      sad: "soft blue tones, gentle rain, peaceful melancholy",
+      scary: "cute-scary balance, spooky but adorable elements, purple and green accents",
+      mysterious: "magical glowing elements, stars, mystical symbols",
+      peaceful: "soft pastels, gentle lighting, cozy atmosphere",
+      adventurous: "dynamic composition, exciting elements, treasure and exploration vibes",
+    };
+    const moodStyle = moodMap[data.mood.toLowerCase()] || data.mood;
+    parts.push(`Mood/atmosphere: ${moodStyle}.`);
   }
 
-  // Threat level affects atmosphere
+  // Threat level affects color palette and elements
   if (data.threatLevel !== undefined) {
     if (data.threatLevel >= 4) {
-      parts.push("Dark, dangerous atmosphere. Ominous shadows, tension.");
+      parts.push(
+        "Add subtle dark fantasy elements: ominous shadows, glowing red/purple accents, but keep it cute and stylized, not scary."
+      );
     } else if (data.threatLevel >= 2) {
-      parts.push("Mysterious, slightly tense atmosphere.");
+      parts.push(
+        "Slightly mysterious atmosphere with magical glowing elements, floating particles."
+      );
     } else {
-      parts.push("Calm, peaceful, serene atmosphere.");
+      parts.push(
+        "Very peaceful and cozy atmosphere, soft pastel colors, gentle lighting, comfort vibes."
+      );
     }
   }
 
-  // Final quality instructions
+  // Quality instructions
   parts.push(
-    "High quality illustration, rich details, beautiful colors, professional book cover quality. Dreamy fantasy art style."
+    "High quality digital illustration. Rich saturated colors, clean linework, professional indie game art quality. Dreamy, magical, whimsical. Think: If Studio Ghibli made a cartoon video game. Ultra detailed backgrounds with cute foreground characters."
   );
 
   return parts.join(" ");
