@@ -19,10 +19,20 @@ import { applyMoonTheme } from "@/utils/moonTheme";
 import { APP_VERSION } from "@/config/appVersion";
 import { AppUpdateProvider } from "@/hooks/useAppUpdate";
 import { PixelParticleEffects } from "@/components/PixelParticleEffects";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.reducedMotion = prefersReducedMotion
+      ? "true"
+      : "false";
+  }, [prefersReducedMotion]);
+
   // Apply moon theme globally on app mount
   useEffect(() => {
     const { phenomenon } = getSessionPhenomenon();

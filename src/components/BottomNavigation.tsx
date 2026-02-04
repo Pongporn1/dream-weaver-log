@@ -1,8 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Book, Library, BookOpen, BarChart3, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { usePixelRipple } from "@/hooks/usePixelRipple";
+import {
+  PixelDreamNavEffects,
+  SuperBlueBloodMoonNavEffects,
+  SuperBloodMoonNavEffects,
+  NebulaDreamMoonNavEffects,
+  CosmicVoyageMoonNavEffects,
+} from "@/components/mythic/BottomNavEffects";
 
 
 const navItems = [
@@ -13,6 +21,9 @@ const navItems = [
   { path: "/statistics", icon: BarChart3, label: "Stats" },
   { path: "/about", icon: Info, label: "About" },
 ];
+
+const randomBetween = (min: number, max: number) =>
+  Math.random() * (max - min) + min;
 
 // Mythic theme styles for bottom navigation
 const mythicNavStyles: Record<string, React.CSSProperties> = {
@@ -156,6 +167,148 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
 export function BottomNavigation() {
   const location = useLocation();
   const [mythicTheme, setMythicTheme] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  const isLowParticle =
+    prefersReducedMotion ||
+    (typeof window !== "undefined" && window.innerWidth <= 480);
+
+  const arcticSnowParticles = useMemo(() => {
+    if (mythicTheme !== "arcticMoon") return [];
+    const count = isLowParticle ? 6 : 15;
+    return Array.from({ length: count }).map(() => ({
+      size: Math.random() * 2 + 1,
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      duration: Math.random() * 3 + 2,
+      opacity: Math.random() * 0.8 + 0.2,
+    }));
+  }, [mythicTheme, isLowParticle]);
+
+  const arcticMeteors = useMemo(() => {
+    if (mythicTheme !== "arcticMoon") return [];
+    const count = isLowParticle ? 2 : 6;
+    return Array.from({ length: count }).map(() => ({
+      top: -Math.random() * 100 - 50,
+      right: Math.random() * 100 - 20,
+      width: Math.random() * 120 + 80,
+      color: Math.random() > 0.5 ? "white" : "#a5f3fc",
+      glow: Math.random() > 0.5 ? "white" : "cyan",
+      duration: Math.random() * 5 + 3,
+      delay: Math.random() * 10,
+    }));
+  }, [mythicTheme, isLowParticle]);
+
+  const pixelDreamData = useMemo(() => {
+    if (mythicTheme !== "pixelDreamMoon") return null;
+    const staticCount = isLowParticle ? 8 : 15;
+    const twinkleCount = isLowParticle ? 3 : 6;
+    const milkyCount = isLowParticle ? 16 : 30;
+    const grassCount = isLowParticle ? 8 : 15;
+    const fireflyCount = isLowParticle ? 6 : 12;
+
+    return {
+      staticStars: Array.from({ length: staticCount }).map(() => ({
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+      })),
+      twinkleStars: Array.from({ length: twinkleCount }).map(() => ({
+        top: `${Math.random() * 80 + 10}%`,
+        left: `${Math.random() * 90 + 5}%`,
+        duration: randomBetween(1, 3),
+      })),
+      milkyStars: Array.from({ length: milkyCount }).map(() => ({
+        top: `${Math.random() * 80}%`,
+        left: `${Math.random() * 80 + 10}%`,
+        duration: randomBetween(2, 5),
+      })),
+      embers: Array.from({ length: 3 }).map((_, i) => ({
+        left: i,
+        duration: randomBetween(1, 3),
+        delay: i * 0.3,
+      })),
+      grass: Array.from({ length: grassCount }).map(() => ({
+        left: `${Math.random() * 90 + 5}%`,
+        duration: randomBetween(1, 3),
+        delay: Math.random(),
+      })),
+      fireflies: Array.from({ length: fireflyCount }).map(() => ({
+        bottom: `${Math.random() * 40}%`,
+        left: `${Math.random() * 100}%`,
+        duration: randomBetween(2, 4),
+        delay: randomBetween(0, 2),
+        fx1: `${randomBetween(-10, 10)}px`,
+        fy1: `${-randomBetween(5, 20)}px`,
+        fx2: `${randomBetween(-10, 10)}px`,
+        fy2: `${-randomBetween(10, 20)}px`,
+        fx3: `${randomBetween(-10, 10)}px`,
+        fy3: `${-randomBetween(3, 15)}px`,
+      })),
+    };
+  }, [mythicTheme, isLowParticle]);
+
+  const superBlueBloodData = useMemo(() => {
+    if (mythicTheme !== "superBlueBloodMoon") return null;
+    const starCount = isLowParticle ? 8 : 15;
+    return {
+      stars: Array.from({ length: starCount }).map(() => ({
+        size: randomBetween(1, 3),
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        floatDuration: randomBetween(10, 20),
+        twinkleDuration: randomBetween(0.5, 1.5),
+      })),
+    };
+  }, [mythicTheme, isLowParticle]);
+
+  const superBloodData = useMemo(() => {
+    if (mythicTheme !== "superBloodMoon") return null;
+    const mistCount = isLowParticle ? 4 : 8;
+    return {
+      mist: Array.from({ length: mistCount }).map(() => ({
+        size: randomBetween(50, 150),
+        left: `${Math.random() * 100}%`,
+        duration: randomBetween(10, 20),
+      })),
+    };
+  }, [mythicTheme, isLowParticle]);
+
+  const nebulaDreamData = useMemo(() => {
+    if (mythicTheme !== "nebulaDreamMoon") return null;
+    const count = isLowParticle ? 8 : 15;
+    return {
+      stardust: Array.from({ length: count }).map((_, i) => ({
+        size: randomBetween(1, 3),
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        opacity: randomBetween(0.2, 1),
+        duration: randomBetween(1, 3),
+        delay: randomBetween(0, 1),
+        glow: randomBetween(2, 6),
+        color: i % 2 === 0 ? "#ff00ff" : "#00ffff",
+      })),
+    };
+  }, [mythicTheme, isLowParticle]);
+
+  const cosmicVoyageData = useMemo(() => {
+    if (mythicTheme !== "cosmicVoyageMoon") return null;
+    const warpCount = isLowParticle ? 8 : 15;
+    const starCount = isLowParticle ? 10 : 20;
+    return {
+      warpStars: Array.from({ length: warpCount }).map(() => ({
+        height: randomBetween(10, 40),
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        duration: randomBetween(1.5, 3.5),
+        delay: randomBetween(0, 3),
+      })),
+      staticStars: Array.from({ length: starCount }).map(() => ({
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        duration: randomBetween(1, 3),
+      })),
+    };
+  }, [mythicTheme, isLowParticle]);
   const { createRipple, RippleEffect } = usePixelRipple();
 
   useEffect(() => {
@@ -200,6 +353,7 @@ export function BottomNavigation() {
       {/* Special effects overlays for certain themes */}
       {mythicTheme === "hybridEclipse" && (
         <div
+          aria-hidden="true"
           className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none"
           style={{
             background:
@@ -208,101 +362,14 @@ export function BottomNavigation() {
           }}
         />
       )}
-      {mythicTheme === "pixelDreamMoon" && (
-        <>
-          {/* Pixel Wave Border - Water Wave Style */}
-          <div className="absolute left-0 right-0 h-[12px] z-50 pointer-events-none overflow-hidden" style={{ top: "-12px" }}>
-            {/* Wide wave pattern for seamless scrolling */}
-            <div
-              className="absolute bottom-0 left-0"
-              style={{
-                width: "200%", // Double width for seamless loop
-                height: "100%",
-                display: "flex",
-                animation: "pixelWaveScroll 12s linear infinite",
-              }}
-            >
-              {/* Create 120 blocks (double the original 60) for seamless loop */}
-              {[...Array(120)].map((_, i) => {
-                // Create sine wave pattern that repeats every 60 blocks
-                const wavePhase = (i * 0.5) % 8;
-                const sineValue = Math.sin(wavePhase * Math.PI / 4);
-                const height = Math.floor((sineValue + 1) * 3.5) + 2; // 2-9 pixels height
-                
-                // Color based on height
-                let color;
-                if (height <= 3) color = "#1e3a8a";
-                else if (height <= 5) color = "#3b82f6";
-                else if (height <= 7) color = "#06b6d4";
-                else if (height <= 8) color = "#22d3ee";
-                else color = "#ffffff";
-                
-                return (
-                  <div
-                    key={i}
-                    className="absolute bottom-0"
-                    style={{
-                      left: `${i * 0.8333}%`, // 100% / 120 blocks
-                      width: "0.9%",
-                      height: `${height}px`,
-                      backgroundColor: color,
-                      imageRendering: "pixelated",
-                      boxShadow: height > 6 ? `0 0 6px ${color}` : "none",
-                    }}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* Animated glow overlay */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: "linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.3) 25%, rgba(255,255,255,0.5) 50%, rgba(6,182,212,0.3) 75%, transparent 100%)",
-                animation: "pixelWaveGlow 2.5s linear infinite",
-              }}
-            />
-          </div>
-          
-          {/* Animated Pixel Stars on Border */}
-          <div className="absolute left-0 right-0 h-[8px] z-40 pointer-events-none" style={{ top: "-8px" }}>
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-[3px] h-[3px]"
-                style={{
-                  left: `${15 + i * 15}%`,
-                  top: "2px",
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 0 6px #06b6d4",
-                  animation: `pixelTwinkle ${1 + i * 0.3}s steps(2) infinite`,
-                  imageRendering: "pixelated",
-                }}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      <style>{`
-        @keyframes pixelTwinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.3; transform: scale(0.7); }
-        }
-        @keyframes pixelWaveFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-2px); }
-        }
-        @keyframes pixelWaveGlow {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes pixelWaveScroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-      `}</style>
+      <PixelDreamNavEffects data={pixelDreamData} />
+      <SuperBlueBloodMoonNavEffects data={superBlueBloodData} />
+      <SuperBloodMoonNavEffects data={superBloodData} />
+      <NebulaDreamMoonNavEffects data={nebulaDreamData} />
+      <CosmicVoyageMoonNavEffects data={cosmicVoyageData} />
       {mythicTheme === "arcticMoon" && (
-        <div 
+        <div
+          aria-hidden="true"
           className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none"
           style={{ animation: "mythicThemeEntrance 2.5s ease-out forwards" }}
         >
@@ -362,17 +429,17 @@ export function BottomNavigation() {
            />
 
            {/* Layer 6: Glittering Snow Particles */}
-           {[...Array(15)].map((_, i) => (
+           {arcticSnowParticles.map((particle, i) => (
              <div
                key={i}
                className="absolute bg-white rounded-full blur-[0.5px]"
                style={{
-                 width: Math.random() * 2 + 1 + "px",
-                 height: Math.random() * 2 + 1 + "px",
-                 top: Math.random() * 100 + "%",
-                 left: Math.random() * 100 + "%",
-                 animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-                 opacity: Math.random() * 0.8 + 0.2
+                 width: `${particle.size}px`,
+                 height: `${particle.size}px`,
+                 top: particle.top,
+                 left: particle.left,
+                 animation: `twinkle ${particle.duration}s ease-in-out infinite`,
+                 opacity: particle.opacity,
                }}
              />
            ))}
@@ -387,19 +454,19 @@ export function BottomNavigation() {
            />
 
            {/* Layer 8: Meteor Shower (Multiple Shooting Stars) */}
-           {[...Array(6)].map((_, i) => (
+           {arcticMeteors.map((meteor, i) => (
              <div
                key={i}
                className="absolute z-20"
                style={{
-                 top: -Math.random() * 100 - 50 + "%", // Start WAY ABOVE (-50% to -150%)
-                 right: Math.random() * 100 - 20 + "%", // Wider spread (-20% to 80%)
-                 width: Math.random() * 120 + 80 + "px", // Longer trails
+                 top: `${meteor.top}%`,
+                 right: `${meteor.right}%`,
+                 width: `${meteor.width}px`,
                  height: "2px",
-                 opacity: 0, // Hidden by default, animation controls opacity
-                 background: `linear-gradient(to right, transparent, ${Math.random() > 0.5 ? 'white' : '#a5f3fc'}, transparent)`,
-                 filter: `drop-shadow(0 0 ${Math.random() * 3 + 2}px ${Math.random() > 0.5 ? 'white' : 'cyan'})`,
-                 animation: `shootingStar ${Math.random() * 5 + 3}s linear infinite ${Math.random() * 10}s both`, // Faster speed (3-8s), 'both' fill mode
+                 opacity: 0,
+                 background: `linear-gradient(to right, transparent, ${meteor.color}, transparent)`,
+                 filter: `drop-shadow(0 0 3px ${meteor.glow})`,
+                 animation: `shootingStar ${meteor.duration}s linear infinite ${meteor.delay}s both`,
                  transform: "rotate(-45deg)"
                }}
              />
@@ -501,59 +568,6 @@ export function BottomNavigation() {
                backgroundSize: "200% 100%",
                animation: "liquidBorder 3s linear infinite",
                boxShadow: "0 2px 10px rgba(180, 130, 255, 0.5)"
-             }}
-           />
-        </div>
-      )}
-
-      {mythicTheme === "superBlueBloodMoon" && (
-        <div className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none">
-           {/* Layer 1: Deep Cosmos Background */}
-           <div className="absolute inset-0 bg-black/80" />
-
-           {/* Layer 2: Red Blood Nebula (Slow Swirl) */}
-           <div 
-             className="absolute inset-0 opacity-60"
-             style={{
-               background: "radial-gradient(circle at 40% 60%, rgba(180, 0, 50, 0.5), transparent 50%)",
-               filter: "blur(20px)",
-               animation: "plasmaFlow 10s ease-in-out infinite alternate"
-             }}
-           />
-
-           {/* Layer 3: Blue/Purple Plasma (Interference) */}
-           <div 
-             className="absolute inset-0 opacity-60 mix-blend-screen"
-             style={{
-               background: "radial-gradient(circle at 60% 40%, rgba(50, 60, 200, 0.6), transparent 50%)",
-               filter: "blur(15px)",
-               animation: "plasmaFlow 8s ease-in-out infinite alternate-reverse"
-             }}
-           />
-
-           {/* Layer 4: Stars/Particles - Moving & Twinkling */}
-           {[...Array(15)].map((_, i) => (
-             <div
-               key={i}
-               className="absolute rounded-full bg-white blur-[0.5px]"
-               style={{
-                 width: Math.random() * 2 + 1 + "px",
-                 height: Math.random() * 2 + 1 + "px",
-                 top: Math.random() * 100 + "%",
-                 left: Math.random() * 100 + "%",
-                 animation: `starFloat ${Math.random() * 10 + 10}s infinite linear, starTwinkle ${Math.random() * 1 + 0.5}s infinite ease-in-out alternate`,
-               }}
-             />
-           ))}
-
-           {/* Layer 5: Royal Gold/Purple Border Beam - Flowing Right */}
-           <div 
-             className="absolute top-0 left-0 right-0 h-[2px] z-20"
-             style={{
-               background: "linear-gradient(90deg, transparent, rgba(255, 50, 50, 0.8), rgba(200, 100, 255, 1), rgba(50, 100, 255, 0.8), transparent)",
-               backgroundSize: "200% 100%",
-               animation: "flowRight 3s linear infinite",
-               boxShadow: "0 0 15px rgba(200, 50, 200, 0.6)"
              }}
            />
         </div>
@@ -677,71 +691,6 @@ export function BottomNavigation() {
         </div>
       )}
 
-      {mythicTheme === "cosmicVoyageMoon" && (
-        <div className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none">
-           {/* Layer 1: Deep Space Background */}
-           <div className="absolute inset-0 bg-[#0b0515]/95" />
-
-           {/* Layer 2: Nebula Highway (Moving Texture) */}
-           <div 
-             className="absolute inset-y-0 left-0 w-[200%] opacity-50 mix-blend-screen"
-             style={{
-               backgroundImage: "linear-gradient(90deg, transparent, rgba(100, 20, 200, 0.3), rgba(60, 20, 150, 0.5), rgba(100, 20, 200, 0.3), transparent)",
-               backgroundSize: "50% 100%",
-               backgroundRepeat: "repeat-x",
-               animation: "mistScroll 5s linear infinite"
-             }}
-           />
-
-           {/* Layer 3: Warp Stars (Vertical Ascent) */}
-           {[...Array(15)].map((_, i) => (
-             <div
-               key={i}
-               className="absolute w-[2px] bg-white rounded-full mix-blend-screen opacity-40"
-               style={{
-                 height: Math.random() * 30 + 10 + "px", // Vertical streaks
-                 top: Math.random() * 100 + "%",
-                 left: Math.random() * 100 + "%", 
-                 animation: `warpSpeed ${Math.random() * 2 + 1.5}s linear infinite ${Math.random() * 3}s`,
-                 boxShadow: "0 0 2px rgba(200, 200, 255, 0.5)"
-               }}
-             />
-           ))}
-
-           {/* Layer 4: Distant Static Stars */}
-            {[...Array(20)].map((_, i) => (
-             <div
-               key={`star-${i}`}
-               className="absolute w-[1px] h-[1px] bg-white rounded-full opacity-60"
-               style={{
-                 top: Math.random() * 100 + "%",
-                 left: Math.random() * 100 + "%",
-                 animation: `pulse ${Math.random() * 2 + 1}s ease-in-out infinite`
-               }}
-             />
-           ))}
-
-           {/* Layer 5: Propulsion Border (Glowing Edge) */}
-           {/* Static Base Rail */}
-           <div 
-             className="absolute top-0 left-0 right-0 h-[1px] z-20 opacity-40"
-             style={{
-                background: "linear-gradient(90deg, transparent, #8a2be2, transparent)",
-             }}
-           />
-           {/* Moving Photon Energy Beam */}
-           <div 
-             className="absolute top-[-1px] left-0 right-0 h-[3px] z-21 mix-blend-screen"
-             style={{
-               background: "linear-gradient(90deg, transparent, rgba(150, 50, 255, 0), rgba(255, 200, 255, 1) 50%, rgba(150, 50, 255, 0), transparent)",
-               backgroundSize: "200% 100%",
-               boxShadow: "0 0 20px rgba(220, 150, 255, 0.8), 0 0 40px rgba(150, 50, 255, 0.5)",
-               animation: "mistFlow 1.5s linear infinite"
-             }}
-           />
-        </div>
-      )}
-
       {mythicTheme === "crystalMoon" && (
         <div className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none">
            {/* Layer 1: Prismatic Mesh Background */}
@@ -845,244 +794,6 @@ export function BottomNavigation() {
              className="absolute top-0 left-0 right-0 h-[2px] z-30 bg-white"
              style={{
                 boxShadow: "0 0 15px rgba(200, 240, 255, 1), 0 0 30px rgba(200, 240, 255, 0.6)"
-             }}
-           />
-        </div>
-      )}
-
-      {mythicTheme === "nebulaDreamMoon" && (
-        <div 
-          className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none"
-          style={{ animation: "mythicThemeEntrance 2.5s ease-out forwards" }} 
-        >
-           {/* Layer 1: Deep Cosmic Background */}
-           <div className="absolute inset-0 bg-[#1a0b2e]/95 backdrop-blur-md" />
-           
-           {/* Layer 2: Nebula Clouds */}
-           <div 
-             className="absolute inset-0 opacity-60 mix-blend-screen"
-             style={{
-               background: "radial-gradient(circle at 30% 50%, rgba(255, 0, 150, 0.3), transparent 60%), radial-gradient(circle at 70% 50%, rgba(0, 200, 255, 0.3), transparent 60%)",
-               filter: "blur(10px)",
-               animation: "nebulaPulse 6s ease-in-out infinite"
-             }}
-           />
-           <div 
-             className="absolute inset-0 opacity-40 mix-blend-color-dodge"
-             style={{
-               backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48ZmlsdGVyIGlkPSJnoiPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjAyIiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2cpIiBvcGFjaXR5PSIwLjUiLz48L3N2Zz4=')",
-               animation: "mistFlow 10s linear infinite"
-             }}
-           />
-
-           {/* Layer 3: Stardust Particles */}
-           {[...Array(15)].map((_, i) => (
-             <div
-               key={i}
-               className="absolute bg-white rounded-full"
-               style={{
-                 width: Math.random() * 2 + 1 + "px",
-                 height: Math.random() * 2 + 1 + "px",
-                 top: Math.random() * 100 + "%",
-                 left: Math.random() * 100 + "%",
-                 opacity: Math.random() * 0.8 + 0.2,
-                 animation: `stardustTwinkle ${Math.random() * 2 + 1}s ease-in-out infinite ${Math.random()}s`,
-                 boxShadow: `0 0 ${Math.random() * 4 + 2}px ${i % 2 === 0 ? '#ff00ff' : '#00ffff'}`
-               }}
-             />
-           ))}
-
-           {/* Layer 4: Cosmic Horizon Border */}
-           <div 
-             className="absolute top-0 left-0 right-0 h-[2px] z-20"
-             style={{
-               background: "linear-gradient(90deg, transparent, #ff00ff, #00ffff, transparent)",
-               boxShadow: "0 0 15px rgba(255, 0, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.3)"
-             }}
-           />
-        </div>
-      )}
-
-      {mythicTheme === "superBloodMoon" && (
-        <div 
-          className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none"
-          style={{ animation: "mythicThemeEntrance 3s ease-out forwards" }}
-        >
-           {/* Layer 1: Blood Void Background */}
-           <div className="absolute inset-0 bg-black" />
-           <div 
-             className="absolute inset-0 opacity-80"
-             style={{
-               background: "radial-gradient(circle at 50% 100%, rgba(50, 0, 0, 0.8), transparent 80%)"
-             }}
-           />
-
-           {/* Layer 2: Red Starfield */}
-           <div 
-             className="absolute inset-0 opacity-60"
-             style={{
-                backgroundImage: "radial-gradient(1px 1px at 20% 20%, #ffaaaa 10%, transparent 0), radial-gradient(1.5px 1.5px at 60% 80%, #ff4444 10%, transparent 0)",
-                backgroundSize: "200px 200px",
-                animation: "pulse 4s ease-in-out infinite"
-             }}
-           />
-
-           {/* Layer 3: The Giant Blood Moon (Enhanced Definition) */}
-           <div 
-             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[35%] w-[320px] h-[320px] rounded-full z-10"
-             style={{
-               background: "radial-gradient(circle at 35% 35%, #800000 0%, #500000 40%, #2a0a0a 100%)",
-               boxShadow: "0 0 60px rgba(255, 30, 30, 0.6), inset -10px -10px 40px rgba(0,0,0,0.9)",
-               filter: "contrast(1.2) brightness(1.2)"
-             }}
-           >
-              {/* Detailed Surface Texture */}
-              <div className="absolute inset-0 rounded-full opacity-60 mix-blend-multiply"
-                   style={{
-                     backgroundImage: "radial-gradient(circle at 20% 40%, rgba(0,0,0,0.7) 4%, transparent 12%), radial-gradient(circle at 65% 60%, rgba(0,0,0,0.6) 8%, transparent 20%), radial-gradient(circle at 45% 75%, rgba(0,0,0,0.5) 5%, transparent 15%), radial-gradient(circle at 80% 30%, rgba(0,0,0,0.6) 3%, transparent 10%)"
-                   }}
-              />
-              {/* Sharp Rim Light */}
-              <div 
-                 className="absolute inset-0 rounded-full"
-                 style={{
-                   boxShadow: "inset 0 0 20px rgba(255, 100, 100, 0.8), 0 0 10px rgba(255, 50, 50, 0.5)",
-                   mixBlendMode: "screen"
-                 }}
-              />
-              {/* Beating Heart Glow */}
-              <div 
-                 className="absolute inset-0 rounded-full opacity-40 mix-blend-overlay"
-                 style={{
-                   background: "radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.6), transparent 70%)",
-                   animation: "flashPulse 4s ease-in-out infinite"
-                 }}
-              />
-           </div>
-
-           {/* Layer 4: Rising Blood Mist */}
-           <div 
-             className="absolute inset-0 z-20"
-             style={{
-               background: "linear-gradient(to top, rgba(50, 0, 0, 0.6), transparent)",
-               maskImage: "linear-gradient(to top, black, transparent)",
-               WebkitMaskImage: "linear-gradient(to top, black, transparent)",
-             }}
-           >
-              {[...Array(8)].map((_, i) => (
-               <div
-                 key={i}
-                 className="absolute rounded-full bg-red-600/20 blur-xl"
-                 style={{
-                   width: Math.random() * 100 + 50 + "px",
-                   height: Math.random() * 100 + 50 + "px",
-                   bottom: -50 + "px",
-                   left: Math.random() * 100 + "%",
-                   animation: `singularFloat ${Math.random() * 10 + 10}s linear infinite reverse`
-                 }}
-               />
-              ))}
-           </div>
-
-           {/* Layer 5: Crimson Horizon Border */}
-           <div 
-             className="absolute top-0 left-0 right-0 h-[3px] z-30"
-             style={{
-               background: "linear-gradient(90deg, transparent, #ff0000, #ff4444, #ff0000, transparent)",
-               backgroundSize: "200% 100%",
-               animation: "borderFlow 3s linear infinite",
-               boxShadow: "0 0 20px rgba(255, 0, 0, 0.6)"
-             }}
-           />
-        </div>
-      )}
-
-      {mythicTheme === "superBlueBloodMoon" && (
-        <div className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none">
-           {/* Layer 1: Mystic Void Background */}
-           <div className="absolute inset-0 bg-[#050510]" />
-           <div 
-             className="absolute inset-0 opacity-80"
-             style={{
-               background: "radial-gradient(circle at 50% 100%, rgba(80, 0, 100, 0.4), transparent 80%)"
-             }}
-           />
-
-           {/* Layer 2: Hybrid Starfield (Red & Blue) */}
-           <div 
-             className="absolute inset-0 opacity-70"
-             style={{
-                backgroundImage: "radial-gradient(1.5px 1.5px at 20% 20%, #aaddff 10%, transparent 0), radial-gradient(1.5px 1.5px at 80% 80%, #ffaaaa 10%, transparent 0)",
-                backgroundSize: "250px 250px",
-                animation: "pulse 5s ease-in-out infinite"
-             }}
-           />
-
-           {/* Layer 3: The Super Blue Blood Moon (Dual Tone) */}
-           <div 
-             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[35%] w-[320px] h-[320px] rounded-full z-10"
-             style={{
-               background: "radial-gradient(circle at 30% 30%, #1e1b4b 0%, #4c0519 60%, #000000 100%)", /* Indigo to Rose to Black */
-               boxShadow: "0 0 60px rgba(100, 50, 255, 0.4), inset -10px -10px 50px rgba(100, 0, 50, 0.8)",
-               filter: "contrast(1.3) brightness(1.1)"
-             }}
-           >
-              {/* Moon Texture */}
-              <div className="absolute inset-0 rounded-full opacity-50 mix-blend-overlay"
-                   style={{
-                     backgroundImage: "radial-gradient(circle at 30% 40%, rgba(50,50,100,0.5) 5%, transparent 15%), radial-gradient(circle at 70% 60%, rgba(100,50,50,0.5) 8%, transparent 20%)"
-                   }}
-              />
-              {/* Sharp Rim Light (Blue Top, Red Bottom glow hint) */}
-              <div 
-                 className="absolute inset-0 rounded-full"
-                 style={{
-                   boxShadow: "inset 10px 10px 30px rgba(100, 150, 255, 0.6), inset -10px -10px 30px rgba(255, 50, 100, 0.4)",
-                   mixBlendMode: "screen"
-                 }}
-              />
-              {/* Dual Pulse */}
-              <div 
-                 className="absolute inset-0 rounded-full opacity-40 mix-blend-color-dodge"
-                 style={{
-                   background: "radial-gradient(circle at 50% 50%, rgba(120, 50, 255, 0.4), transparent 70%)",
-                   animation: "flashPulse 5s ease-in-out infinite"
-                 }}
-              />
-           </div>
-
-           {/* Layer 4: Particle Convergence (Blue & Red) */}
-           <div 
-             className="absolute inset-0 z-20"
-             style={{
-               background: "linear-gradient(to top, rgba(20, 0, 40, 0.4), transparent)",
-             }}
-           >
-              {[...Array(6)].map((_, i) => (
-               <div
-                 key={i}
-                 className="absolute rounded-full blur-md"
-                 style={{
-                   backgroundColor: i % 2 === 0 ? "#60a5fa" : "#f43f5e", /* Blue / Red */
-                   width: Math.random() * 4 + 2 + "px",
-                   height: Math.random() * 4 + 2 + "px",
-                   bottom: -20 + "px",
-                   left: Math.random() * 100 + "%",
-                   animation: `singularFloat ${Math.random() * 8 + 8}s linear infinite reverse`,
-                   opacity: 0.6
-                 }}
-               />
-              ))}
-           </div>
-
-           {/* Layer 5: Hybrid Horizon Border */}
-           <div 
-             className="absolute top-0 left-0 right-0 h-[3px] z-30"
-             style={{
-               background: "linear-gradient(90deg, transparent, #3b82f6, #a855f7, #ef4444, #a855f7, #3b82f6, transparent)",
-               backgroundSize: "200% 100%",
-               animation: "borderFlow 3s linear infinite",
-               boxShadow: "0 0 20px rgba(168, 85, 247, 0.6)"
              }}
            />
         </div>
@@ -1302,306 +1013,6 @@ export function BottomNavigation() {
                }}
              />
            ))}
-        </div>
-      )}
-
-      {mythicTheme === "pixelDreamMoon" && (
-        <div 
-          className="absolute inset-0 overflow-hidden rounded-t-[inherit] pointer-events-none"
-        >
-           {/* Animated Pixel Beam (Top Border) */}
-           <div 
-             className="absolute left-0 right-0 h-[4px] z-50"
-             style={{
-               top: "-4px", // Sit correctly on the border
-               background: "linear-gradient(90deg, transparent 0%, transparent 20%, #ffffff 40%, #ffffff 60%, transparent 80%, transparent 100%)", // Hard block beam
-               backgroundSize: "200% 100%", // Larger size for travel
-               opacity: 1, // Full brightness
-               animation: "pixelBeam 2s linear infinite", // Faster
-               boxShadow: "0 0 4px #ffffff" // Glow
-             }}
-           />
-           <style>{`
-             @keyframes pixelBeam { 
-               0% { background-position: 200% 0; } 
-               100% { background-position: -200% 0; } 
-             }
-           `}</style>
-           {/* Layer 1: Stargazing Sky (Dense Stars & Shooting Star) */}
-           <div className="absolute inset-x-0 top-0 h-[60%] overflow-hidden">
-             {/* Static Stars */}
-             {[...Array(15)].map((_, i) => (
-               <div
-                 key={`star-static-${i}`}
-                 className="absolute bg-white opacity-60"
-                 style={{
-                   width: "2px",
-                   height: "2px",
-                   top: Math.random() * 100 + "%",
-                   left: Math.random() * 100 + "%",
-                   boxShadow: "0 0 1px white"
-                 }}
-               />
-             ))}
-             {/* Twinkling Stars */}
-             {[...Array(6)].map((_, i) => (
-               <div
-                 key={`star-twinkle-${i}`}
-                 className="absolute bg-[#a5b4fc]" // Indigo-200
-                 style={{
-                   width: "3px",
-                   height: "3px",
-                   top: Math.random() * 80 + 10 + "%",
-                   left: Math.random() * 90 + 5 + "%",
-                   animation: `pulse ${Math.random() * 2 + 1}s infinite alternate`
-                 }}
-               />
-             ))}
-             {/* Shooting Star */}
-             <div 
-               className="absolute top-0 left-[20%]"
-               style={{
-                 width: "4px",
-                 height: "4px",
-                 background: "#ffffff",
-                 boxShadow: "2px 2px 0 #c7d2fe, 4px 4px 0 #818cf8, 6px 6px 0 #4338ca", // Trail
-                 animation: "shootingStar 4s ease-in-out infinite"
-               }} 
-             >
-               <style>{`
-                 @keyframes shootingStar {
-                   0% { transform: translate(-100px, -100px); opacity: 0; }
-                   10% { opacity: 1; }
-                   20% { transform: translate(200px, 200px); opacity: 0; }
-                   100% { transform: translate(200px, 200px); opacity: 0; }
-                 }
-               `}</style>
-             </div>
-           </div>
-
-           {/* Layer 2: Scene Container (Mountains, Hills, Camp) */}
-           <div className="absolute inset-x-0 bottom-0 h-[60%]">
-           {/* Layer 0.2: Milky Way (Galaxy Band) */}
-              <div 
-                 className="absolute inset-0 opacity-30 transform -rotate-12 scale-150"
-                 style={{
-                    background: "radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 60%)",
-                    pointerEvents: "none"
-                 }}
-              />
-              {/* Extra Dense Stars for Milky Way */}
-              {[...Array(30)].map((_, i) => (
-                <div
-                  key={`star-milky-${i}`}
-                  className="absolute bg-white opacity-40"
-                  style={{
-                    width: "1px", height: "1px",
-                    top: Math.random() * 80 + "%", left: Math.random() * 80 + 10 + "%",
-                    animation: `twinkle ${Math.random() * 3 + 2}s infinite`
-                  }}
-                />
-              ))}
-
-              {/* Layer 0.5: Shooting Stars (Dual) */}
-               <div 
-                className="absolute top-[10%] left-[20%] w-[2px] h-[2px] bg-white rounded-full z-0 opacity-0"
-                style={{
-                  boxShadow: "0 0 4px white, 2px 2px 0 rgba(255,255,255,0.5)",
-                  animation: "shootingStar 6s ease-in-out infinite"
-                }} 
-              />
-              <div 
-                className="absolute top-[30%] left-[50%] w-[1px] h-[1px] bg-cyan-200 rounded-full z-0 opacity-0"
-                style={{
-                  boxShadow: "0 0 2px cyan",
-                  animation: "shootingStar 9s ease-in-out infinite 3s"
-                }} 
-              />
-
-              {/* Layer 0.8: Drifting Pixel Clouds */}
-              {[...Array(3)].map((_, i) => (
-                <div 
-                  key={`cloud-${i}`}
-                  className="absolute opacity-20"
-                  style={{
-                    top: `${20 + i * 15}%`,
-                    left: `${i * 30}%`,
-                    animation: `cloudDrift ${15 + i * 5}s linear ${i * 3}s infinite`
-                  }}
-                >
-                  <div className="w-[8px] h-[3px] bg-white rounded-sm" />
-                  <div className="absolute top-[-2px] left-[2px] w-[4px] h-[3px] bg-white rounded-sm" />
-                  <div className="absolute top-[-2px] right-[1px] w-[3px] h-[2px] bg-white rounded-sm" />
-                </div>
-              ))}
-              <style>{`@keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(100vw); } }`}</style>
-
-              {/* Layer 1.5: Constellation (Big Dipper) */}
-              <div className="absolute top-[15%] left-[5%] opacity-70">
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: 0, left: 0 }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "10px", left: "20px" }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "25px", left: "35px" }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "35px", left: "55px" }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "45px", left: "55px" }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "45px", left: "80px" }} />
-                 <div className="absolute w-[2px] h-[2px] bg-white shadow-[0_0_2px_white]" style={{ top: "35px", left: "80px" }} />
-                 <svg className="absolute top-0 left-0 w-[100px] h-[60px] opacity-20 pointer-events-none">
-                    <polyline points="1,1 21,11 36,26 56,36 56,46 81,46 81,36 56,36" fill="none" stroke="white" strokeWidth="0.5" />
-                 </svg>
-              </div>
-
-              {/* Layer 2: Trees (Detailed) */}
-              {[10, 20, 70, 85].map((pos, i) => (
-                 <div key={`tree-detailed-${i}`} className="absolute bottom-[35%]" style={{ left: `${pos}%` }}>
-                    <div style={{
-                       width: "0", height: "0", borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: "16px solid #164e63",
-                       transform: `scale(${1 + i * 0.1})`, transformOrigin: "bottom center", animation: `treeSway ${4 + i}s ease-in-out infinite alternate`
-                    }}>
-                       {/* Snow/Light Highlight on Trees */}
-                       <div className="absolute top-[4px] left-[-2px] w-[1px] h-[1px] bg-[#0eaaaf] opacity-50" />
-                       <div className="absolute top-[8px] right-[-2px] w-[1px] h-[1px] bg-[#0eaaaf] opacity-50" />
-                    </div>
-                    {/* Lantern on 2nd Tree */}
-                    {i === 1 && (
-                       <div className="absolute top-[6px] right-[-4px] animate-pulse" style={{ animation: `treeSway ${4 + i}s ease-in-out infinite alternate` }}>
-                          <div className="w-[2px] h-[3px] bg-[#fbbf24] shadow-[0_0_4px_#fbbf24]" />
-                          <div className="absolute -top-[1px] left-0 w-[2px] h-[1px] bg-[#78350f]" />
-                       </div>
-                    )}
-                 </div>
-              ))}
-
-              {/* Layer 2.5: Foreground Hill (Darker for Depth) */}
-               <div 
-                 className="absolute inset-0 w-[150%] -left-[20%] rounded-[100%] bg-[#155e75] shadow-[inset_0_2px_0_#164e63]" 
-                 style={{ transform: "scaleY(0.5) translateY(40%)", opacity: 0.8 }}
-               />
-
-              {/* Layer 3: Camp Scene Details */}
-              {/* Tent */}
-              <div 
-                className="absolute bottom-6 left-[45%] z-10" 
-                style={{
-                  width: "0", height: "0",
-                  borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderBottom: "12px solid #ef4444", filter: "drop-shadow(2px 0 0 #7f1d1d)"
-                }}
-              >
-                 <div className="absolute top-[2px] left-[-2px] w-0 h-0 border-l-[2px] border-r-[2px] border-b-[8px] border-b-[#1e293b] border-l-transparent border-r-transparent" />
-              </div>
-
-               {/* Sleeping Fox (Breathing) */}
-               <div className="absolute bottom-4 left-[42%] z-10" style={{ animation: "foxBreathe 2s ease-in-out infinite" }}>
-                  <div className="w-[6px] h-[4px] bg-[#f97316] rounded-t-lg rounded-bl-lg" /> {/* Body */}
-                  <div className="absolute -top-[2px] left-0 w-[2px] h-[2px] bg-[#f97316]" /> {/* Ear */}
-                  <div className="absolute top-[1px] -right-[2px] w-[3px] h-[3px] bg-[#fff7ed] rounded-full" /> {/* Tail tip */}
-                  {/* Zzz */}
-                  <div className="absolute -top-[6px] -right-[4px] text-[6px] text-white opacity-60" style={{ animation: "zzz 3s ease-in-out infinite" }}>z</div>
-               </div>
-               <style>{`
-                 @keyframes foxBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-                 @keyframes zzz { 0%, 100% { transform: translateY(0); opacity: 0; } 50% { transform: translateY(-8px); opacity: 0.6; } }
-               `}</style>
-
-              {/* Campfire (Enhanced with Embers) */}
-              <div 
-                className="absolute bottom-5 left-[50%] w-1 h-1 bg-orange-500 rounded-full z-10"
-                style={{ boxShadow: "0 0 6px orange, 0 -2px 8px rgba(255, 69, 0, 0.8)", animation: "flicker 0.2s infinite alternate" }}
-              >
-                 <div className="absolute -bottom-[2px] -left-[2px] w-2 h-[2px] bg-[#78350f]" />
-                 {/* Rising Embers */}
-                  {[...Array(3)].map((_, i) => (
-                    <div 
-                      key={`ember-${i}`}
-                      className="absolute w-[1px] h-[1px] bg-orange-400 rounded-full"
-                      style={{
-                        bottom: "2px",
-                        left: `${i}px`,
-                        animation: `emberRise ${Math.random() * 2 + 1}s ease-out ${i * 0.3}s infinite`,
-                      }}
-                    />
-                  ))}
-              </div>
-              <style>{`@keyframes emberRise { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-20px) scale(0.3); opacity: 0; } }`}</style>
-              
-              {/* Guitar (Vibrating) */}
-              <div className="absolute bottom-5 left-[52%] z-10" style={{ animation: "guitarVibrate 0.5s ease-in-out infinite alternate" }}>
-                 <div className="w-[3px] h-[8px] bg-[#92400e] rounded-[1px] shadow-[1px_1px_0_#000] rotate-12" />
-                 {/* Strings */}
-                 <div className="absolute top-[2px] left-[1px] w-[1px] h-[4px] bg-[#fbbf24] opacity-30" />
-              </div>
-              <style>{`@keyframes guitarVibrate { from { transform: rotate(-1deg); } to { transform: rotate(1deg); } }`}</style>
-
-              {/* Mushrooms (Red/White) */}
-              {[15, 25, 60, 75, 80].map((pos, i) => (
-                 <div key={`mushroom-${i}`} className="absolute bottom-4 z-10" style={{ left: `${pos}%` }}>
-                    <div className="w-[4px] h-[3px] bg-[#ef4444] rounded-t-sm" /> {/* Cap */}
-                    <div className="absolute top-[1px] left-[1px] w-[1px] h-[1px] bg-white" /> {/* Spot */}
-                    <div className="absolute bottom-[-2px] left-[1px] w-[2px] h-[2px] bg-[#fcd34d]" /> {/* Stem */}
-                 </div>
-              ))}
-
-              {/* Tall Grass (Swaying) */}
-              {[...Array(15)].map((_, i) => (
-                 <div 
-                   key={`grass-${i}`} 
-                   className="absolute bottom-3 w-[1px] h-[3px] bg-[#4ade80]" 
-                   style={{ 
-                      left: `${Math.random() * 90 + 5}%`, 
-                      opacity: 0.6,
-                      animation: `grassSway ${Math.random() * 2 + 1}s ease-in-out ${Math.random()}s infinite alternate`,
-                      transformOrigin: "bottom"
-                   }} 
-                 />
-              ))}
-              <style>{`@keyframes grassSway { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }`}</style>
-
-              {/* Fireflies (Enhanced Swarm) */}
-              {[...Array(12)].map((_, i) => (
-                <div
-                   key={`firefly-${i}`}
-                   className="absolute w-[1px] h-[1px] bg-[#fcd34d] rounded-full"
-                   style={{
-                      bottom: Math.random() * 40 + "%",
-                      left: Math.random() * 100 + "%",
-                      boxShadow: "0 0 3px #fcd34d",
-                      animation: `fireflyBounce ${2 + Math.random() * 2}s ease-in-out ${Math.random() * 2}s infinite`
-                   }}
-                />
-              ))}
-              <style>{`
-                @keyframes fireflyBounce { 
-                  0%, 100% { transform: translate(0, 0); opacity: 0.3; } 
-                  25% { transform: translate(${Math.random() * 20 - 10}px, -${Math.random() * 15 + 5}px); opacity: 1; }
-                  50% { transform: translate(${Math.random() * 20 - 10}px, -${Math.random() * 10 + 10}px); opacity: 0.8; }
-                  75% { transform: translate(${Math.random() * 20 - 10}px, -${Math.random() * 5 + 3}px); opacity: 1; }
-                }
-              `}</style>
-
-              {/* Layer 2.5: Drifting Low Fog (Mist) */}
-              <div 
-                className="absolute bottom-0 left-0 w-[200%] h-12 pointer-events-none opacity-30"
-                style={{
-                  background: "linear-gradient(to top, rgba(255,255,255,0.4), transparent)",
-                  maskImage: "linear-gradient(90deg, transparent, black 50%, transparent)",
-                  WebkitMaskImage: "linear-gradient(90deg, transparent, black 50%, transparent)",
-                  animation: "fogDrift 20s linear infinite"
-                }}
-              >
-                 <style>{`@keyframes fogDrift { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
-              </div>
-           </div>
-
-           {/* Layer 3: Secret Easter Egg (Tiny UFO) */}
-           <div 
-              className="absolute top-[15%] right-[-20px] pointer-events-none opacity-80"
-               style={{
-                 width: "6px", height: "2px", background: "#ec4899", // Pink disk
-                 boxShadow: "2px -2px 0 #22d3ee, -2px -2px 0 #22d3ee, 0 -4px 0 #e879f9", // Dome & lights
-                 animation: "ufoFly 30s linear 5s infinite"
-               }}
-            >
-              <style>{`@keyframes ufoFly { 0% { transform: translateX(0) translateY(0); } 25% { transform: translateX(-150px) translateY(10px); } 50% { transform: translateX(-300px) translateY(-5px); } 100% { transform: translateX(-120vw) translateY(20px); } }`}</style>
-           </div>
         </div>
       )}
 

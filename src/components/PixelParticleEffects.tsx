@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Particle {
   id: number;
@@ -19,6 +20,7 @@ export function PixelParticleEffects() {
   const particleIdRef = useRef(0);
   const lastScrollY = useRef(0);
   const animationFrameRef = useRef<number>();
+  const prefersReducedMotion = useReducedMotion();
 
   // Check if pixel theme is active
   const [isPixelTheme, setIsPixelTheme] = useState(false);
@@ -41,7 +43,7 @@ export function PixelParticleEffects() {
 
   // Scroll Dust Trail
   useEffect(() => {
-    if (!isPixelTheme) return;
+    if (!isPixelTheme || prefersReducedMotion) return;
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -79,7 +81,7 @@ export function PixelParticleEffects() {
 
   // Click Sparkle
   useEffect(() => {
-    if (!isPixelTheme) return;
+    if (!isPixelTheme || prefersReducedMotion) return;
 
     const handleClick = (e: MouseEvent) => {
       const sparkleCount = 8;
@@ -112,7 +114,7 @@ export function PixelParticleEffects() {
 
   // Animation loop
   useEffect(() => {
-    if (!isPixelTheme) return;
+    if (!isPixelTheme || prefersReducedMotion) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -189,7 +191,7 @@ export function PixelParticleEffects() {
     };
   }, [isPixelTheme]);
 
-  if (!isPixelTheme) return null;
+  if (!isPixelTheme || prefersReducedMotion) return null;
 
   return (
     <canvas

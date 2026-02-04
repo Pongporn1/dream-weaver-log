@@ -146,7 +146,7 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
   if (!render) return null;
 
   const FrameLayer = (
-    <>
+    <div aria-hidden="true" className="contents">
       <div className="absolute inset-3 border-4 border-[#7dd3fc]/40 shadow-[0_0_20px_rgba(125,211,252,0.35),inset_0_0_20px_rgba(59,130,246,0.25)] pointer-events-none" />
       <div className="absolute inset-3 pointer-events-none" style={{ animation: "framePulse 3s ease-in-out infinite" }}>
         <div
@@ -172,11 +172,11 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
         <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#7dd3fc]" />
         <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#7dd3fc]" />
       </div>
-    </>
+    </div>
   );
 
   const AtmosphereLayer = (
-    <>
+    <div aria-hidden="true" className="contents">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.35)_60%,rgba(0,0,0,0.7)_100%)] pointer-events-none" />
       <div
         className="absolute inset-0 opacity-25 mix-blend-screen pointer-events-none"
@@ -213,11 +213,11 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
           animation: "beamSweep 5s linear infinite",
         }}
       />
-    </>
+    </div>
   );
 
   const BackdropLayer = (
-    <>
+    <div aria-hidden="true" className="contents">
       <div
         className="absolute bottom-8 left-1/2 -translate-x-1/2 w-44 h-44 opacity-35 pointer-events-none"
         style={{
@@ -256,11 +256,11 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
           background: "linear-gradient(0deg, rgba(34,211,238,0.35), rgba(34,211,238,0))",
         }}
       />
-    </>
+    </div>
   );
 
   const ParticlesLayer = (
-    <>
+    <div aria-hidden="true" className="contents">
       {stars.map((star, i) => (
         <div
           key={`star-${i}`}
@@ -371,11 +371,11 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
           }}
         />
       ))}
-    </>
+    </div>
   );
 
   const HudLayer = (
-    <>
+    <div aria-hidden="true" className="contents">
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div
           className="relative w-16 h-16 opacity-40"
@@ -440,7 +440,7 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
       >
         MODE: DREAM
       </div>
-    </>
+    </div>
   );
 
   const ContentLayer = (
@@ -539,6 +539,7 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
       {ContentLayer}
 
       <div
+        aria-hidden="true"
         className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay"
         style={{
           backgroundImage:

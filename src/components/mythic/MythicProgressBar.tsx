@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { MythicParticleConfig } from "@/hooks/useMythicCollection";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Particle {
   x: number;
@@ -162,23 +163,34 @@ export function MythicProgressBar({
   label,
   variant,
 }: MythicProgressBarProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const motionFactor = prefersReducedMotion ? 0.25 : 1;
+  const effectiveAnimated = animated && !prefersReducedMotion;
+  const effectiveParticleConfig = useMemo(() => {
+    if (!particleConfig) return null;
+    return {
+      ...particleConfig,
+      density: particleConfig.density * motionFactor,
+    };
+  }, [particleConfig, motionFactor]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
   const progressPercent = Math.min(100, Math.max(0, (value / max) * 100));
 
   // Determine variant from particleConfig if not provided
-  const effectiveVariant = variant || (particleConfig?.type as BarVariant) || "normal";
+  const effectiveVariant =
+    variant || (effectiveParticleConfig?.type as BarVariant) || "normal";
   const isPixelVariant = effectiveVariant === "pixels";
   const styles = VARIANT_STYLES[effectiveVariant] || VARIANT_STYLES.normal;
   const animations = VARIANT_ANIMATIONS[effectiveVariant] || VARIANT_ANIMATIONS.normal;
 
   // Generate particles based on config
   const createParticle = useMemo(() => {
-    if (!particleConfig) return null;
-    
+    if (!effectiveParticleConfig) return null;
+
     return (x: number, y: number, width: number, height: number): Particle => {
-      const config = particleConfig;
+      const config = effectiveParticleConfig;
       const isSecondary = Math.random() > 0.6;
       const color = isSecondary && config.secondaryColor ? config.secondaryColor : config.color;
       
@@ -256,16 +268,16 @@ export function MythicProgressBar({
         rotationSpeed,
       };
     };
-  }, [particleConfig, progressPercent]);
+  }, [effectiveParticleConfig, progressPercent]);
 
   // Animation loop
   useEffect(() => {
-    if (!animated || !canvasRef.current || !particleConfig) return;
+    if (!effectiveAnimated || !canvasRef.current || !effectiveParticleConfig) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    if (particleConfig.type === "pixels") {
+    if (effectiveParticleConfig.type === "pixels") {
       ctx.imageSmoothingEnabled = false;
     }
     
@@ -281,7 +293,7 @@ export function MythicProgressBar({
       ctx.clearRect(0, 0, width, canvasHeight);
       
       // Spawn new particles at the progress edge
-      if (createParticle && Math.random() < particleConfig.density * 0.3) {
+      if (createParticle && Math.random() < effectiveParticleConfig.density * 0.3) {
         particlesRef.current.push(createParticle(0, 0, width, canvasHeight));
       }
       
@@ -305,7 +317,7 @@ export function MythicProgressBar({
           ctx.rotate(p.rotation);
         }
         
-        if (particleConfig.glow) {
+        if (effectiveParticleConfig.glow) {
           ctx.shadowColor = p.color;
           ctx.shadowBlur = p.size * 3;
         }
@@ -314,7 +326,7 @@ export function MythicProgressBar({
         ctx.globalAlpha = alpha;
         
         // Different shapes based on particle type
-        switch (particleConfig.type) {
+        switch (effectiveParticleConfig.type) {
           case "crystals":
             // Diamond shape
             ctx.beginPath();
@@ -432,10 +444,10 @@ export function MythicProgressBar({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [animated, particleConfig, createParticle]);
+  }, [effectiveAnimated, effectiveParticleConfig, createParticle]);
 
-  const barColor = particleConfig?.color || "hsl(var(--primary))";
-  const effectiveGradient = particleConfig 
+  const barColor = effectiveParticleConfig?.color || "hsl(var(--primary))";
+  const effectiveGradient = effectiveParticleConfig 
     ? styles.gradient 
     : "hsl(var(--primary))";
   const radiusClass = isPixelVariant ? "rounded-md" : "rounded-full";
@@ -481,7 +493,7 @@ export function MythicProgressBar({
           transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
             background: effectiveGradient,
-            boxShadow: showGlow && particleConfig?.glow
+            boxShadow: showGlow && effectiveParticleConfig?.glow
               ? `0 0 12px ${styles.glowColor}, 0 0 24px ${styles.glowColor}50, inset 0 1px 0 rgba(255,255,255,0.3)`
               : "inset 0 1px 0 rgba(255,255,255,0.3)",
           }}
@@ -495,7 +507,7 @@ export function MythicProgressBar({
           )}
 
           {/* Pulse animation */}
-          {animated && animations.pulseAnimation && progressPercent > 0 && (
+          {effectiveAnimated && animations.pulseAnimation && progressPercent > 0 && (
             <motion.div
               className="absolute inset-0 rounded-full"
               animate={{
@@ -513,7 +525,7 @@ export function MythicProgressBar({
           )}
 
           {/* Wave animation */}
-          {animated && animations.waveAnimation && progressPercent > 0 && (
+          {effectiveAnimated && animations.waveAnimation && progressPercent > 0 && (
             <motion.div
               className="absolute inset-0"
               animate={{
@@ -532,7 +544,7 @@ export function MythicProgressBar({
           )}
 
           {/* Sparkle animation */}
-          {animated && animations.sparkleAnimation && progressPercent > 0 && (
+          {effectiveAnimated && animations.sparkleAnimation && progressPercent > 0 && (
             <>
               <motion.div
                 className="absolute w-1 h-1 rounded-full bg-white"
@@ -577,7 +589,7 @@ export function MythicProgressBar({
           )}
 
           {/* Shimmer effect */}
-          {animated && progressPercent > 0 && (
+          {effectiveAnimated && progressPercent > 0 && (
             <motion.div
               className="absolute inset-0"
               animate={{
@@ -615,7 +627,7 @@ export function MythicProgressBar({
         </motion.div>
         
         {/* Particle canvas overlay */}
-        {animated && particleConfig && (
+        {effectiveAnimated && effectiveParticleConfig && (
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full pointer-events-none"
