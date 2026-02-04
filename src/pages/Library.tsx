@@ -204,22 +204,9 @@ export default function Library() {
                   ? "Debug: Pixel Dream (ON)"
                   : "Debug: Pixel Dream"}
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  localStorage.setItem("mythic-locked-moon", "pixelDreamMoon");
-                  window.location.href = "/";
-                }}
-                className="h-8"
-                title="Test: บังคับ Pixel Intro แล้วกลับหน้าแรก"
-              >
-                Test Intro 100%
-              </Button>
+              
             </div>
-            <span className="text-xs text-muted-foreground">
-              เฉพาะ dev • ชั่วคราว
-            </span>
+            
           </div>
         </div>
       )}

@@ -479,17 +479,7 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
         transition: isPulling ? "none" : "transform 0.3s ease-out",
       }}
     >
-      {import.meta.env.DEV && (
-        <div className="absolute top-3 right-3 z-50">
-          <button
-            type="button"
-            onClick={handleForcePixelIntro}
-            className="rounded-md border border-white/40 bg-black/60 px-3 py-1 text-xs text-white/90 backdrop-blur hover:bg-black/75"
-          >
-            Test Pixel Intro
-          </button>
-        </div>
-      )}
+     
       {/* Pull-to-refresh indicator */}
       <HeaderPullIndicator
         pullDistance={pullDistance}

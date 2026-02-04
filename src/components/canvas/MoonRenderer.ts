@@ -43,12 +43,107 @@ const drawPixelDreamMoon = (
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // --- 1. Atmosphere (Reverted) ---
-  // Clouds are handled in SkyRenderer.ts
-  
-  // --- 2. Pixel Moon (The Planet) ---
+  // --- Helper: Draw Rings ---
+  const drawRings = (drawReference: "back" | "front") => {
+      const ringGrid = 2; // Finer grain for rings
+      const tiltAngle = Math.PI / 8;
+      const perspectiveScale = 0.3; 
+      
+      // Ring Definitions - Ethereal & Cosmic
+      const ringBands = [
+        { inner: 1.4, outer: 1.6, color: "#a855f7", baseAlpha: 0.6, noise: 0.5 }, // Deep Inner Purple
+        { inner: 1.65, outer: 1.75, color: "#22d3ee", baseAlpha: 0.8, noise: 0.3 }, // Bright Cyan Core
+        { inner: 1.8, outer: 2.1, color: "#f472b6", baseAlpha: 0.4, noise: 0.7 }, // Soft Pink Outer Haze
+      ];
 
-  // --- 2. ดวงจันทร์พิกเซล (ตัวดาว) ---
+      ctx.save();
+      ctx.translate(moonX, moonY);
+      ctx.rotate(-Math.PI / 12); // Tilt
+
+      ringBands.forEach((band, i) => {
+          const step = ringGrid;
+          
+          // We iterate over the area of the ring
+          const maxR = band.outer * radius;
+          
+          // Optimization: Polar coordinate loop is better for rings than XY scan
+          // But for pixel art look, XY scan ensures grid alignment? 
+          // Actually, drawing small rects along the arc is easier to control depth.
+          
+          for (let r = band.inner * radius; r <= band.outer * radius; r += step) {
+             const circumference = 2 * Math.PI * r;
+             const segments = Math.floor(circumference / step);
+             
+             for (let s = 0; s < segments; s++) {
+                 const angle = (s / segments) * Math.PI * 2;
+                 
+                 // Depth sort: sin(angle) > 0 is "front" (y positive in un-tilted 3D space usually, 
+                 // but here we flatten. Let's say top half is back, bottom half is front?
+                 // Standard parametric circle: x = cos, y = sin. 
+                 // If we rotate X axis to tilt, y becomes compressed.
+                 // y_screen = y_world * cos(tilt) - z_world * sin(tilt) ... complicated.
+                 // Simple approximation: y screen coordinate. 
+                 // Let's stick to the "angle" logic. 
+                 // Usually angle 0 is right, PI/2 is down, PI is left, 3PI/2 is up.
+                 // "Back" part of ring is usually the top part on screen (PI to 2PI).
+                 // "Front" part is bottom (0 to PI).
+                 
+                 // Let's refine:
+                 const isBack = Math.sin(angle) < 0; // Top half
+                 
+                 if (drawReference === "back" && !isBack) continue;
+                 if (drawReference === "front" && isBack) continue;
+
+
+                 // Animation rotation - Extremely Slow (v3)
+                 const rotOffset = (time / (60000 + i * 20000)) * (i % 2 === 0 ? 1 : -1);
+                 const finalAngle = angle + rotOffset;
+                 
+                 const px = Math.cos(finalAngle) * r;
+                 const py = Math.sin(finalAngle) * r * perspectiveScale;
+                 
+                 // Noise texture
+                 const n = pixelHash(Math.floor(px), Math.floor(py), time * 0.0001);
+                 
+                 if (n > band.noise) {
+                     ctx.fillStyle = band.color;
+                     // Fade edges
+                     const distRel = (r - band.inner * radius) / ((band.outer - band.inner) * radius);
+                     const fade = Math.sin(distRel * Math.PI); // Smooth curve 0->1->0
+                     
+                     ctx.globalAlpha = band.baseAlpha * fade * (isBack ? 0.6 : 1.0); // Back is dimmer
+                     ctx.fillRect(px, py, ringGrid, ringGrid);
+                 }
+             }
+          }
+      });
+      
+      // Add floating sparkles to front rings only
+      if (drawReference === "front") {
+          const sparkleCount = 8;
+          ctx.globalAlpha = 1;
+          for(let k=0; k<sparkleCount; k++) {
+              if (pixelHash(k, time/1000, 42) > 0.8) {
+                   const angle = (Date.now() / 25000 + k) % (Math.PI * 2);
+                   // Only front semi-circleish
+                   if (Math.sin(angle) > 0.1) {
+                       const r = radius * 1.7;
+                       const sx = Math.cos(angle) * r;
+                       const sy = Math.sin(angle) * r * perspectiveScale;
+                       ctx.fillStyle = "#ffffff";
+                       ctx.fillRect(sx, sy, 2, 2);
+                   }
+              }
+          }
+      }
+
+      ctx.restore();
+  };
+
+  // 1. Draw Back Rings
+  drawRings("back");
+
+  // 2. Pixel Moon (The Planet)
   // วาดตารางพิกเซล
   for (let y = -radius; y <= radius; y += grid) {
     for (let x = -radius; x <= radius; x += grid) {
@@ -130,90 +225,9 @@ const drawPixelDreamMoon = (
     }
   }
 
-  // --- 3. Elegant Saturn Rings (Clean & Cyber) ---
-  
-  const ringGrid = grid; // 3px pixels
-  
-  // Refined Perspective
-  const tiltAngle = Math.PI / 8; 
-  const perspectiveScale = 0.3; // Thinner, more elegant ellipse
-  
-  // Clean Ring Bands (Spaced out, cool colors)
-  const ringBands = [
-    { inner: 1.3, outer: 1.45, color: "#a855f7", alpha: 0.8, density: 0.9, pattern: "solid" }, // Purple Main
-    { inner: 1.5, outer: 1.55, color: "#22d3ee", alpha: 0.9, density: 0.7, pattern: "dashed" }, // Cyan Accent
-    { inner: 1.6, outer: 1.65, color: "#f472b6", alpha: 0.7, density: 0.6, pattern: "dotted" }, // Pink Outer
-  ];
-  
-  ctx.save();
-  ctx.translate(moonX, moonY);
-  ctx.rotate(-Math.PI / 12); // Slight diagonal tilt
-  
-  // Draw Rings (Back Half - roughly)
-  // Note: Simple 2D draw, just drawing on top for now with transparency
-  
-  ringBands.forEach((band, bandIndex) => {
-    const bandInner = radius * band.inner;
-    const bandOuter = radius * band.outer;
-    
-    for (let r = bandInner; r <= bandOuter; r += ringGrid) { // Increased step for less density
-      const circumference = 2 * Math.PI * r;
-      const steps = Math.floor(circumference / ringGrid);
-      
-      for (let i = 0; i < steps; i++) {
-        const angle = (i / steps) * Math.PI * 2 + (time / 5000) * (bandIndex % 2 === 0 ? 1 : -1);
-        
-        // Calculate Position
-        const x = Math.cos(angle) * r;
-        const y = Math.sin(angle) * r * perspectiveScale;
-        
-        // Clean Patterns
-        let shouldDraw = false;
-        if (band.pattern === "solid") {
-           shouldDraw = i % 2 === 0; // Checkerboard for lightness
-        } else if (band.pattern === "dashed") {
-           shouldDraw = i % 8 < 4; // Long dashes
-        } else if (band.pattern === "dotted") {
-           shouldDraw = i % 6 === 0; // Dots
-        }
-        
-        if (!shouldDraw) continue;
+  // 3. Draw Front Rings
+  drawRings("front");
 
-        // Front/Back simulation (Front is brighter)
-        const isFront = Math.sin(angle) > 0;
-        
-        ctx.fillStyle = band.color;
-        ctx.globalAlpha = isFront ? band.alpha : band.alpha * 0.5; // Dim back side
-        
-        // Draw varied pixel sizes for texture
-        const size = isFront ? ringGrid : ringGrid - 1;
-        ctx.fillRect(x - size/2, y - size/2, size, size);
-      }
-    }
-  });
-
-  // Floating Sparkles (Minimalist)
-  const sparkleCount = 12; // Reduced count
-  ctx.globalAlpha = 1.0;
-  for (let i = 0; i < sparkleCount; i++) {
-     const angle = (time / 3000 + i) % (Math.PI * 2);
-     const r = radius * 1.4; // Orbit the main ring
-     
-     const x = Math.cos(angle) * r;
-     const y = Math.sin(angle) * r * perspectiveScale;
-     
-     // Only show sparkles occasionally
-     if (Math.random() > 0.1) {
-         ctx.fillStyle = "#ffffff";
-         ctx.fillRect(x, y, 2, 2);
-     }
-  }
-
-  ctx.restore();
-  ctx.globalAlpha = 1.0;
-  
-  // --- 4. ดาวตกแบบพิกเซล (ย้ายไป StarRenderer.ts แล้ว) ---
-  
   ctx.restore();
 };
 
