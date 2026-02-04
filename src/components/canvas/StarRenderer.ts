@@ -136,13 +136,16 @@ export function drawStars({
   const time = (timeMs ?? 0) * 0.001;
   const pulse = 0.6 + Math.sin(time * 0.8) * 0.4;
 
-  if (!isPixelTheme && constellations && constellations.length > 0) {
+  // Allow constellations in Pixel Theme too
+  if (constellations && constellations.length > 0) {
     ctx.save();
     const scale = Math.min(1.8, Math.max(0.8, constellationScale ?? 1));
     const intensityBoost = Math.min(
       1.8,
       Math.max(0.6, constellationIntensity ?? 1)
     );
+    
+    // ... existing vars ...
     const reveal = Math.min(1, Math.max(0.15, constellationReveal ?? 1));
     ctx.lineWidth = 0.9 * scale;
     ctx.lineCap = "round";
@@ -159,19 +162,38 @@ export function drawStars({
       const visiblePoints = points.slice(0, revealCount);
       if (visiblePoints.length < 2) return;
 
+
       // Base faint constellation line
       ctx.globalAlpha = Math.min(1, group.intensity * 0.35 * intensityBoost);
-      ctx.beginPath();
-      visiblePoints.forEach((star, index) => {
-        const starX = star.x + pX;
-        const starY = star.y + pY;
-        if (index === 0) {
-          ctx.moveTo(starX, starY);
-        } else {
-          ctx.lineTo(starX, starY);
-        }
-      });
-      ctx.stroke();
+      
+      if (isPixelTheme) {
+          // PIXEL MODE: Draw jagged lines
+          visiblePoints.forEach((star, index) => {
+            if (index === 0) return;
+            const prev = visiblePoints[index - 1];
+            
+            // Snap coords for better look
+            const x0 = snap(prev.x + pX);
+            const y0 = snap(prev.y + pY);
+            const x1 = snap(star.x + pX);
+            const y1 = snap(star.y + pY);
+            
+            drawPixelLine(ctx, x0, y0, x1, y1, "rgba(255,255,255,1)", 0.25);
+          });
+      } else {
+          // NORMAL MODE: Smooth lines
+          ctx.beginPath();
+          visiblePoints.forEach((star, index) => {
+            const starX = star.x + pX;
+            const starY = star.y + pY;
+            if (index === 0) {
+              ctx.moveTo(starX, starY);
+            } else {
+              ctx.lineTo(starX, starY);
+            }
+          });
+          ctx.stroke();
+      }
 
       // Animated traveling line along the constellation path
       const travelSpeed = 0.15; // cycles per second
@@ -376,6 +398,29 @@ export function drawStars({
           
           drawPixelShootingStar(ctx, currentX, currentY, 25, scale, color, activeTime * 1000); 
       }
+
+      // --- UFO EASTER EGG ---
+      // Spawns rarely (every ~45 seconds)
+      const ufoInterval = 45; 
+      const ufoCycle = Math.floor(timeSec / ufoInterval);
+      const ufoRandom = pixelHash(ufoCycle, 66, 77); // Deterministic spawn
+      
+      if (ufoRandom > 0.6) { // 40% chance per interval
+          const ufoTime = timeSec % ufoInterval;
+          const duration = 12; // Takes 12s to cross
+          
+          if (ufoTime < duration) {
+               const progress = ufoTime / duration;
+               const startY = height * (0.2 + ufoRandom * 0.4); // Random height 20-60%
+               const ufoX = width * 1.1 - (width * 1.4 * progress); // Move Right to Left
+               
+               // Warp/Wobble
+               const wobbleY = Math.sin(timeSec * 3) * 10;
+               const ufoY = startY + wobbleY;
+               
+               drawPixelUFO(ctx, ufoX, ufoY, timeSec);
+          }
+      }
   }
 }
 
@@ -413,4 +458,79 @@ const drawPixelShootingStar = (
      }
   }
   ctx.globalAlpha = 1.0;
+};
+
+// Helper to draw pixelated lines (Bresenham-style)
+const drawPixelLine = (
+    ctx: CanvasRenderingContext2D, 
+    x0: number, 
+    y0: number, 
+    x1: number, 
+    y1: number, 
+    color: string,
+    alpha: number
+) => {
+    const grid = 3;
+    let x = Math.floor(x0 / grid);
+    let y = Math.floor(y0 / grid);
+    const endX = Math.floor(x1 / grid);
+    const endY = Math.floor(y1 / grid);
+    
+    const dx = Math.abs(endX - x);
+    const dy = Math.abs(endY - y);
+    const sx = (x < endX) ? 1 : -1;
+    const sy = (y < endY) ? 1 : -1;
+    let err = dx - dy;
+    
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    
+    while(true) {
+        ctx.fillRect(x * grid, y * grid, grid, grid);
+        if ((x === endX) && (y === endY)) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+    }
+};
+
+const drawPixelUFO = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    time: number
+) => {
+    const grid = 3;
+    const w = 11 * grid; // 11px wide sprite
+    const h = 5 * grid;
+    
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Dome
+    ctx.fillStyle = "#a5f3fc"; // Cyan Glass
+    ctx.globalAlpha = 0.9;
+    ctx.fillRect(4*grid, 0, 3*grid, 2*grid);
+    
+    // Body
+    ctx.fillStyle = "#5d5d5d"; // Metal Gray
+    ctx.globalAlpha = 1.0;
+    ctx.fillRect(2*grid, 2*grid, 7*grid, 1*grid);
+    ctx.fillRect(1*grid, 3*grid, 9*grid, 1*grid);
+    ctx.fillRect(2*grid, 4*grid, 7*grid, 1*grid);
+    
+    // Lights (RGB Shift)
+    const lightFrame = Math.floor(time * 8) % 3;
+    const lights = ["#ff0000", "#00ff00", "#0000ff"];
+    
+    ctx.fillStyle = lights[lightFrame];
+    ctx.fillRect(2*grid, 3*grid, 1*grid, 1*grid);
+    
+    ctx.fillStyle = lights[(lightFrame + 1) % 3];
+    ctx.fillRect(5*grid, 3*grid, 1*grid, 1*grid);
+    
+    ctx.fillStyle = lights[(lightFrame + 2) % 3];
+    ctx.fillRect(8*grid, 3*grid, 1*grid, 1*grid);
+    
+    ctx.restore();
 };
