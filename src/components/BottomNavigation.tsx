@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Book, Library, BookOpen, BarChart3, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { usePixelRipple } from "@/hooks/usePixelRipple";
+
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -154,6 +156,7 @@ const mythicNavStyles: Record<string, React.CSSProperties> = {
 export function BottomNavigation() {
   const location = useLocation();
   const [mythicTheme, setMythicTheme] = useState<string | null>(null);
+  const { createRipple, RippleEffect } = usePixelRipple();
 
   useEffect(() => {
     // Check for mythic theme attribute
@@ -206,22 +209,96 @@ export function BottomNavigation() {
         />
       )}
       {mythicTheme === "pixelDreamMoon" && (
-        <div 
-           className="absolute left-0 right-0 h-[4px] z-50 pointer-events-none"
-           style={{
-             top: "-4px", 
-             // Beautiful Slow Flow: Deep Indigo -> Blue -> Cyan -> White Sparkle -> Cyan -> Blue -> Deep Indigo
-             background: "repeating-linear-gradient(90deg, #1e1b4b 0%, #1e1b4b 10%, #3b82f6 10%, #3b82f6 20%, #06b6d4 20%, #06b6d4 24%, #ffffff 24%, #ffffff 26%, #06b6d4 26%, #06b6d4 30%, #3b82f6 30%, #3b82f6 40%, #1e1b4b 40%, #1e1b4b 50%)",
-             backgroundSize: "200% 100%", 
-             animation: "pixelSlowFlow 8s linear infinite", // Slow & Majestic
-             boxShadow: "0 0 8px rgba(6, 182, 212, 0.6)" // Soft Cyan Glow
-           }}
-        />
+        <>
+          {/* Pixel Wave Border - Water Wave Style */}
+          <div className="absolute left-0 right-0 h-[12px] z-50 pointer-events-none overflow-hidden" style={{ top: "-12px" }}>
+            {/* Wide wave pattern for seamless scrolling */}
+            <div
+              className="absolute bottom-0 left-0"
+              style={{
+                width: "200%", // Double width for seamless loop
+                height: "100%",
+                display: "flex",
+                animation: "pixelWaveScroll 12s linear infinite",
+              }}
+            >
+              {/* Create 120 blocks (double the original 60) for seamless loop */}
+              {[...Array(120)].map((_, i) => {
+                // Create sine wave pattern that repeats every 60 blocks
+                const wavePhase = (i * 0.5) % 8;
+                const sineValue = Math.sin(wavePhase * Math.PI / 4);
+                const height = Math.floor((sineValue + 1) * 3.5) + 2; // 2-9 pixels height
+                
+                // Color based on height
+                let color;
+                if (height <= 3) color = "#1e3a8a";
+                else if (height <= 5) color = "#3b82f6";
+                else if (height <= 7) color = "#06b6d4";
+                else if (height <= 8) color = "#22d3ee";
+                else color = "#ffffff";
+                
+                return (
+                  <div
+                    key={i}
+                    className="absolute bottom-0"
+                    style={{
+                      left: `${i * 0.8333}%`, // 100% / 120 blocks
+                      width: "0.9%",
+                      height: `${height}px`,
+                      backgroundColor: color,
+                      imageRendering: "pixelated",
+                      boxShadow: height > 6 ? `0 0 6px ${color}` : "none",
+                    }}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* Animated glow overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.3) 25%, rgba(255,255,255,0.5) 50%, rgba(6,182,212,0.3) 75%, transparent 100%)",
+                animation: "pixelWaveGlow 2.5s linear infinite",
+              }}
+            />
+          </div>
+          
+          {/* Animated Pixel Stars on Border */}
+          <div className="absolute left-0 right-0 h-[8px] z-40 pointer-events-none" style={{ top: "-8px" }}>
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-[3px] h-[3px]"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  top: "2px",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 0 6px #06b6d4",
+                  animation: `pixelTwinkle ${1 + i * 0.3}s steps(2) infinite`,
+                  imageRendering: "pixelated",
+                }}
+              />
+            ))}
+          </div>
+        </>
       )}
       <style>{`
-        @keyframes pixelSlowFlow { 
-          0% { background-position: -200% 0; } 
-          100% { background-position: 0% 0; } 
+        @keyframes pixelTwinkle {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.3; transform: scale(0.7); }
+        }
+        @keyframes pixelWaveFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+        @keyframes pixelWaveGlow {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes pixelWaveScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
       {mythicTheme === "arcticMoon" && (
@@ -1539,11 +1616,12 @@ export function BottomNavigation() {
               key={path}
               to={path}
               className={cn(
-                "mythic-nav-item flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors min-w-[60px] relative",
+                "mythic-nav-item flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors min-w-[60px] relative overflow-hidden",
                 isActive
                   ? "text-primary bg-primary/10 rounded-lg mythic-nav-active"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg",
               )}
+              onMouseEnter={createRipple}
               style={
                 mythicTheme === "cosmicVoyageMoon" && isActive
                   ? {
@@ -1552,6 +1630,7 @@ export function BottomNavigation() {
                   : undefined
               }
             >
+              <RippleEffect />
               {mythicTheme === "cosmicVoyageMoon" && isActive && (
                 <div
                   className="absolute inset-0 rounded-lg -z-10"
@@ -1638,31 +1717,92 @@ export function BottomNavigation() {
                   }}
                 />
               )}
-              {/* Pixel Dream Moon - Stargazing Highlight */}
+              {/* Pixel Dream Moon - Retro Glow & Particles */}
               {mythicTheme === "pixelDreamMoon" && isActive && (
                 <>
-                  {/* The Box */}
+                  {/* Main Glow Box */}
                   <div
                     className="absolute inset-0 -z-10"
                     style={{
                       borderRadius: "8px",
-                      border: "2px dashed #818cf8", // Stardust dashed
-                      background: "rgba(30, 27, 75, 0.5)", // Deep Indigo tint
-                      boxShadow: "0 0 15px rgba(129, 140, 248, 0.5), inset 0 0 10px rgba(129, 140, 248, 0.2)",
-                      animation: "pulse 3s ease-in-out infinite"
+                      border: "3px solid #818cf8",
+                      background: "linear-gradient(135deg, rgba(30, 27, 75, 0.8), rgba(14, 116, 144, 0.6))",
+                      boxShadow: `
+                        0 0 20px rgba(129, 140, 248, 0.8),
+                        inset 0 0 15px rgba(129, 140, 248, 0.3),
+                        0 4px 0 rgba(49, 46, 129, 0.5)
+                      `,
+                      imageRendering: "pixelated",
+                      animation: "pixelPulse 2s steps(4) infinite",
                     }}
                   />
-                  {/* The Interactive Border Notch (Slides along the top) */}
+                  
+                  {/* Pixel Corners */}
+                  {[
+                    { top: "-2px", left: "-2px" },
+                    { top: "-2px", right: "-2px" },
+                    { bottom: "-2px", left: "-2px" },
+                    { bottom: "-2px", right: "-2px" },
+                  ].map((pos, idx) => (
+                    <div
+                      key={idx}
+                      className="absolute w-[4px] h-[4px] bg-[#06b6d4] -z-10"
+                      style={{
+                        ...pos,
+                        boxShadow: "0 0 6px #06b6d4",
+                        animation: `pixelCornerBlink ${1 + idx * 0.2}s steps(2) infinite`,
+                      }}
+                    />
+                  ))}
+                  
+                  {/* Floating Pixel Particles */}
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-[2px] h-[2px] -z-10"
+                      style={{
+                        left: `${20 + i * 10}%`,
+                        top: `${10 + (i % 3) * 30}%`,
+                        backgroundColor: i % 2 === 0 ? "#818cf8" : "#06b6d4",
+                        boxShadow: `0 0 4px ${i % 2 === 0 ? "#818cf8" : "#06b6d4"}`,
+                        animation: `pixelFloat ${2 + i * 0.3}s ease-in-out infinite`,
+                        animationDelay: `${i * 0.1}s`,
+                        imageRendering: "pixelated",
+                      }}
+                    />
+                  ))}
+                  
+                  {/* Top Indicator Triangle */}
                   <div 
-                    className="absolute -top-[14px] left-1/2 -translate-x-1/2 w-4 h-4 bg-[#818cf8]"
+                    className="absolute -top-[14px] left-1/2 -translate-x-1/2 w-0 h-0"
                     style={{
-                      clipPath: "polygon(50% 100%, 0% 0%, 100% 0%)", // Triangle pointing down
-                      boxShadow: "0 -2px 5px #818cf8",
-                      animation: "bounce 1s infinite"
+                      borderLeft: "6px solid transparent",
+                      borderRight: "6px solid transparent",
+                      borderTop: "8px solid #818cf8",
+                      filter: "drop-shadow(0 0 6px #818cf8)",
+                      animation: "pixelBounce 1s steps(4) infinite",
                     }}
                   />
                 </>
               )}
+              <style>{`
+                @keyframes pixelPulse {
+                  0%, 100% { transform: scale(1); opacity: 1; }
+                  50% { transform: scale(1.05); opacity: 0.9; }
+                }
+                @keyframes pixelCornerBlink {
+                  0%, 100% { opacity: 1; }
+                  50% { opacity: 0.3; }
+                }
+                @keyframes pixelFloat {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-4px); }
+                }
+                @keyframes pixelBounce {
+                  0%, 100% { transform: translate(-50%, 0); }
+                  50% { transform: translate(-50%, -3px); }
+                }
+              `}</style>
               <Icon
                 className={cn(
                   "w-5 h-5 transition-all duration-300",
@@ -1685,17 +1825,26 @@ export function BottomNavigation() {
                                     : mythicTheme === "nebulaDreamMoon"
                                       ? "drop-shadow(0 0 6px rgba(184, 136, 216, 0.8))"
                                       : mythicTheme === "pixelDreamMoon"
-                                        ? "drop-shadow(2px 2px 0 rgba(0,0,0,0.8))" 
+                                        ? "drop-shadow(3px 3px 0 rgba(0,0,0,1)) drop-shadow(0 0 8px rgba(129,140,248,0.9))" 
                                         : undefined,
                         animation:
                           mythicTheme === "lunarTransientPhenomena"
                             ? "iconFlicker 0.3s steps(3) infinite"
-                            : undefined,
-                        color: mythicTheme === "pixelDreamMoon" && isActive ? "#2a2a40" : undefined, // Inverse color for contrast
+                            : mythicTheme === "pixelDreamMoon"
+                              ? "pixelIconBob 0.6s steps(2) infinite"
+                              : undefined,
+                        color: mythicTheme === "pixelDreamMoon" && isActive ? "#ffffff" : undefined,
+                        imageRendering: mythicTheme === "pixelDreamMoon" ? "pixelated" : undefined,
                       }
                     : undefined
                 }
               />
+              <style>{`
+                @keyframes pixelIconBob {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-2px); }
+                }
+              `}</style>
               <span 
                 className={cn(
                   "text-[10px] font-medium transition-all duration-300",

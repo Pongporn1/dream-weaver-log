@@ -18,6 +18,7 @@ import { getSessionPhenomenon } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import { APP_VERSION } from "@/config/appVersion";
 import { AppUpdateProvider } from "@/hooks/useAppUpdate";
+import { PixelParticleEffects } from "@/components/PixelParticleEffects";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => {
               import.meta.env.MODE === "production" ? "/dream-weaver-log" : "/"
             }
           >
+            <PixelParticleEffects />
             <Routes>
               {/* Home page without Layout for full-screen hero */}
               <Route path="/" element={<Home />} />

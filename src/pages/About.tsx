@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Info, Download, RefreshCw, Loader2 } from "lucide-react";
 import { AnimatedSection } from "@/components/ui/animated";
 import { Button } from "@/components/ui/button";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { APP_VERSION } from "@/config/appVersion";
+import { PixelBorder } from "@/components/PixelBorder";
+import { PixelLoadingBar } from "@/components/PixelLoadingBar";
 
 export default function About() {
   const {
@@ -13,6 +16,8 @@ export default function About() {
     checkForUpdates,
     applyUpdate,
   } = useAppUpdate();
+
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   return (
     <div className="py-4 space-y-8 pb-20">

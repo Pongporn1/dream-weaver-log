@@ -36,6 +36,17 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
         {/* CRT Frame */}
         <div className="absolute inset-3 border-4 border-[#7dd3fc]/40 shadow-[0_0_20px_rgba(125,211,252,0.35),inset_0_0_20px_rgba(59,130,246,0.25)] pointer-events-none" />
         <div className="absolute inset-3 pointer-events-none" style={{ animation: "framePulse 3s ease-in-out infinite" }}>
+          <div
+            className="absolute -top-2 left-0 right-0 h-1"
+            style={{
+              background:
+                "repeating-linear-gradient(90deg, #22d3ee 0 10px, #f472b6 10px 16px, #93c5fd 16px 24px, transparent 24px 40px)",
+              backgroundSize: "64px 100%",
+              animation: "topBarScroll 2.6s steps(8) infinite",
+              boxShadow: "0 0 6px rgba(34,211,238,0.8)",
+              willChange: "background-position",
+            }}
+          />
           <div className="absolute -top-2 left-4 h-1 w-12 bg-[#22d3ee]/70 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
           <div className="absolute -top-2 right-4 h-1 w-8 bg-[#f472b6]/70 shadow-[0_0_8px_rgba(244,114,182,0.8)]" />
           <div className="absolute -bottom-2 left-6 h-1 w-10 bg-[#a7f3d0]/60 shadow-[0_0_8px_rgba(167,243,208,0.8)]" />
@@ -449,6 +460,10 @@ export function PixelTransitionOverlay({ show, onComplete }: PixelTransitionOver
             @keyframes framePulse {
                 0%, 100% { opacity: 0.6; }
                 50% { opacity: 1; }
+            }
+            @keyframes topBarScroll {
+                0% { background-position: 0 0; }
+                100% { background-position: -128px 0; }
             }
             @keyframes crtFlicker {
                 0%, 100% { opacity: 0.6; }
