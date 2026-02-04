@@ -13,31 +13,89 @@ const pixelHash = (x: number, y: number, seed: number) => {
 
 
 
+// Pixel Dream Moon color palette derived from phenomenon config
+interface PixelMoonPalette {
+  bg: string;
+  shadow: string;
+  mid: string;
+  base: string;
+  highlight: string;
+  rim: string;
+  crater: string;
+  glow: string;
+}
+
+const getPixelMoonPalette = (
+  moonTint: string,
+  uiAccent: string
+): PixelMoonPalette => ({
+  bg: "#120826",
+  shadow: "#241042",
+  mid: "#3b1e69",
+  base: moonTint, // Use phenomenon moonTint
+  highlight: adjustBrightness(moonTint, 1.25),
+  rim: uiAccent, // Use phenomenon uiAccent
+  crater: adjustBrightness(moonTint, 0.6),
+  glow: uiAccent,
+});
+
+// Draw star trail particles orbiting the moon
+const drawPixelStarTrail = (
+  ctx: CanvasRenderingContext2D,
+  moonX: number,
+  moonY: number,
+  radius: number,
+  time: number,
+  accentColor: string
+) => {
+  const particleCount = 16;
+  const orbitRadius = radius * 1.8;
+  
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const baseAngle = (i / particleCount) * Math.PI * 2;
+    // Extremely slow orbit - 2 minutes per revolution
+    const orbitSpeed = time / 120000;
+    const angle = baseAngle + orbitSpeed + Math.sin(time / 8000 + i) * 0.15;
+    
+    // Varying orbit distances
+    const orbitVariation = 0.9 + Math.sin(i * 1.5) * 0.2;
+    const px = moonX + Math.cos(angle) * orbitRadius * orbitVariation;
+    const py = moonY + Math.sin(angle) * orbitRadius * orbitVariation * 0.35; // Flatten for perspective
+    
+    // Twinkling effect
+    const twinkle = Math.sin(time / 800 + i * 2.3) * 0.5 + 0.5;
+    const size = 2 + twinkle * 2;
+    
+    // Draw pixel star
+    ctx.globalAlpha = 0.4 + twinkle * 0.6;
+    ctx.fillStyle = i % 3 === 0 ? "#ffffff" : accentColor;
+    ctx.fillRect(Math.floor(px), Math.floor(py), size, size);
+    
+    // Add small glow
+    if (twinkle > 0.7) {
+      ctx.globalAlpha = 0.2;
+      ctx.fillRect(Math.floor(px) - 1, Math.floor(py) - 1, size + 2, size + 2);
+    }
+  }
+  
+  ctx.restore();
+};
+
 const drawPixelDreamMoon = (
   ctx: CanvasRenderingContext2D,
   moonX: number,
   moonY: number,
   radius: number,
   phase: number,
+  moonTint: string,
+  uiAccent: string
 ) => {
   const grid = 3;
   const radiusSq = radius * radius;
-  
-  const colors = {
-    bg: "#120826",       
-    shadow: "#241042",   
-    mid: "#3b1e69",      
-    base: "#5fffd2",     
-    highlight: "#9dffec", 
-    rim: "#ff8fd6",      
-    crater: "#369080",   
-    cloud1: "#5d3599",   
-    cloud2: "#ff70c0",   
-    starTrail: "#5fffd2" 
-  };
-
-  const sunAngle = Math.PI * (1 - phase * 2); 
-  const lightDir = { x: Math.cos(sunAngle), y: Math.sin(sunAngle) };
+  const colors = getPixelMoonPalette(moonTint, uiAccent);
   const time = Date.now();
 
   ctx.save();
@@ -45,143 +103,114 @@ const drawPixelDreamMoon = (
 
   // --- Helper: Draw Rings ---
   const drawRings = (drawReference: "back" | "front") => {
-      const ringGrid = 2; // Finer grain for rings
-      const tiltAngle = Math.PI / 8;
-      const perspectiveScale = 0.3; 
-      
-      // Ring Definitions - Ethereal & Cosmic
-      const ringBands = [
-        { inner: 1.4, outer: 1.6, color: "#a855f7", baseAlpha: 0.6, noise: 0.5 }, // Deep Inner Purple
-        { inner: 1.65, outer: 1.75, color: "#22d3ee", baseAlpha: 0.8, noise: 0.3 }, // Bright Cyan Core
-        { inner: 1.8, outer: 2.1, color: "#f472b6", baseAlpha: 0.4, noise: 0.7 }, // Soft Pink Outer Haze
-      ];
+    const ringGrid = 2;
+    const perspectiveScale = 0.3;
 
-      ctx.save();
-      ctx.translate(moonX, moonY);
-      ctx.rotate(-Math.PI / 12); // Tilt
+    // Ring Definitions - Use theme colors
+    const ringBands = [
+      { inner: 1.4, outer: 1.6, color: colors.shadow, baseAlpha: 0.5, noise: 0.5 },
+      { inner: 1.65, outer: 1.75, color: colors.base, baseAlpha: 0.7, noise: 0.3 },
+      { inner: 1.8, outer: 2.1, color: colors.rim, baseAlpha: 0.35, noise: 0.7 },
+    ];
 
-      ringBands.forEach((band, i) => {
-          const step = ringGrid;
-          
-          // We iterate over the area of the ring
-          const maxR = band.outer * radius;
-          
-          // Optimization: Polar coordinate loop is better for rings than XY scan
-          // But for pixel art look, XY scan ensures grid alignment? 
-          // Actually, drawing small rects along the arc is easier to control depth.
-          
-          for (let r = band.inner * radius; r <= band.outer * radius; r += step) {
-             const circumference = 2 * Math.PI * r;
-             const segments = Math.floor(circumference / step);
-             
-             for (let s = 0; s < segments; s++) {
-                 const angle = (s / segments) * Math.PI * 2;
-                 
-                 // Depth sort: sin(angle) > 0 is "front" (y positive in un-tilted 3D space usually, 
-                 // but here we flatten. Let's say top half is back, bottom half is front?
-                 // Standard parametric circle: x = cos, y = sin. 
-                 // If we rotate X axis to tilt, y becomes compressed.
-                 // y_screen = y_world * cos(tilt) - z_world * sin(tilt) ... complicated.
-                 // Simple approximation: y screen coordinate. 
-                 // Let's stick to the "angle" logic. 
-                 // Usually angle 0 is right, PI/2 is down, PI is left, 3PI/2 is up.
-                 // "Back" part of ring is usually the top part on screen (PI to 2PI).
-                 // "Front" part is bottom (0 to PI).
-                 
-                 // Let's refine:
-                 const isBack = Math.sin(angle) < 0; // Top half
-                 
-                 if (drawReference === "back" && !isBack) continue;
-                 if (drawReference === "front" && isBack) continue;
+    ctx.save();
+    ctx.translate(moonX, moonY);
+    ctx.rotate(-Math.PI / 12);
 
+    ringBands.forEach((band, i) => {
+      const step = ringGrid;
 
-                 // Animation rotation - Extremely Slow (v3)
-                 const rotOffset = (time / (60000 + i * 20000)) * (i % 2 === 0 ? 1 : -1);
-                 const finalAngle = angle + rotOffset;
-                 
-                 const px = Math.cos(finalAngle) * r;
-                 const py = Math.sin(finalAngle) * r * perspectiveScale;
-                 
-                 // Noise texture
-                 const n = pixelHash(Math.floor(px), Math.floor(py), time * 0.0001);
-                 
-                 if (n > band.noise) {
-                     ctx.fillStyle = band.color;
-                     // Fade edges
-                     const distRel = (r - band.inner * radius) / ((band.outer - band.inner) * radius);
-                     const fade = Math.sin(distRel * Math.PI); // Smooth curve 0->1->0
-                     
-                     ctx.globalAlpha = band.baseAlpha * fade * (isBack ? 0.6 : 1.0); // Back is dimmer
-                     ctx.fillRect(px, py, ringGrid, ringGrid);
-                 }
-             }
+      for (let r = band.inner * radius; r <= band.outer * radius; r += step) {
+        const circumference = 2 * Math.PI * r;
+        const segments = Math.floor(circumference / step);
+
+        for (let s = 0; s < segments; s++) {
+          const angle = (s / segments) * Math.PI * 2;
+          const isBack = Math.sin(angle) < 0;
+
+          if (drawReference === "back" && !isBack) continue;
+          if (drawReference === "front" && isBack) continue;
+
+          // MUCH slower rotation - 3-5 minutes per revolution
+          const rotOffset = (time / (180000 + i * 60000)) * (i % 2 === 0 ? 1 : -1);
+          const finalAngle = angle + rotOffset;
+
+          const px = Math.cos(finalAngle) * r;
+          const py = Math.sin(finalAngle) * r * perspectiveScale;
+
+          const n = pixelHash(Math.floor(px), Math.floor(py), time * 0.00001);
+
+          if (n > band.noise) {
+            ctx.fillStyle = band.color;
+            const distRel = (r - band.inner * radius) / ((band.outer - band.inner) * radius);
+            const fade = Math.sin(distRel * Math.PI);
+
+            ctx.globalAlpha = band.baseAlpha * fade * (isBack ? 0.5 : 1.0);
+            ctx.fillRect(px, py, ringGrid, ringGrid);
           }
-      });
-      
-      // Add floating sparkles to front rings only
-      if (drawReference === "front") {
-          const sparkleCount = 8;
-          ctx.globalAlpha = 1;
-          for(let k=0; k<sparkleCount; k++) {
-              if (pixelHash(k, time/1000, 42) > 0.8) {
-                   const angle = (Date.now() / 25000 + k) % (Math.PI * 2);
-                   // Only front semi-circleish
-                   if (Math.sin(angle) > 0.1) {
-                       const r = radius * 1.7;
-                       const sx = Math.cos(angle) * r;
-                       const sy = Math.sin(angle) * r * perspectiveScale;
-                       ctx.fillStyle = "#ffffff";
-                       ctx.fillRect(sx, sy, 2, 2);
-                   }
-              }
-          }
+        }
       }
+    });
 
-      ctx.restore();
+    // Sparkles on front rings
+    if (drawReference === "front") {
+      const sparkleCount = 12;
+      for (let k = 0; k < sparkleCount; k++) {
+        if (pixelHash(k, time / 2000, 42) > 0.75) {
+          const angle = (time / 45000 + k * 0.5) % (Math.PI * 2);
+          if (Math.sin(angle) > 0.1) {
+            const r = radius * (1.5 + Math.sin(k) * 0.3);
+            const sx = Math.cos(angle) * r;
+            const sy = Math.sin(angle) * r * perspectiveScale;
+            
+            ctx.globalAlpha = 0.6 + Math.sin(time / 500 + k) * 0.4;
+            ctx.fillStyle = k % 2 === 0 ? "#ffffff" : colors.rim;
+            ctx.fillRect(sx, sy, 2, 2);
+          }
+        }
+      }
+    }
+
+    ctx.restore();
   };
+
+  // Draw star trail behind everything
+  drawPixelStarTrail(ctx, moonX, moonY, radius, time, colors.rim);
 
   // 1. Draw Back Rings
   drawRings("back");
 
   // 2. Pixel Moon (The Planet)
-  // วาดตารางพิกเซล
   for (let y = -radius; y <= radius; y += grid) {
     for (let x = -radius; x <= radius; x += grid) {
       const cx = x + grid * 0.5;
       const cy = y + grid * 0.5;
       const distSq = cx * cx + cy * cy;
-      
-      // ตรวจสอบวงกลมอย่างเคร่งครัด
+
       if (distSq > radiusSq) continue;
 
-      // คำนวณแสง (Lighting Dot Product)
       const nx = cx / radius;
       const ny = cy / radius;
       const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
       const lightX = -Math.cos(phase * Math.PI * 2);
-      const dot = nx * lightX + nz * Math.sqrt(Math.max(0, 1 - lightX * lightX)); 
+      const dot = nx * lightX + nz * Math.sqrt(Math.max(0, 1 - lightX * lightX));
 
-      // หลุมดวงจันทร์แบบสุ่ม (Procedural Craters)
-      const noiseVal = pixelHash(Math.round(cx/grid), Math.round(cy/grid), 123);
+      const noiseVal = pixelHash(Math.round(cx / grid), Math.round(cy / grid), 123);
       const isCrater = noiseVal > 0.94;
       const isBigCrater = noiseVal > 0.985;
-      
-      // ความสว่างพื้นฐาน
-      let brightness = (dot + 1) / 2; 
-      
-      // แพทเทิร์นจุด (Dithering)
-      const isEven = (Math.round((cx + radius)/grid) + Math.round((cy + radius)/grid)) % 2 === 0;
-      
+
+      let brightness = (dot + 1) / 2;
+      const isEven = (Math.round((cx + radius) / grid) + Math.round((cy + radius) / grid)) % 2 === 0;
+
       let finalColor = colors.bg;
 
-      // เลือกสีตามความสว่าง
       if (brightness > 0.9) {
         finalColor = colors.highlight;
       } else if (brightness > 0.7) {
-        finalColor = (brightness < 0.8 && isEven) ? colors.base : colors.highlight;
+        finalColor = brightness < 0.8 && isEven ? colors.base : colors.highlight;
       } else if (brightness > 0.5) {
-         finalColor = colors.base;
-         if (brightness < 0.6 && isEven) finalColor = colors.mid;
+        finalColor = colors.base;
+        if (brightness < 0.6 && isEven) finalColor = colors.mid;
       } else if (brightness > 0.3) {
         finalColor = colors.mid;
         if (brightness < 0.4 && isEven) finalColor = colors.shadow;
@@ -189,35 +218,32 @@ const drawPixelDreamMoon = (
         finalColor = colors.shadow;
         if (brightness < 0.2 && isEven) finalColor = colors.bg;
       } else {
-        finalColor = colors.bg; 
+        finalColor = colors.bg;
       }
 
-      // หลุมดวงจันทร์ (เห็นเฉพาะในส่วนที่สว่าง)
       if (brightness > 0.3) {
-         if (isBigCrater) {
-             finalColor = colors.crater;
-             if (nx < 0 && pixelHash(x, y, 1) > 0.5) finalColor = colors.highlight; 
-         } else if (isCrater && brightness > 0.6) {
-             finalColor = colors.crater;
-         }
+        if (isBigCrater) {
+          finalColor = colors.crater;
+          if (nx < 0 && pixelHash(x, y, 1) > 0.5) finalColor = colors.highlight;
+        } else if (isCrater && brightness > 0.6) {
+          finalColor = colors.crater;
+        }
       }
 
-      // แสงขอบ (Rim Light สีชมพู)
       const edgeDist = Math.sqrt(distSq) / radius;
       if (edgeDist > 0.85) {
-         const rimDot = nx * -lightX;
-         if (rimDot > 0.2 || edgeDist > 0.92) {
-             if (edgeDist > 0.95 || (edgeDist > 0.88 && isEven)) {
-                 finalColor = colors.rim;
-             }
-         }
+        const rimDot = nx * -lightX;
+        if (rimDot > 0.2 || edgeDist > 0.92) {
+          if (edgeDist > 0.95 || (edgeDist > 0.88 && isEven)) {
+            finalColor = colors.rim;
+          }
+        }
       }
 
-      // ฝั่งเงา (Shadow Side)
       if (dot < -0.1) {
-         finalColor = colors.shadow;
-         if (dot < -0.3) finalColor = colors.bg;
-         if (dot > -0.3 && isEven) finalColor = colors.mid;
+        finalColor = colors.shadow;
+        if (dot < -0.3) finalColor = colors.bg;
+        if (dot > -0.3 && isEven) finalColor = colors.mid;
       }
 
       ctx.fillStyle = finalColor;
@@ -227,6 +253,19 @@ const drawPixelDreamMoon = (
 
   // 3. Draw Front Rings
   drawRings("front");
+
+  // 4. Add subtle outer glow
+  ctx.globalAlpha = 0.15;
+  const glowGradient = ctx.createRadialGradient(
+    moonX, moonY, radius * 0.8,
+    moonX, moonY, radius * 2.5
+  );
+  glowGradient.addColorStop(0, colors.glow);
+  glowGradient.addColorStop(1, "transparent");
+  ctx.fillStyle = glowGradient;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, radius * 2.5, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.restore();
 };
@@ -240,7 +279,7 @@ const drawPixelMoon = (
   phase: number,
 ) => {
   if (phenomenon.id === "pixelDreamMoon") {
-    drawPixelDreamMoon(ctx, moonX, moonY, radius, phase);
+    drawPixelDreamMoon(ctx, moonX, moonY, radius, phase, phenomenon.moonTint, phenomenon.uiAccent);
     return;
   }
 
