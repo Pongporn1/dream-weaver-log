@@ -43,6 +43,7 @@ export const applyMoonTheme = (phenomenon: MoonPhenomenon): void => {
           card: string;
           primary: string;
           bgColor: string;
+          glowColor?: string;
         }
       > = {
         superBloodMoon: {
@@ -142,6 +143,7 @@ export const applyMoonTheme = (phenomenon: MoonPhenomenon): void => {
           card: "270 40% 10%",
           primary: "320 90% 70%",
           bgColor: "#120826",
+          glowColor: "#ff8fd6",
         },
       };
 
