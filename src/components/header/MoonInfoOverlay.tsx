@@ -115,12 +115,33 @@ export function MoonInfoOverlay({ type, moonPhase, phenomenon, onClose }: MoonIn
             </div>
 
             {/* Rarity Badge */}
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${colors.bg} border ${colors.border}`}>
-              <Star className={`w-4 h-4 ${colors.text}`} />
-              <span className={`text-sm font-medium ${colors.text}`}>
-                {rarityLabels[phenomenon?.rarity || "normal"]}
-              </span>
-            </div>
+            {phenomenon?.id === "pixelDreamMoon" ? (
+              <div 
+                className="inline-flex items-center gap-2 px-3 py-1.5 border-4 border-double"
+                style={{
+                  backgroundColor: "#2a2a40",
+                  borderColor: phenomenon.uiAccent,
+                  boxShadow: `4px 4px 0px rgba(0,0,0,0.5)`,
+                  fontFamily: "'Press Start 2P', cursive",
+                  imageRendering: "pixelated"
+                }}
+              >
+                 <Star className="w-3 h-3" style={{ color: phenomenon.uiAccent }} />
+                 <span 
+                   className="text-xs tracking-widest uppercase"
+                   style={{ color: phenomenon.uiAccent }}
+                 >
+                    {rarityLabels[phenomenon.rarity]}
+                 </span>
+              </div>
+            ) : (
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${colors.bg} border ${colors.border}`}>
+                <Star className={`w-4 h-4 ${colors.text}`} />
+                <span className={`text-sm font-medium ${colors.text}`}>
+                  {rarityLabels[phenomenon?.rarity || "normal"]}
+                </span>
+              </div>
+            )}
 
             {/* Subtitle */}
             <p className="text-lg italic text-white/80 border-l-2 pl-3" style={{ borderColor: phenomenon?.uiAccent }}>

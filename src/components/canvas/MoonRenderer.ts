@@ -9,6 +9,10 @@ const pixelHash = (x: number, y: number, seed: number) => {
   return value - Math.floor(value);
 };
 
+
+
+
+
 const drawPixelDreamMoon = (
   ctx: CanvasRenderingContext2D,
   moonX: number,
@@ -18,71 +22,198 @@ const drawPixelDreamMoon = (
 ) => {
   const grid = 3;
   const radiusSq = radius * radius;
-  const baseColor = "#0b1222";
-  const innerColor = "#101b30";
-  const rimColor = "#5fffd2";
-  const glowColor = "#86ffe6";
-  const crescentEdge = 0.55;
-  const pulse = 1 + Math.sin(phase * 1.4) * 0.05;
+  
+  const colors = {
+    bg: "#120826",       
+    shadow: "#241042",   
+    mid: "#3b1e69",      
+    base: "#5fffd2",     
+    highlight: "#9dffec", 
+    rim: "#ff8fd6",      
+    crater: "#369080",   
+    cloud1: "#5d3599",   
+    cloud2: "#ff70c0",   
+    starTrail: "#5fffd2" 
+  };
+
+  const sunAngle = Math.PI * (1 - phase * 2); 
+  const lightDir = { x: Math.cos(sunAngle), y: Math.sin(sunAngle) };
+  const time = Date.now();
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
+  // --- 1. Atmosphere (Reverted) ---
+  // Clouds are handled in SkyRenderer.ts
+  
+  // --- 2. Pixel Moon (The Planet) ---
+
+  // --- 2. ดวงจันทร์พิกเซล (ตัวดาว) ---
+  // วาดตารางพิกเซล
   for (let y = -radius; y <= radius; y += grid) {
     for (let x = -radius; x <= radius; x += grid) {
       const cx = x + grid * 0.5;
       const cy = y + grid * 0.5;
       const distSq = cx * cx + cy * cy;
+      
+      // ตรวจสอบวงกลมอย่างเคร่งครัด
       if (distSq > radiusSq) continue;
 
-      const dist = Math.sqrt(distSq);
-      const edge = dist / radius;
-      const lightFactor = clamp((cx / radius - crescentEdge) / (1 - crescentEdge), 0, 1);
-      const crescent = Math.pow(lightFactor, 1.8);
-      const rimBoost = edge > 0.82 ? (edge - 0.82) / 0.18 : 0;
-      const rimStrength = Math.max(crescent, rimBoost * 0.7);
+      // คำนวณแสง (Lighting Dot Product)
+      const nx = cx / radius;
+      const ny = cy / radius;
+      const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+      const lightX = -Math.cos(phase * Math.PI * 2);
+      const dot = nx * lightX + nz * Math.sqrt(Math.max(0, 1 - lightX * lightX)); 
 
-      const shadowFactor = clamp(0.6 + (cx / radius) * 0.25, 0.35, 1);
-      const innerMix = clamp(1 - edge, 0, 1);
+      // หลุมดวงจันทร์แบบสุ่ม (Procedural Craters)
+      const noiseVal = pixelHash(Math.round(cx/grid), Math.round(cy/grid), 123);
+      const isCrater = noiseVal > 0.94;
+      const isBigCrater = noiseVal > 0.985;
+      
+      // ความสว่างพื้นฐาน
+      let brightness = (dot + 1) / 2; 
+      
+      // แพทเทิร์นจุด (Dithering)
+      const isEven = (Math.round((cx + radius)/grid) + Math.round((cy + radius)/grid)) % 2 === 0;
+      
+      let finalColor = colors.bg;
 
-      let colorBase = baseColor;
-      let brightness = 0.75 * shadowFactor + innerMix * 0.25;
-
-      if (rimStrength > 0.12) {
-        colorBase = rimColor;
-        brightness = 0.75 + rimStrength * 0.7;
+      // เลือกสีตามความสว่าง
+      if (brightness > 0.9) {
+        finalColor = colors.highlight;
+      } else if (brightness > 0.7) {
+        finalColor = (brightness < 0.8 && isEven) ? colors.base : colors.highlight;
+      } else if (brightness > 0.5) {
+         finalColor = colors.base;
+         if (brightness < 0.6 && isEven) finalColor = colors.mid;
+      } else if (brightness > 0.3) {
+        finalColor = colors.mid;
+        if (brightness < 0.4 && isEven) finalColor = colors.shadow;
+      } else if (brightness > 0.1) {
+        finalColor = colors.shadow;
+        if (brightness < 0.2 && isEven) finalColor = colors.bg;
       } else {
-        colorBase = innerColor;
-        brightness = 0.7 + innerMix * 0.35;
+        finalColor = colors.bg; 
       }
 
-      const speckle = pixelHash(Math.round(cx / grid), Math.round(cy / grid), 42);
-      if (speckle > 0.982 && edge < 0.82 && cx < radius * 0.35) {
-        colorBase = "#9ad0ff";
-        brightness = 1.2;
-      } else if (speckle > 0.988 && edge < 0.85 && cx < radius * 0.4) {
-        colorBase = "#ffb0e4";
-        brightness = 1.15;
+      // หลุมดวงจันทร์ (เห็นเฉพาะในส่วนที่สว่าง)
+      if (brightness > 0.3) {
+         if (isBigCrater) {
+             finalColor = colors.crater;
+             if (nx < 0 && pixelHash(x, y, 1) > 0.5) finalColor = colors.highlight; 
+         } else if (isCrater && brightness > 0.6) {
+             finalColor = colors.crater;
+         }
       }
 
-      ctx.fillStyle = adjustBrightness(colorBase, brightness * pulse);
+      // แสงขอบ (Rim Light สีชมพู)
+      const edgeDist = Math.sqrt(distSq) / radius;
+      if (edgeDist > 0.85) {
+         const rimDot = nx * -lightX;
+         if (rimDot > 0.2 || edgeDist > 0.92) {
+             if (edgeDist > 0.95 || (edgeDist > 0.88 && isEven)) {
+                 finalColor = colors.rim;
+             }
+         }
+      }
+
+      // ฝั่งเงา (Shadow Side)
+      if (dot < -0.1) {
+         finalColor = colors.shadow;
+         if (dot < -0.3) finalColor = colors.bg;
+         if (dot > -0.3 && isEven) finalColor = colors.mid;
+      }
+
+      ctx.fillStyle = finalColor;
       ctx.fillRect(moonX + x, moonY + y, grid, grid);
     }
   }
 
-  // Pixel halo
-  ctx.globalAlpha = 0.45;
-  ctx.fillStyle = adjustBrightness(glowColor, 1.05);
-  for (let y = -radius - grid * 2; y <= radius + grid * 2; y += grid * 2) {
-    for (let x = -radius - grid * 2; x <= radius + grid * 2; x += grid * 2) {
-      const cx = x + grid;
-      const cy = y + grid;
-      const dist = Math.sqrt(cx * cx + cy * cy);
-      if (dist > radius * 1.28 || dist < radius * 1.05) continue;
-      ctx.fillRect(moonX + x, moonY + y, grid * 1.5, grid * 1.5);
+  // --- 3. Elegant Saturn Rings (Clean & Cyber) ---
+  
+  const ringGrid = grid; // 3px pixels
+  
+  // Refined Perspective
+  const tiltAngle = Math.PI / 8; 
+  const perspectiveScale = 0.3; // Thinner, more elegant ellipse
+  
+  // Clean Ring Bands (Spaced out, cool colors)
+  const ringBands = [
+    { inner: 1.3, outer: 1.45, color: "#a855f7", alpha: 0.8, density: 0.9, pattern: "solid" }, // Purple Main
+    { inner: 1.5, outer: 1.55, color: "#22d3ee", alpha: 0.9, density: 0.7, pattern: "dashed" }, // Cyan Accent
+    { inner: 1.6, outer: 1.65, color: "#f472b6", alpha: 0.7, density: 0.6, pattern: "dotted" }, // Pink Outer
+  ];
+  
+  ctx.save();
+  ctx.translate(moonX, moonY);
+  ctx.rotate(-Math.PI / 12); // Slight diagonal tilt
+  
+  // Draw Rings (Back Half - roughly)
+  // Note: Simple 2D draw, just drawing on top for now with transparency
+  
+  ringBands.forEach((band, bandIndex) => {
+    const bandInner = radius * band.inner;
+    const bandOuter = radius * band.outer;
+    
+    for (let r = bandInner; r <= bandOuter; r += ringGrid) { // Increased step for less density
+      const circumference = 2 * Math.PI * r;
+      const steps = Math.floor(circumference / ringGrid);
+      
+      for (let i = 0; i < steps; i++) {
+        const angle = (i / steps) * Math.PI * 2 + (time / 5000) * (bandIndex % 2 === 0 ? 1 : -1);
+        
+        // Calculate Position
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r * perspectiveScale;
+        
+        // Clean Patterns
+        let shouldDraw = false;
+        if (band.pattern === "solid") {
+           shouldDraw = i % 2 === 0; // Checkerboard for lightness
+        } else if (band.pattern === "dashed") {
+           shouldDraw = i % 8 < 4; // Long dashes
+        } else if (band.pattern === "dotted") {
+           shouldDraw = i % 6 === 0; // Dots
+        }
+        
+        if (!shouldDraw) continue;
+
+        // Front/Back simulation (Front is brighter)
+        const isFront = Math.sin(angle) > 0;
+        
+        ctx.fillStyle = band.color;
+        ctx.globalAlpha = isFront ? band.alpha : band.alpha * 0.5; // Dim back side
+        
+        // Draw varied pixel sizes for texture
+        const size = isFront ? ringGrid : ringGrid - 1;
+        ctx.fillRect(x - size/2, y - size/2, size, size);
+      }
     }
+  });
+
+  // Floating Sparkles (Minimalist)
+  const sparkleCount = 12; // Reduced count
+  ctx.globalAlpha = 1.0;
+  for (let i = 0; i < sparkleCount; i++) {
+     const angle = (time / 3000 + i) % (Math.PI * 2);
+     const r = radius * 1.4; // Orbit the main ring
+     
+     const x = Math.cos(angle) * r;
+     const y = Math.sin(angle) * r * perspectiveScale;
+     
+     // Only show sparkles occasionally
+     if (Math.random() > 0.1) {
+         ctx.fillStyle = "#ffffff";
+         ctx.fillRect(x, y, 2, 2);
+     }
   }
 
+  ctx.restore();
+  ctx.globalAlpha = 1.0;
+  
+  // --- 4. ดาวตกแบบพิกเซล (ย้ายไป StarRenderer.ts แล้ว) ---
+  
   ctx.restore();
 };
 

@@ -311,4 +311,106 @@ export function drawStars({
       ctx.fill();
     }
   });
+  
+  // Draw Shooting Stars for Pixel Theme (Meteor Shower Effect)
+  if (isPixelTheme) {
+      const timeSec = (timeMs ?? Date.now()) / 1000;
+      const width = ctx.canvas.width / (window.devicePixelRatio || 1); 
+      const height = ctx.canvas.height / (window.devicePixelRatio || 1);
+      
+      // Meteor Shower Settings
+      const cycleDuration = 3.0; // More frequent (was 4.0)
+      const activeWindow = 3; // Check more windows for density
+      const currentCycle = Math.floor(timeSec / cycleDuration);
+      
+      for (let i = 0; i < activeWindow; i++) {
+          const cycle = currentCycle - i;
+          // Seed based on cycle ID
+          const seed = cycle * 999.99;
+          const r1 = pixelHash(cycle, 1, 111); // Chance
+          const r2 = pixelHash(cycle, 2, 222); // X Position
+          const r3 = pixelHash(cycle, 3, 333); // Speed/Properties
+          
+          // 60% chance to spawn a star this cycle (was 40%)
+          if (r1 > 0.6) continue;
+          
+          // Determine properties
+          const speed = 200 + r3 * 300; // Faster: 200-500 px/s
+          const angle = Math.PI / 4 + (r1 - 0.5) * 0.4; // Varied diagonal 
+          
+          // Start Position: Anywhere along top or left edge
+          let startX, startY;
+          if (r2 > 0.4) {
+              // Top edge
+              startX = width * (r2 - 0.2) * 1.5; // Spread wider
+              startY = -50;
+          } else {
+              // Left edge
+              startX = -50;
+              startY = height * r2 * 2;
+          }
+          
+          // Calculate active time
+          const cycleStartTime = cycle * cycleDuration;
+          const timeSinceStart = timeSec - cycleStartTime;
+          
+          // Add a random delay within the cycle
+          const delay = r1 * 2.5; 
+          const activeTime = timeSinceStart - delay;
+          
+          const maxDuration = 2.5; // Short life
+          if (activeTime < 0 || activeTime > maxDuration) continue; 
+          
+          // Draw Position
+          const dist = speed * activeTime;
+          const currentX = startX + Math.cos(angle) * dist;
+          const currentY = startY + Math.sin(angle) * dist;
+          
+          // Determine Size/Tail based on 'r3'
+          const scale = 0.8 + r3 * 0.6; // 0.8x to 1.4x scale
+          
+          // Colors
+          const palette = ["#5fffd2", "#ff8fd6", "#ffffff", "#fcd34d"];
+          const colorIdx = Math.floor(r2 * palette.length);
+          const color = palette[colorIdx];
+          
+          drawPixelShootingStar(ctx, currentX, currentY, 25, scale, color, activeTime * 1000); 
+      }
+  }
 }
+
+const pixelHash = (x: number, y: number, seed: number) => {
+  const value = Math.sin(x * 12.9898 + y * 78.233 + seed * 0.17) * 43758.5453;
+  return value - Math.floor(value);
+};
+
+const drawPixelShootingStar = (
+  ctx: CanvasRenderingContext2D,
+  currentX: number,
+  currentY: number,
+  length: number,
+  speed: number,
+  color: string,
+  localTimeMs: number
+) => {
+  const grid = 3;
+  
+  // Draw Head
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(currentX, currentY, grid * 2, grid * 2);
+  
+  // Draw Dithered Trail
+  const trailSegs = 20; 
+  for (let i = 0; i < trailSegs; i++) {
+     const tx = currentX - (i * grid * 1.5);
+     const ty = currentY - (i * grid * 1.2);
+     
+     // Flickering trail
+     if (i % 2 === 0 || pixelHash(i, Math.floor(localTimeMs/50), 10) > 0.3) {
+         ctx.fillStyle = color; 
+         ctx.globalAlpha = 1 - (i / trailSegs);
+         ctx.fillRect(tx, ty, grid, grid);
+     }
+  }
+  ctx.globalAlpha = 1.0;
+};

@@ -16,47 +16,58 @@ const pixelNoise = (x: number, y: number, seed: number) => {
 };
 
 const drawPixelCloud = (ctx: CanvasRenderingContext2D, cloud: Cloud) => {
-  const grid = 6;
-  const columns = Math.max(6, Math.round(cloud.width / grid));
-  const rows = Math.max(4, Math.round(cloud.height / grid));
-  const startX = cloud.x - (columns * grid) / 2;
-  const startY = cloud.y - (rows * grid) / 2;
-  const rx = columns / 2;
-  const ry = rows / 2;
+  const grid = 4;
+  const w = cloud.width / grid;
+  const h = cloud.height / grid;
+  const startX = cloud.x;
+  const startY = cloud.y;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = cloud.opacity;
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < columns; col += 1) {
-      const nx = (col - rx + 0.5) / rx;
-      const ny = (row - ry + 0.5) / ry;
-      const wobble = (pixelNoise(col, row, cloud.seed) - 0.5) * 0.22;
-      const shape = nx * nx + (ny * 1.15) * (ny * 1.15) + wobble;
-      if (shape > 1) continue;
-      if (ny > 0.65 && shape > 0.9) continue;
+  // Add subtle internal motion
+  const time = Date.now() / 2000;
+  const floatY = Math.sin(time + cloud.seed) * 3;
 
-      const vertical = (ny + 1) * 0.5;
+  for (let dy = -h / 2; dy <= h / 2; dy++) {
+    for (let dx = -w / 2; dx <= w / 2; dx++) {
+      // Wide & Flat Shape Logic
+      const nx = dx / (w / 2); // -1 to 1
+      const ny = dy / (h / 2); // -1 to 1
+      
+      const noise = pixelNoise(dx, dy, cloud.seed);
+      
+      // Elliptical base with noise carving
+      // Top rounder, bottom flatter
+      const distSq = nx * nx + (ny * (ny > 0 ? 0.5 : 1)) * (ny * (ny > 0 ? 0.5 : 1));
+      
+      // Carve out edges
+      if (distSq > 0.8 - noise * 0.3) continue;
+      if (ny > 0.3 && Math.abs(nx) > 0.8) continue; // Taper bottom corners
+
+      const px = startX + dx * grid;
+      const py = startY + dy * grid + floatY; // Apply float
+
+      // Volumetric Shading
       let color = PIXEL_CLOUD_PALETTE.base;
+      const vertical = (ny + 1) * 0.5; // 0 (top) to 1 (bottom)
 
-      if (vertical < 0.25) color = PIXEL_CLOUD_PALETTE.highlight;
-      else if (vertical < 0.52) color = PIXEL_CLOUD_PALETTE.mid;
-      else color = PIXEL_CLOUD_PALETTE.shadow;
-
-      if (shape > 0.82 && vertical < 0.55) {
-        color = PIXEL_CLOUD_PALETTE.rim;
-      }
-
-      if (
-        vertical < 0.35 &&
-        pixelNoise(col + 11, row + 7, cloud.seed) > 0.965
-      ) {
-        color = PIXEL_CLOUD_PALETTE.glow;
+      if (ny < -0.4) {
+          color = PIXEL_CLOUD_PALETTE.highlight; // Top highlight
+          if (ny < -0.6 && noise > 0.6) color = PIXEL_CLOUD_PALETTE.glow; // Rim glow
+      } else if (ny > 0.1) {
+          color = PIXEL_CLOUD_PALETTE.mid;
+          
+          if (ny > 0.4) {
+              color = PIXEL_CLOUD_PALETTE.shadow; // Deep shadow bottom
+              // Partial dither at bottom
+              if (ny > 0.7 && (Math.floor(px)+Math.floor(py)) % 2 !== 0) continue;
+          }
       }
 
       ctx.fillStyle = color;
-      ctx.fillRect(startX + col * grid, startY + row * grid, grid, grid);
+      ctx.fillRect(px, py, grid, grid);
     }
   }
 
@@ -70,30 +81,28 @@ export function initClouds(
 ): Cloud[] {
   if (phenomenon.specialEffect === "pixel") {
     const clouds: Cloud[] = [];
-    const lowerCount = 4;
-    const midCount = 3;
-    const total = lowerCount + midCount;
+    // Create stratified layers for depth
+    const layers = [
+      { count: 3, y: 0.75, size: 1.0, speed: 0.2, opacity: 0.6 }, // Back/Low
+      { count: 4, y: 0.82, size: 1.2, speed: 0.4, opacity: 0.8 }, // Mid
+      { count: 2, y: 0.90, size: 1.4, speed: 0.6, opacity: 1.0 }, // Front/High
+    ];
 
-    for (let i = 0; i < total; i += 1) {
-      const isLower = i < lowerCount;
-      const bandY = isLower ? height * 0.62 : height * 0.38;
-      const bandRange = isLower ? height * 0.28 : height * 0.2;
-      const baseWidth = isLower ? 220 : 150;
-      const widthRange = isLower ? 160 : 110;
-      const cloudWidth = Math.random() * widthRange + baseWidth;
-      const cloudHeight =
-        cloudWidth * (isLower ? 0.32 + Math.random() * 0.12 : 0.24 + Math.random() * 0.08);
-
-      clouds.push({
-        x: Math.random() * width,
-        y: bandY + Math.random() * bandRange,
-        width: cloudWidth,
-        height: cloudHeight,
-        speed: (Math.random() * 0.08 + 0.03) * phenomenon.cloudSpeed,
-        opacity: (Math.random() * 0.25 + 0.45) * phenomenon.cloudOpacity,
-        seed: Math.floor(Math.random() * 10000),
-      });
-    }
+    layers.forEach(layer => {
+        for(let i=0; i<layer.count; i++) {
+            const baseWidth = 180 * layer.size;
+            const variance = Math.random() * 60;
+            clouds.push({
+                x: Math.random() * width,
+                y: height * layer.y + (Math.random() * height * 0.05),
+                width: baseWidth + variance,
+                height: (baseWidth + variance) * 0.25, // Aspect ratio 4:1
+                speed: (0.1 + Math.random() * 0.1) * layer.speed * phenomenon.cloudSpeed, // Slow drift
+                opacity: layer.opacity * phenomenon.cloudOpacity,
+                seed: Math.random() * 1000,
+            });
+        }
+    });
 
     return clouds;
   }

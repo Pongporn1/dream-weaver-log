@@ -57,6 +57,10 @@ function buildDreamSeed(dreams: DreamLog[]): string {
   return `${hash}`;
 }
 
+import { PixelTransitionOverlay } from "./mythic/PixelTransitionOverlay";
+
+const PIXEL_INTRO_SEEN_KEY = "pixel-intro-seen";
+
 function formatDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -130,9 +134,19 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
   const moonPositionRef = useRef<MoonPosition>({ x: 0, y: 0, phase: 0 });
   const moonPhaseRef = useRef(getMoonPhase());
   const scrollOffsetRef = useRef({ x: 0, y: 0 });
+  const [showPixelIntro, setShowPixelIntro] = useState(false);
 
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
   const currentStreak = useMemo(() => getCurrentDreamStreak(dreams), [dreams]);
+
+  const handlePixelIntroComplete = useCallback(() => {
+    setShowPixelIntro(false);
+  }, []);
+
+  const handleForcePixelIntro = useCallback(() => {
+    sessionStorage.removeItem(PIXEL_INTRO_SEEN_KEY);
+    setShowPixelIntro(true);
+  }, []);
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -141,6 +155,11 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
       getSessionPhenomenon();
     setPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
+
+    // Trigger Intro for Pixel Theme
+    if (newPhenomenon.id === 'pixelDreamMoon') {
+       setShowPixelIntro(true);
+    }
 
     // Record encounter in collection only if it's a new encounter
     if (isNewEncounter) {
@@ -212,6 +231,14 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
       getSessionPhenomenon();
     setPhenomenon(sessionPhenomenon);
     applyMoonTheme(sessionPhenomenon);
+
+    if (sessionPhenomenon.id === "pixelDreamMoon") {
+      const introSeen = sessionStorage.getItem(PIXEL_INTRO_SEEN_KEY);
+      if (!introSeen) {
+        setShowPixelIntro(true);
+        sessionStorage.setItem(PIXEL_INTRO_SEEN_KEY, "1");
+      }
+    }
 
     // Record initial encounter in collection only if it's a new encounter
     if (isNewEncounter) {
@@ -309,7 +336,7 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
       };
 
       // Draw sky
-      drawSky(baseProps);
+      drawSky({ ...baseProps, time: currentTime });
 
       if (!prefersReducedMotion) {
         drawBackgroundEffects(
@@ -452,6 +479,17 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
         transition: isPulling ? "none" : "transform 0.3s ease-out",
       }}
     >
+      {import.meta.env.DEV && (
+        <div className="absolute top-3 right-3 z-50">
+          <button
+            type="button"
+            onClick={handleForcePixelIntro}
+            className="rounded-md border border-white/40 bg-black/60 px-3 py-1 text-xs text-white/90 backdrop-blur hover:bg-black/75"
+          >
+            Test Pixel Intro
+          </button>
+        </div>
+      )}
       {/* Pull-to-refresh indicator */}
       <HeaderPullIndicator
         pullDistance={pullDistance}
@@ -481,6 +519,12 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
           onClose={handleCloseOverlay}
         />
       )}
+      
+      {/* Pixel Mythic Theme Intro */ }
+      <PixelTransitionOverlay 
+        show={showPixelIntro} 
+        onComplete={handlePixelIntroComplete} 
+      />
     </div>
   );
 }
