@@ -39,7 +39,19 @@ const getPixelMoonPalette = (
   glow: uiAccent,
 });
 
-// Draw star trail particles orbiting the moon
+// Retro color palette for beat effect
+const RETRO_COLORS = [
+  "#FF6B9D", // Hot pink
+  "#C44CFF", // Electric purple
+  "#00D4FF", // Cyan
+  "#FFE66D", // Yellow
+  "#4DFFB8", // Mint green
+  "#FF8A5B", // Coral
+  "#7B68EE", // Medium slate blue
+  "#00FF88", // Spring green
+];
+
+// Draw star trail particles orbiting the moon with retro beat colors
 const drawPixelStarTrail = (
   ctx: CanvasRenderingContext2D,
   moonX: number,
@@ -48,8 +60,13 @@ const drawPixelStarTrail = (
   time: number,
   accentColor: string
 ) => {
-  const particleCount = 16;
+  const particleCount = 20;
   const orbitRadius = radius * 1.8;
+  
+  // Beat timing - changes color every 400ms for retro rhythm feel
+  const beatPhase = Math.floor(time / 400) % RETRO_COLORS.length;
+  const beatProgress = (time % 400) / 400;
+  const beatPulse = Math.sin(beatProgress * Math.PI); // 0 -> 1 -> 0
   
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -61,23 +78,34 @@ const drawPixelStarTrail = (
     const angle = baseAngle + orbitSpeed + Math.sin(time / 8000 + i) * 0.15;
     
     // Varying orbit distances
-    const orbitVariation = 0.9 + Math.sin(i * 1.5) * 0.2;
+    const orbitVariation = 0.85 + Math.sin(i * 1.5) * 0.25;
     const px = moonX + Math.cos(angle) * orbitRadius * orbitVariation;
-    const py = moonY + Math.sin(angle) * orbitRadius * orbitVariation * 0.35; // Flatten for perspective
+    const py = moonY + Math.sin(angle) * orbitRadius * orbitVariation * 0.35;
     
-    // Twinkling effect
-    const twinkle = Math.sin(time / 800 + i * 2.3) * 0.5 + 0.5;
-    const size = 2 + twinkle * 2;
+    // Twinkling effect synced with beat
+    const twinkle = Math.sin(time / 600 + i * 2.3) * 0.5 + 0.5;
+    const size = 2 + twinkle * 2 + beatPulse * 1.5;
     
-    // Draw pixel star
-    ctx.globalAlpha = 0.4 + twinkle * 0.6;
-    ctx.fillStyle = i % 3 === 0 ? "#ffffff" : accentColor;
+    // Color cycling per particle with offset
+    const colorIndex = (beatPhase + i) % RETRO_COLORS.length;
+    const particleColor = RETRO_COLORS[colorIndex];
+    
+    // Draw pixel star with beat-synced glow
+    ctx.globalAlpha = 0.5 + twinkle * 0.4 + beatPulse * 0.1;
+    ctx.fillStyle = particleColor;
     ctx.fillRect(Math.floor(px), Math.floor(py), size, size);
     
-    // Add small glow
-    if (twinkle > 0.7) {
-      ctx.globalAlpha = 0.2;
+    // Enhanced glow on beat
+    if (twinkle > 0.5 || beatPulse > 0.7) {
+      ctx.globalAlpha = 0.25 + beatPulse * 0.15;
       ctx.fillRect(Math.floor(px) - 1, Math.floor(py) - 1, size + 2, size + 2);
+      
+      // Extra sparkle layer on strong beat
+      if (beatPulse > 0.8 && i % 3 === 0) {
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(Math.floor(px) - 2, Math.floor(py) - 2, size + 4, size + 4);
+      }
     }
   }
   
