@@ -159,8 +159,8 @@ const drawPixelDreamMoon = (
           if (drawReference === "back" && !isBack) continue;
           if (drawReference === "front" && isBack) continue;
 
-          // MUCH slower rotation - 3-5 minutes per revolution
-          const rotOffset = (time / (180000 + i * 60000)) * (i % 2 === 0 ? 1 : -1);
+          // EXTREMELY slow rotation - 10-15 minutes per revolution
+          const rotOffset = (time / (600000 + i * 300000)) * (i % 2 === 0 ? 1 : -1);
           const finalAngle = angle + rotOffset;
 
           const px = Math.cos(finalAngle) * r;
