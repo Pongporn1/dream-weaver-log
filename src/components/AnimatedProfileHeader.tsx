@@ -346,7 +346,7 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
           height,
           scrollOffsetRef.current,
         );
-        drawAtmosphericEffects(ctx, phenomenon, width);
+        drawAtmosphericEffects(ctx, phenomenon, width, height);
       }
 
       const streakBoost = Math.min(0.8, currentStreak / 14);

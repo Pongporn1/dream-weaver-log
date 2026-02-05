@@ -399,12 +399,4 @@ export const drawMeteorShower = (
   }
 };
 
-export const initMeteorNebula = (
-  canvasWidth: number,
-  canvasHeight: number,
-  count = 6,
-) => {
-  // This is defined in NebulaCloud.ts as initMeteorNebula
-  // Re-export if needed or import from NebulaCloud
-  return [];
-};
+// Note: initMeteorNebula is defined in NebulaCloud.ts
