@@ -2,4 +2,5 @@
  * Pixel Theme Animation Hooks
  */
 
-export * from "./usePixelRipple";
+// Forward to shared hook implementation
+export * from "@/hooks/usePixelRipple";

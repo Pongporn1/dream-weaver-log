@@ -2,6 +2,7 @@
  * Interaction Animation Hooks
  */
 
-export * from "./useMoonInteraction";
-export * from "./useParallax";
-export * from "./useHeaderGestures";
+// Forward to shared hook implementations
+export * from "@/hooks/useMoonInteraction";
+export * from "@/hooks/useParallax";
+export * from "@/hooks/useHeaderGestures";

@@ -2,6 +2,7 @@
  * Core Animation Hooks
  */
 
-export * from "./useCanvasAnimation";
-export * from "./useParticleSystem";
-export * from "./useFPSThrottle";
+// Forward to shared hook implementations
+export * from "@/hooks/useCanvasAnimation";
+export * from "@/hooks/useParticleSystem";
+export * from "@/hooks/useFPSThrottle";
