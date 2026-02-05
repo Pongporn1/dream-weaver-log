@@ -198,13 +198,14 @@ export function useParticleSystem() {
   const drawAtmosphericEffects = useCallback((
     ctx: CanvasRenderingContext2D,
     phenomenon: MoonPhenomenon,
-    width: number
+    width: number,
+    height: number
   ) => {
     if (phenomenon.specialEffect === "aurora" && auroraWavesRef.current.length > 0) {
       drawAurora(ctx, auroraWavesRef.current, width);
     }
     if (phenomenon.specialEffect === "fog" && fogLayersRef.current.length > 0) {
-      drawFog(ctx, fogLayersRef.current, width);
+      drawFog(ctx, fogLayersRef.current, width, height);
     }
   }, []);
 
