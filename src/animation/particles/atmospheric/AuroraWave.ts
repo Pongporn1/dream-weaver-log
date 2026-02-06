@@ -33,7 +33,7 @@ export const drawAurora = (
   waves: AuroraWave[],
   canvasWidth: number,
 ) => {
-  waves.forEach((w, index) => {
+  waves.forEach((w) => {
     w.phase += w.speed;
 
     // Pulsing opacity for breathing effect

@@ -16,7 +16,7 @@ interface Particle {
 
 export function PixelParticleEffects() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const [, setParticles] = useState<Particle[]>([]);
   const particleIdRef = useRef(0);
   const lastScrollY = useRef(0);
   const animationFrameRef = useRef<number>();
@@ -77,7 +77,7 @@ export function PixelParticleEffects() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isPixelTheme]);
+  }, [isPixelTheme, prefersReducedMotion]);
 
   // Click Sparkle
   useEffect(() => {
@@ -110,7 +110,7 @@ export function PixelParticleEffects() {
 
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
-  }, [isPixelTheme]);
+  }, [isPixelTheme, prefersReducedMotion]);
 
   // Animation loop
   useEffect(() => {
@@ -189,7 +189,7 @@ export function PixelParticleEffects() {
       }
       window.removeEventListener("resize", updateSize);
     };
-  }, [isPixelTheme]);
+  }, [isPixelTheme, prefersReducedMotion]);
 
   if (!isPixelTheme || prefersReducedMotion) return null;
 

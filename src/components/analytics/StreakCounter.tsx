@@ -3,9 +3,7 @@ import { DreamLog } from "@/types/dream";
 import { Flame, Award } from "lucide-react";
 import {
   format,
-  differenceInDays,
   eachDayOfInterval,
-  parseISO,
 } from "date-fns";
 import { th } from "date-fns/locale";
 

@@ -143,11 +143,6 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
     setShowPixelIntro(false);
   }, []);
 
-  const handleForcePixelIntro = useCallback(() => {
-    sessionStorage.removeItem(PIXEL_INTRO_SEEN_KEY);
-    setShowPixelIntro(true);
-  }, []);
-
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     // Regenerate moon phenomenon
@@ -292,7 +287,7 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
         Math.min(1, phenomenon.starDensity + densityBoost),
       );
       cloudsRef.current = initClouds(rect.width, rect.height, phenomenon);
-      shootingStarsRef.current = initShootingStars(rect.width, rect.height);
+      shootingStarsRef.current = initShootingStars(rect.width);
       moonPositionRef.current = {
         x: rect.width * 0.7,
         y: rect.height * 0.25,
@@ -346,7 +341,7 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
           height,
           scrollOffsetRef.current,
         );
-        drawAtmosphericEffects(ctx, phenomenon, width, height);
+        drawAtmosphericEffects(ctx, phenomenon, width);
       }
 
       const streakBoost = Math.min(0.8, currentStreak / 14);

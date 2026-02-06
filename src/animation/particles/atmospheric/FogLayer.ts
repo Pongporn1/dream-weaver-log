@@ -19,10 +19,10 @@ export interface FogLayer {
 export const initFogLayers = (
   canvasWidth: number,
   canvasHeight: number,
-  count = 3,
+  count = 5,
 ): FogLayer[] => {
   const colors = ["#f0e8e0", "#e8d8d0", "#d8c8c0"];
-  return Array.from({ length: 5 }, (_, i) => ({
+  return Array.from({ length: count }, (_, i) => ({
     x: -canvasWidth - Math.random() * canvasWidth * 0.5,
     y: canvasHeight * 0.5 + i * 40,
     width: canvasWidth * 2.5,
@@ -39,7 +39,6 @@ export const drawFog = (
   ctx: CanvasRenderingContext2D,
   fogLayers: FogLayer[],
   canvasWidth: number,
-  canvasHeight: number,
 ) => {
   fogLayers.forEach((l, i) => {
     l.x += l.speed;

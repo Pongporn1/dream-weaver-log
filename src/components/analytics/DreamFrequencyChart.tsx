@@ -2,8 +2,6 @@ import { useMemo } from "react";
 import { DreamLog } from "@/types/dream";
 import {
   format,
-  startOfWeek,
-  startOfMonth,
   eachWeekOfInterval,
   eachMonthOfInterval,
 } from "date-fns";

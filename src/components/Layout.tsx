@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Library, BookOpen, BarChart3, Info } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,8 +8,6 @@ interface LayoutProps {
 import { BottomNavigation } from "@/components/BottomNavigation";
 
 export function Layout({ children }: LayoutProps) {
-  const location = useLocation();
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}

@@ -77,7 +77,6 @@ export const drawMoonCracks = (
   moonX: number,
   moonY: number,
   moonRadius: number,
-  moonColor: string,
 ) => {
   ctx.save();
 

@@ -2,13 +2,6 @@ import { MapPin, Users, AlertTriangle, Clock, Zap, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
 
-interface TopListsProps {
-  dreams: DreamLog[];
-  worlds: World[];
-  entities: Entity[];
-  threats: ThreatEntry[];
-}
-
 export function TopWorldsList({ worlds }: { worlds: World[] }) {
   const worldCounts = worlds
     .map((w) => ({ name: w.name, count: w.dreamIds.length, stability: w.stability }))

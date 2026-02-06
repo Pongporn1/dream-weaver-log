@@ -1,5 +1,4 @@
 import type { ShootingStarRendererProps, ShootingStar } from "./types";
-import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
 const SHOOTING_STAR_COLORS = [
   "#FFFFFF",
@@ -28,10 +27,7 @@ const SHOOTING_STAR_DIRECTION: "right" | "left" = "right";
 const SHOOTING_STAR_BASE_ANGLE = Math.PI / 4.6;
 const SHOOTING_STAR_ANGLE_VARIANCE = 0.16;
 
-export function initShootingStars(
-  width: number,
-  height: number
-): ShootingStar[] {
+export function initShootingStars(width: number): ShootingStar[] {
   const startX =
     SHOOTING_STAR_DIRECTION === "right" ? -100 : width + 100;
   return Array.from({ length: 10 }, (_, i) => ({

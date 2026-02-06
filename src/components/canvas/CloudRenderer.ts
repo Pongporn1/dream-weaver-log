@@ -51,7 +51,6 @@ const drawPixelCloud = (ctx: CanvasRenderingContext2D, cloud: Cloud) => {
 
       // Volumetric Shading
       let color = PIXEL_CLOUD_PALETTE.base;
-      const vertical = (ny + 1) * 0.5; // 0 (top) to 1 (bottom)
 
       if (ny < -0.4) {
           color = PIXEL_CLOUD_PALETTE.highlight; // Top highlight

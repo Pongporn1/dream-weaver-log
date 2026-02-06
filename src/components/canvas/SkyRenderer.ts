@@ -72,7 +72,7 @@ function drawPixelSkyDetails(ctx: CanvasRenderingContext2D, width: number, heigh
   ];
 
   ctx.save();
-  planets.forEach((p, i) => {
+  planets.forEach((p) => {
       // Glow Effect
       ctx.shadowBlur = 15;
       ctx.shadowColor = p.glow;

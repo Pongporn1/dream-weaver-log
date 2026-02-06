@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { DreamLog } from "@/types/dream";
-import { supabase } from "@/integrations/supabase/client";
 
 export type SymbolType = "eye" | "moon" | "tree" | "gate" | "spiral" | "flame" | "void" | "crown" | "key" | "heart" | "skull" | "hourglass" | "compass" | "infinity" | "lotus";
 export type SymbolRotation = "none" | "slow" | "medium" | "pulse";
@@ -21,13 +20,9 @@ export interface AICoverStyle {
   keywords: string[];
 }
 
-// In-memory cache for cover styles
-const styleCache = new Map<string, AICoverStyle>();
-
 export function useCoverStyle(dream: DreamLog) {
   const [style, setStyle] = useState<AICoverStyle | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // AI API is disabled due to payment/quota exhaustion
@@ -37,5 +32,5 @@ export function useCoverStyle(dream: DreamLog) {
     return;
   }, [dream.id, dream.notes, dream.world, dream.environments, dream.threatLevel, dream.entities]);
 
-  return { style, loading, error };
+  return { style, loading };
 }

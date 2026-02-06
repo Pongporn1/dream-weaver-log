@@ -57,8 +57,7 @@ const drawPixelStarTrail = (
   moonX: number,
   moonY: number,
   radius: number,
-  time: number,
-  accentColor: string
+  time: number
 ) => {
   const particleCount = 20;
   const orbitRadius = radius * 1.8;
@@ -203,7 +202,7 @@ const drawPixelDreamMoon = (
   };
 
   // Draw star trail behind everything
-  drawPixelStarTrail(ctx, moonX, moonY, radius, time, colors.rim);
+  drawPixelStarTrail(ctx, moonX, moonY, radius, time);
 
   // 1. Draw Back Rings
   drawRings("back");
@@ -227,7 +226,7 @@ const drawPixelDreamMoon = (
       const isCrater = noiseVal > 0.94;
       const isBigCrater = noiseVal > 0.985;
 
-      let brightness = (dot + 1) / 2;
+      const brightness = (dot + 1) / 2;
       const isEven = (Math.round((cx + radius) / grid) + Math.round((cy + radius) / grid)) % 2 === 0;
 
       let finalColor = colors.bg;

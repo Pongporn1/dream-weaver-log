@@ -53,7 +53,7 @@ export function StoryMode({ dreams, worlds, entities }: Props) {
           {/* Tabs */}
           <AnimatedSection delay={80} duration={400}>
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {tabs.map((tab, index) => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setViewMode(tab.id)}
@@ -79,7 +79,7 @@ export function StoryMode({ dreams, worlds, entities }: Props) {
           <AnimatedSection delay={160} duration={400}>
             {viewMode === "timeline" && <TimelineView dreams={dreams} />}
             {viewMode === "connected" && (
-              <ConnectedDreams dreams={dreams} worlds={worlds} />
+              <ConnectedDreams dreams={dreams} />
             )}
             {viewMode === "map" && (
               <DreamUniverseMap dreams={dreams} worlds={worlds} />

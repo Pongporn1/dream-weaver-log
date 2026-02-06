@@ -1,6 +1,5 @@
-import { Search, Calendar, Globe, Shuffle } from "lucide-react";
+import { Search, Calendar, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 
@@ -13,7 +12,6 @@ interface LibraryHeaderProps {
   onGroupByChange: (groupBy: GroupBy) => void;
   totalDreams: number;
   currentPhenomenon: MoonPhenomenon | null;
-  onChangePhenomenon: () => void;
   showDreamFilters?: boolean;
 }
 
@@ -24,7 +22,6 @@ export function LibraryHeader({
   onGroupByChange,
   totalDreams,
   currentPhenomenon,
-  onChangePhenomenon,
   showDreamFilters = true,
 }: LibraryHeaderProps) {
   return (

@@ -124,7 +124,7 @@ export function WordCloud({ dreams }: Props) {
 
     // Convert to array and sort by frequency
     const sortedWords = Array.from(wordCount.entries())
-      .map(([word, data]) => ({
+      .map(([, data]) => ({
         word: data.display,
         count: data.count,
         weight: data.weight,

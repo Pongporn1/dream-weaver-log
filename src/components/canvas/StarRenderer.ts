@@ -347,8 +347,6 @@ export function drawStars({
       
       for (let i = 0; i < activeWindow; i++) {
           const cycle = currentCycle - i;
-          // Seed based on cycle ID
-          const seed = cycle * 999.99;
           const r1 = pixelHash(cycle, 1, 111); // Chance
           const r2 = pixelHash(cycle, 2, 222); // X Position
           const r3 = pixelHash(cycle, 3, 333); // Speed/Properties
@@ -501,8 +499,6 @@ const drawPixelUFO = (
     time: number
 ) => {
     const grid = 3;
-    const w = 11 * grid; // 11px wide sprite
-    const h = 5 * grid;
     
     ctx.save();
     ctx.translate(x, y);

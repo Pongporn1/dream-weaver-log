@@ -37,8 +37,6 @@ export const spawnVoidRipple = (
 export const drawVoidRipples = (
   ctx: CanvasRenderingContext2D,
   ripples: VoidRipple[],
-  moonX: number,
-  moonY: number,
 ): VoidRipple[] => {
   return ripples
     .map((r) => {

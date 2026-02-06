@@ -446,7 +446,6 @@ export function MythicProgressBar({
     };
   }, [effectiveAnimated, effectiveParticleConfig, createParticle]);
 
-  const barColor = effectiveParticleConfig?.color || "hsl(var(--primary))";
   const effectiveGradient = effectiveParticleConfig 
     ? styles.gradient 
     : "hsl(var(--primary))";

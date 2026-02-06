@@ -40,7 +40,7 @@ export function TimelineView({ dreams }: Props) {
         {/* Timeline Line */}
         <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border" />
 
-        {sortedDreams.map((dream, index) => (
+        {sortedDreams.map((dream) => (
           <div key={dream.id} className="relative pl-16 pb-8 last:pb-0">
             {/* Timeline Dot */}
             <div

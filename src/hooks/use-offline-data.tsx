@@ -58,7 +58,7 @@ export function useOfflineDreamLogs() {
         } else {
           setError(err as Error);
         }
-      } catch (cacheErr) {
+      } catch {
         setError(err as Error);
       }
     } finally {
@@ -118,7 +118,7 @@ export function useOfflineSleepLogs() {
         } else {
           setError(err as Error);
         }
-      } catch (cacheErr) {
+      } catch {
         setError(err as Error);
       }
     } finally {

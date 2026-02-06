@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { MythicProgressBar } from "./MythicProgressBar";
 import {
   useMythicCollection,
-  MYTHIC_PARTICLE_CONFIGS,
 } from "@/hooks/useMythicCollection";
 import { MOON_PHENOMENA } from "@/data/moonPhenomena";
 import type {
@@ -25,7 +24,6 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
-  Trophy,
 } from "lucide-react";
 
 interface MythicCodexProps {

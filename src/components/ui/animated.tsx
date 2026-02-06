@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, createContext, useContext } from "react";
+import { ReactNode, useEffect, useState, createContext } from "react";
 
 // Animation context to track if initial animations have played
 const AnimationContext = createContext<{ hasAnimated: boolean; setHasAnimated: (v: boolean) => void }>({

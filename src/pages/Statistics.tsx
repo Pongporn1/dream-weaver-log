@@ -206,7 +206,7 @@ export default function Statistics() {
 
           <TabsContent value="patterns" className="space-y-6">
             <AnimatedStatsSection delay={100} duration={400}>
-              <RecurringPatterns dreams={dreams} entities={entities} />
+              <RecurringPatterns dreams={dreams} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={180} duration={400}>
               <EntityFrequency dreams={dreams} entities={entities} />

@@ -1,14 +1,13 @@
 import { useMemo } from "react";
-import { DreamLog, Entity } from "@/types/dream";
-import { Repeat, Bell } from "lucide-react";
+import { DreamLog } from "@/types/dream";
+import { Repeat } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Props {
   dreams: DreamLog[];
-  entities: Entity[];
 }
 
-export function RecurringPatterns({ dreams, entities }: Props) {
+export function RecurringPatterns({ dreams }: Props) {
   const patterns = useMemo(() => {
     // Find recurring themes in environments
     const envCounts = new Map<string, number>();
@@ -36,19 +35,19 @@ export function RecurringPatterns({ dreams, entities }: Props) {
 
     return {
       recurringEnvs: Array.from(envCounts.entries())
-        .filter(([_, count]) => count >= 3)
+        .filter(([, count]) => count >= 3)
         .map(([env, count]) => ({ env, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5),
 
       recurringCombos: Array.from(entityCombos.entries())
-        .filter(([_, count]) => count >= 2)
+        .filter(([, count]) => count >= 2)
         .map(([combo, count]) => ({ combo, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 3),
 
       worldPatterns: Array.from(worldSequences.entries())
-        .filter(([_, count]) => count >= 2)
+        .filter(([, count]) => count >= 2)
         .map(([seq, count]) => ({ seq, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 3),

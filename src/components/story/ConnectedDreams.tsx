@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { DreamLog, World } from "@/types/dream";
+import { DreamLog } from "@/types/dream";
 import { Network, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -7,7 +7,6 @@ import { findCommonValues, isLikelySame } from "@/lib/storyMatching";
 
 interface Props {
   dreams: DreamLog[];
-  worlds: World[];
 }
 
 interface Connection {
@@ -17,7 +16,7 @@ interface Connection {
   score: number;
 }
 
-export function ConnectedDreams({ dreams, worlds }: Props) {
+export function ConnectedDreams({ dreams }: Props) {
   const connections = useMemo(() => {
     const result: Connection[] = [];
     const scoreWeights = {
