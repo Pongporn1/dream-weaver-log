@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BarChart3, RefreshCw } from "lucide-react";
+import { BarChart3, RefreshCw, Download } from "lucide-react";
 import {
   getDreamLogs,
   getWorlds,
@@ -8,7 +8,14 @@ import {
   addEntity,
   addThreat,
 } from "@/lib/api";
-import { DreamLog, World, Entity, ThreatEntry, ENTITY_ROLES } from "@/types/dream";
+import { downloadHTML } from "@/lib/exportHTML";
+import {
+  DreamLog,
+  World,
+  Entity,
+  ThreatEntry,
+  ENTITY_ROLES,
+} from "@/types/dream";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -35,6 +42,8 @@ import { StatsOverviewCards } from "@/components/stats/StatsOverviewCards";
 import { InsightsCards } from "@/components/stats/InsightsCards";
 import { ThreatDistribution } from "@/components/stats/ThreatDistribution";
 import { AnimatedStatsSection } from "@/components/stats/AnimatedStatsSection";
+import { CalendarView } from "@/components/stats/CalendarView";
+import { DreamMap } from "@/components/stats/DreamMap";
 import {
   TopWorldsList,
   TopEntitiesList,
@@ -70,12 +79,13 @@ export default function Statistics() {
     else setLoading(true);
 
     try {
-      const [dreamsData, worldsData, entitiesData, threatsData] = await Promise.all([
-        getDreamLogs(),
-        getWorlds(),
-        getEntities(),
-        getThreats(),
-      ]);
+      const [dreamsData, worldsData, entitiesData, threatsData] =
+        await Promise.all([
+          getDreamLogs(),
+          getWorlds(),
+          getEntities(),
+          getThreats(),
+        ]);
       setDreams(dreamsData);
       setWorlds(worldsData);
       setEntities(entitiesData);
@@ -193,19 +203,26 @@ export default function Statistics() {
 
   // Calculate statistics
   const totalDreams = dreams.length;
-  const avgThreatLevel = dreams.length > 0
-    ? (dreams.reduce((sum, d) => sum + d.threatLevel, 0) / dreams.length).toFixed(1)
-    : "0";
+  const avgThreatLevel =
+    dreams.length > 0
+      ? (
+          dreams.reduce((sum, d) => sum + d.threatLevel, 0) / dreams.length
+        ).toFixed(1)
+      : "0";
 
   // Trend calculation
   const recentDreams = dreams.slice(0, 7);
   const previousDreams = dreams.slice(7, 14);
-  const recentAvgThreat = recentDreams.length > 0
-    ? recentDreams.reduce((sum, d) => sum + d.threatLevel, 0) / recentDreams.length
-    : 0;
-  const previousAvgThreat = previousDreams.length > 0
-    ? previousDreams.reduce((sum, d) => sum + d.threatLevel, 0) / previousDreams.length
-    : 0;
+  const recentAvgThreat =
+    recentDreams.length > 0
+      ? recentDreams.reduce((sum, d) => sum + d.threatLevel, 0) /
+        recentDreams.length
+      : 0;
+  const previousAvgThreat =
+    previousDreams.length > 0
+      ? previousDreams.reduce((sum, d) => sum + d.threatLevel, 0) /
+        previousDreams.length
+      : 0;
   const threatTrend = recentAvgThreat - previousAvgThreat;
 
   // World counts for insights
@@ -235,12 +252,32 @@ export default function Statistics() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
-            <h1 className="text-lg sm:text-2xl font-semibold truncate">Statistics & Insights</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold truncate">
+              Statistics & Insights
+            </h1>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <span className="text-xs sm:text-sm text-muted-foreground">
-              {lastUpdate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+              {lastUpdate.toLocaleTimeString("th-TH", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              onClick={() => {
+                downloadHTML(
+                  dreams,
+                  `dream-logs-${new Date().toISOString().split("T")[0]}`,
+                );
+                toast({ title: "กำลังดาวน์โหลด HTML..." });
+              }}
+              title="Export เป็น HTML"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -248,7 +285,9 @@ export default function Statistics() {
               onClick={() => loadData(true)}
               disabled={refreshing}
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              />
             </Button>
           </div>
         </div>
@@ -256,20 +295,47 @@ export default function Statistics() {
 
       {/* Tabs */}
       <AnimatedStatsSection delay={80} duration={400}>
-        <Tabs defaultValue="overview" className="space-y-3 sm:space-y-4 max-w-full">
-          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg border bg-muted/60 p-1">
-            <TabsTrigger value="overview" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+        <Tabs
+          defaultValue="overview"
+          className="space-y-3 sm:space-y-4 max-w-full"
+        >
+          <TabsList className="grid h-auto w-full grid-cols-5 gap-1 rounded-lg border bg-muted/60 p-1">
+            <TabsTrigger
+              value="overview"
+              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+            >
               Overview
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+            <TabsTrigger
+              value="analytics"
+              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+            >
               Analytics
             </TabsTrigger>
-            <TabsTrigger value="patterns" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+            <TabsTrigger
+              value="patterns"
+              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+            >
               Patterns
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendar"
+              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+            >
+              ปฏิทิน
+            </TabsTrigger>
+            <TabsTrigger
+              value="map"
+              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+            >
+              แผนที่
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6 max-w-full">
+          <TabsContent
+            value="overview"
+            className="space-y-4 sm:space-y-6 max-w-full"
+          >
             <AnimatedStatsSection delay={160} duration={400}>
               <InsightsCards
                 dreams={dreams}
@@ -297,8 +363,12 @@ export default function Statistics() {
             <AnimatedStatsSection delay={400} duration={400}>
               <div className="card-minimal space-y-3 sm:space-y-4 border border-amber-200/60 bg-gradient-to-br from-[#fffaf0] via-white to-[#f7fcff] p-3 sm:p-4">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-sm font-semibold">Character & Threat Builder</h2>
-                  <span className="text-xs text-muted-foreground">เพิ่มข้อมูลเข้าฐานโดยตรง</span>
+                  <h2 className="text-sm font-semibold">
+                    Character & Threat Builder
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    เพิ่มข้อมูลเข้าฐานโดยตรง
+                  </span>
                 </div>
                 <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                   <form
@@ -379,7 +449,9 @@ export default function Statistics() {
                     }}
                   >
                     <div>
-                      <h3 className="text-sm font-medium">เพิ่ม Threat + ความสามารถ</h3>
+                      <h3 className="text-sm font-medium">
+                        เพิ่ม Threat + ความสามารถ
+                      </h3>
                       <p className="text-xs text-muted-foreground">
                         ความสามารถจะแสดงใน Threat Analysis ทันที
                       </p>
@@ -419,7 +491,9 @@ export default function Statistics() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="threatAbility">ความสามารถ / วิธีรับมือ (optional)</Label>
+                      <Label htmlFor="threatAbility">
+                        ความสามารถ / วิธีรับมือ (optional)
+                      </Label>
                       <Textarea
                         id="threatAbility"
                         value={threatDraft.response}
@@ -490,6 +564,18 @@ export default function Statistics() {
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={180} duration={400}>
               <EntityFrequency dreams={dreams} entities={entities} />
+            </AnimatedStatsSection>
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <AnimatedStatsSection delay={100} duration={400}>
+              <CalendarView dreams={dreams} />
+            </AnimatedStatsSection>
+          </TabsContent>
+
+          <TabsContent value="map" className="space-y-6">
+            <AnimatedStatsSection delay={100} duration={400}>
+              <DreamMap dreams={dreams} />
             </AnimatedStatsSection>
           </TabsContent>
         </Tabs>
