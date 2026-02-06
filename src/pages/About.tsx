@@ -1,8 +1,27 @@
-import { Info, Download, RefreshCw, Loader2 } from "lucide-react";
+import { useState } from "react";
+import {
+  Info,
+  Download,
+  RefreshCw,
+  Loader2,
+  Lock,
+  Unlock,
+  Sparkles,
+} from "lucide-react";
 import { AnimatedSection } from "@/components/ui/animated";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { APP_VERSION } from "@/config/appVersion";
+import {
+  verifySecretCode,
+  unlockAllMoons,
+  areMoonsUnlocked,
+  getUnlockStatus,
+} from "@/lib/moonUnlock";
+import { useMythicCollection } from "@/hooks/useMythicCollection";
+import { toast } from "@/hooks/use-toast";
 
 export default function About() {
   const {
@@ -13,6 +32,46 @@ export default function About() {
     checkForUpdates,
     applyUpdate,
   } = useAppUpdate();
+
+  const { unlockAllMoonsInCollection } = useMythicCollection();
+
+  const [secretCode, setSecretCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(areMoonsUnlocked());
+
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!secretCode.trim()) return;
+
+    setIsVerifying(true);
+    try {
+      const isValid = await verifySecretCode(secretCode);
+      if (isValid) {
+        unlockAllMoons(unlockAllMoonsInCollection);
+        setIsUnlocked(true);
+        toast({
+          title: "🌕 ปลดล็อกสำเร็จ!",
+          description: "ดวงจันทร์ทั้งหมด 54 ดวงถูกปลดล็อกแล้ว",
+        });
+        setSecretCode("");
+      } else {
+        toast({
+          title: "❌ รหัสไม่ถูกต้อง",
+          description: "กรุณาลองใหม่อีกครั้ง",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Unlock error:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถตรวจสอบรหัสได้",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <div className="py-4 space-y-8 pb-20">
@@ -88,14 +147,71 @@ export default function About() {
             </div>
             {lastCheckedAt && (
               <div className="text-xs text-muted-foreground">
-                ตรวจสอบล่าสุด:{" "}
-                {new Date(lastCheckedAt).toLocaleString("th-TH")}
+                ตรวจสอบล่าสุด: {new Date(lastCheckedAt).toLocaleString("th-TH")}
               </div>
             )}
           </section>
         </AnimatedSection>
 
         <AnimatedSection delay={160} duration={400}>
+          <section className="card-minimal space-y-4">
+            <div className="mb-3">
+              <h2 className="text-lg font-medium">Redeem Code</h2>
+            </div>
+
+            {isUnlocked ? (
+              <div className="space-y-2">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                    <Unlock className="w-5 h-5" />
+                    <span className="font-semibold">ปลดล็อกแล้ว!</span>
+                  </div>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-2">
+                    คุณสามารถเข้าถึงดวงจันทร์ทั้งหมด 54 ดวงได้แล้ว 🌕✨
+                  </p>
+                  {getUnlockStatus().unlockedAt && (
+                    <p className="text-xs text-emerald-600/70 dark:text-emerald-500/70 mt-1">
+                      ปลดล็อกเมื่อ:{" "}
+                      {new Date(getUnlockStatus().unlockedAt!).toLocaleString(
+                        "th-TH",
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleUnlockSubmit} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="secretCode"></Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="secretCode"
+                      type="password"
+                      value={secretCode}
+                      onChange={(e) => setSecretCode(e.target.value)}
+                      placeholder="ใส่รหัสที่นี่..."
+                      className="font-mono"
+                      disabled={isVerifying}
+                      maxLength={50}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={isVerifying || !secretCode.trim()}
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Unlock className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </section>
+        </AnimatedSection>
+
+        <AnimatedSection delay={200} duration={400}>
           <section className="card-minimal text-center">
             <p className="text-sm text-muted-foreground">
               Dream book by Bon © {new Date().getFullYear()}

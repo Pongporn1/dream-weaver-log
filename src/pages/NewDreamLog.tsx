@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   FolderOpen,
+  Zap,
+  Maximize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -39,6 +41,7 @@ import {
   DreamSettings,
 } from "@/components/dream-form";
 import { DreamTypeSelector } from "@/components/dream-form/DreamTypeSelector";
+import { QuickCaptureMode } from "@/components/dream-form/QuickCaptureMode";
 import {
   Accordion,
   AccordionContent,
@@ -127,6 +130,7 @@ export default function NewDreamLog() {
   const initialFormRef = useRef<DreamFormState>(createInitialForm());
   const [form, setForm] = useState<DreamFormState>(initialFormRef.current);
   const isMountedRef = useRef(true);
+  const [quickMode, setQuickMode] = useState(false);
   const formRef = useRef(form);
 
   const isDraftEmpty = useCallback((data: DreamFormState) => {
@@ -508,12 +512,28 @@ export default function NewDreamLog() {
                 บันทึกฝันใหม่
               </h1>
             </div>
-            <Button onClick={saveDream} disabled={saving}>
-              <Save className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">
-                {saving ? "กำลังบันทึก..." : "บันทึก"}
-              </span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setQuickMode(!quickMode)}
+                title={
+                  quickMode ? "เปลี่ยนเป็นโหมดเต็ม" : "เปลี่ยนเป็นโหมดเร็ว"
+                }
+              >
+                {quickMode ? (
+                  <Maximize2 className="w-4 h-4" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+              </Button>
+              <Button onClick={saveDream} disabled={saving}>
+                <Save className="w-4 h-4" />
+                <span className="hidden sm:inline ml-2">
+                  {saving ? "กำลังบันทึก..." : "บันทึก"}
+                </span>
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -562,153 +582,181 @@ export default function NewDreamLog() {
         onSubmit={handleSubmit}
         className="container-app space-y-4 sm:space-y-6 pb-32"
       >
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-          {/* LEFT COLUMN - Story Summary */}
-          <div className="lg:row-span-2">
-            <div className="card-minimal p-3 sm:p-4 h-full">
+        {quickMode ? (
+          <QuickCaptureMode
+            form={{
+              date: form.date,
+              wakeTime: form.wakeTime,
+              world: form.world,
+              storySummary: form.storySummary,
+              dreamTypes: form.dreamTypes,
+            }}
+            onFormChange={(updates) =>
+              setForm((prev) => ({ ...prev, ...updates }))
+            }
+            onSave={saveDream}
+            onSwitchToFull={() => setQuickMode(false)}
+            saving={saving}
+          />
+        ) : (
+          <>
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+              {/* LEFT COLUMN - Story Summary */}
+              <div className="lg:row-span-2">
+                <div className="card-minimal p-3 sm:p-4 h-full">
+                  <div className="mb-3">
+                    <Label
+                      htmlFor="storySummary"
+                      className="text-base font-medium"
+                    >
+                      เรื่องย่อความฝัน
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      เล่าแบบสั้นหรือยาวตามที่จำได้
+                    </p>
+                  </div>
+                  <Textarea
+                    id="storySummary"
+                    placeholder="เล่าเหตุการณ์ในฝัน..."
+                    value={form.storySummary}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        storySummary: e.target.value,
+                      }))
+                    }
+                    className="min-h-[200px] sm:min-h-[240px] lg:min-h-[320px]"
+                  />
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN */}
+              <div className="space-y-4 sm:space-y-6">
+                {/* Date/Time Card */}
+                <div className="card-minimal p-3 sm:p-4">
+                  <div className="mb-3">
+                    <h2 className="text-base font-medium">วันที่และเวลาตื่น</h2>
+                  </div>
+                  <DateTimeFields
+                    date={form.date}
+                    wakeTime={form.wakeTime}
+                    onDateChange={(v) =>
+                      setForm((prev) => ({ ...prev, date: v }))
+                    }
+                    onWakeTimeChange={(v) =>
+                      setForm((prev) => ({ ...prev, wakeTime: v }))
+                    }
+                  />
+                </div>
+
+                {/* World Card */}
+                <div className="card-minimal p-3 sm:p-4">
+                  <div className="mb-3">
+                    <h2 className="text-base font-medium">โลกในฝัน</h2>
+                  </div>
+                  <WorldSelector
+                    worlds={worlds}
+                    selectedWorld={form.world}
+                    newWorld={form.newWorld}
+                    onWorldChange={(v) =>
+                      setForm((prev) => ({ ...prev, world: v }))
+                    }
+                    onNewWorldChange={(v) =>
+                      setForm((prev) => ({ ...prev, newWorld: v }))
+                    }
+                  />
+                </div>
+
+                {/* Additional Details Accordion */}
+                <div className="card-minimal p-3 sm:p-4">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="details" className="border-none">
+                      <AccordionTrigger className="px-0 py-0 text-base font-medium hover:no-underline">
+                        รายละเอียดเพิ่มเติม
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-4 space-y-4 sm:space-y-6">
+                        <DreamSettings
+                          timeSystem={form.timeSystem}
+                          threatLevel={form.threatLevel}
+                          safetyOverride={form.safetyOverride}
+                          exit={form.exit}
+                          onTimeSystemChange={(v) =>
+                            setForm((prev) => ({ ...prev, timeSystem: v }))
+                          }
+                          onThreatLevelChange={(v) =>
+                            setForm((prev) => ({ ...prev, threatLevel: v }))
+                          }
+                          onSafetyOverrideChange={(v) =>
+                            setForm((prev) => ({ ...prev, safetyOverride: v }))
+                          }
+                          onExitChange={(v) =>
+                            setForm((prev) => ({ ...prev, exit: v }))
+                          }
+                        />
+
+                        <EnvironmentSelector
+                          selectedEnvironments={form.environments}
+                          newEnvironment={form.newEnvironment}
+                          commonEnvironments={topEnvironments}
+                          onToggleEnvironment={toggleEnvironment}
+                          onNewEnvironmentChange={(v) =>
+                            setForm((prev) => ({ ...prev, newEnvironment: v }))
+                          }
+                          onAddEnvironment={handleAddEnvironment}
+                        />
+
+                        <EntitySelector
+                          entities={entities}
+                          selectedEntities={form.selectedEntities}
+                          newEntity={form.newEntity}
+                          commonEntities={topEntities}
+                          onToggleEntity={toggleEntity}
+                          onNewEntityChange={(v) =>
+                            setForm((prev) => ({ ...prev, newEntity: v }))
+                          }
+                          onAddEntity={handleAddEntity}
+                        />
+
+                        <DreamTypeSelector
+                          selectedTypes={form.dreamTypes}
+                          onToggleType={(type) => {
+                            setForm((prev) => ({
+                              ...prev,
+                              dreamTypes: prev.dreamTypes.includes(type)
+                                ? prev.dreamTypes.filter((t) => t !== type)
+                                : [...prev.dreamTypes, type],
+                            }));
+                          }}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+              </div>
+            </div>
+
+            {/* FULL WIDTH - Notes */}
+            <div className="card-minimal p-3 sm:p-4">
               <div className="mb-3">
-                <Label htmlFor="storySummary" className="text-base font-medium">
-                  เรื่องย่อความฝัน
+                <Label htmlFor="notes" className="text-base font-medium">
+                  Notes เพิ่มเติม
                 </Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  เล่าแบบสั้นหรือยาวตามที่จำได้
+                  รายละเอียดเสริมที่อยากเก็บไว้
                 </p>
               </div>
               <Textarea
-                id="storySummary"
-                placeholder="เล่าเหตุการณ์ในฝัน..."
-                value={form.storySummary}
+                id="notes"
+                placeholder="พิมพ์เพิ่มเติมที่นี่..."
+                value={form.notes}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, storySummary: e.target.value }))
+                  setForm((prev) => ({ ...prev, notes: e.target.value }))
                 }
-                className="min-h-[200px] sm:min-h-[240px] lg:min-h-[320px]"
+                className="min-h-[120px]"
               />
             </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Date/Time Card */}
-            <div className="card-minimal p-3 sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-base font-medium">วันที่และเวลาตื่น</h2>
-              </div>
-              <DateTimeFields
-                date={form.date}
-                wakeTime={form.wakeTime}
-                onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
-                onWakeTimeChange={(v) =>
-                  setForm((prev) => ({ ...prev, wakeTime: v }))
-                }
-              />
-            </div>
-
-            {/* World Card */}
-            <div className="card-minimal p-3 sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-base font-medium">โลกในฝัน</h2>
-              </div>
-              <WorldSelector
-                worlds={worlds}
-                selectedWorld={form.world}
-                newWorld={form.newWorld}
-                onWorldChange={(v) =>
-                  setForm((prev) => ({ ...prev, world: v }))
-                }
-                onNewWorldChange={(v) =>
-                  setForm((prev) => ({ ...prev, newWorld: v }))
-                }
-              />
-            </div>
-
-            {/* Additional Details Accordion */}
-            <div className="card-minimal p-3 sm:p-4">
-              <Accordion type="single" collapsible>
-                <AccordionItem value="details" className="border-none">
-                  <AccordionTrigger className="px-0 py-0 text-base font-medium hover:no-underline">
-                    รายละเอียดเพิ่มเติม
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-4 space-y-4 sm:space-y-6">
-                    <DreamSettings
-                      timeSystem={form.timeSystem}
-                      threatLevel={form.threatLevel}
-                      safetyOverride={form.safetyOverride}
-                      exit={form.exit}
-                      onTimeSystemChange={(v) =>
-                        setForm((prev) => ({ ...prev, timeSystem: v }))
-                      }
-                      onThreatLevelChange={(v) =>
-                        setForm((prev) => ({ ...prev, threatLevel: v }))
-                      }
-                      onSafetyOverrideChange={(v) =>
-                        setForm((prev) => ({ ...prev, safetyOverride: v }))
-                      }
-                      onExitChange={(v) =>
-                        setForm((prev) => ({ ...prev, exit: v }))
-                      }
-                    />
-
-                    <EnvironmentSelector
-                      selectedEnvironments={form.environments}
-                      newEnvironment={form.newEnvironment}
-                      commonEnvironments={topEnvironments}
-                      onToggleEnvironment={toggleEnvironment}
-                      onNewEnvironmentChange={(v) =>
-                        setForm((prev) => ({ ...prev, newEnvironment: v }))
-                      }
-                      onAddEnvironment={handleAddEnvironment}
-                    />
-
-                    <EntitySelector
-                      entities={entities}
-                      selectedEntities={form.selectedEntities}
-                      newEntity={form.newEntity}
-                      commonEntities={topEntities}
-                      onToggleEntity={toggleEntity}
-                      onNewEntityChange={(v) =>
-                        setForm((prev) => ({ ...prev, newEntity: v }))
-                      }
-                      onAddEntity={handleAddEntity}
-                    />
-
-                    <DreamTypeSelector
-                      selectedTypes={form.dreamTypes}
-                      onToggleType={(type) => {
-                        setForm((prev) => ({
-                          ...prev,
-                          dreamTypes: prev.dreamTypes.includes(type)
-                            ? prev.dreamTypes.filter((t) => t !== type)
-                            : [...prev.dreamTypes, type],
-                        }));
-                      }}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          </div>
-        </div>
-
-        {/* FULL WIDTH - Notes */}
-        <div className="card-minimal p-3 sm:p-4">
-          <div className="mb-3">
-            <Label htmlFor="notes" className="text-base font-medium">
-              Notes เพิ่มเติม
-            </Label>
-            <p className="text-xs text-muted-foreground mt-1">
-              รายละเอียดเสริมที่อยากเก็บไว้
-            </p>
-          </div>
-          <Textarea
-            id="notes"
-            placeholder="พิมพ์เพิ่มเติมที่นี่..."
-            value={form.notes}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, notes: e.target.value }))
-            }
-            className="min-h-[120px]"
-          />
-        </div>
+          </>
+        )}
       </form>
     </div>
   );

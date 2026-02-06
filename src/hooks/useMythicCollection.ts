@@ -373,6 +373,27 @@ export function useMythicCollection() {
     [collection],
   );
 
+  // Unlock all moons at once (for redeem code)
+  const unlockAllMoonsInCollection = useCallback(() => {
+    const now = new Date().toISOString();
+    const allMoons: Record<string, MoonCollectionEntry> = {};
+
+    Object.values(MOON_PHENOMENA).forEach((moon) => {
+      allMoons[moon.id] = {
+        id: moon.id,
+        firstEncountered: now,
+        encounterCount: 1,
+        lastEncountered: now,
+        isFavorite: false,
+        isLocked: false,
+        themeDurationBoost: 0,
+      };
+    });
+
+    setCollection(allMoons);
+    console.log("🌕 All 54 moons unlocked in collection!");
+  }, []);
+
   return {
     collection,
     isLoaded,
@@ -386,5 +407,6 @@ export function useMythicCollection() {
     getMythicMoons,
     getParticleConfig,
     isDiscovered,
+    unlockAllMoonsInCollection,
   };
 }

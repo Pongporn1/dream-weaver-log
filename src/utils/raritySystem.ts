@@ -4,6 +4,7 @@ import {
   getAllPhenomena,
   MOON_PHENOMENA,
 } from "@/data/moonPhenomena";
+import { areMoonsUnlocked } from "@/lib/moonUnlock";
 
 // Rarity weights (adjusted for better user experience)
 const RARITY_WEIGHTS: Record<MoonRarity, number> = {
@@ -12,6 +13,15 @@ const RARITY_WEIGHTS: Record<MoonRarity, number> = {
   very_rare: 15, // 15% - Blue Moon, Veiled Moon (หายากมาก)
   legendary: 10, // 10% - Blood Moon, Still Moon (หายากมากๆ)
   mythic: 5, // 5% - Empty Sky, Crystal Moon (หายากที่สุด)
+};
+
+// Unlocked mode: All moons have equal chance
+const UNLOCKED_WEIGHTS: Record<MoonRarity, number> = {
+  normal: 30,
+  rare: 30,
+  very_rare: 30,
+  legendary: 30,
+  mythic: 30,
 };
 
 // Storage keys
@@ -25,13 +35,16 @@ const BASE_DURATION_MS = 30 * 60 * 1000; // 30 minutes base
 
 /**
  * Select a random moon phenomenon based on rarity weights
+ * If moons are unlocked, all moons have equal chance
  */
 export const selectRandomPhenomenon = (): MoonPhenomenon => {
   const allPhenomena = getAllPhenomena();
+  const isUnlocked = areMoonsUnlocked();
+  const weights = isUnlocked ? UNLOCKED_WEIGHTS : RARITY_WEIGHTS;
 
   // Calculate total weight
   const totalWeight = allPhenomena.reduce((sum, phenomenon) => {
-    return sum + RARITY_WEIGHTS[phenomenon.rarity];
+    return sum + weights[phenomenon.rarity];
   }, 0);
 
   // Generate random number
@@ -39,7 +52,7 @@ export const selectRandomPhenomenon = (): MoonPhenomenon => {
 
   // Select phenomenon based on weight
   for (const phenomenon of allPhenomena) {
-    random -= RARITY_WEIGHTS[phenomenon.rarity];
+    random -= weights[phenomenon.rarity];
     if (random <= 0) {
       return phenomenon;
     }
@@ -145,8 +158,9 @@ export const getSessionPhenomenon = (): {
   localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
 
   const durationMins = Math.round(duration / 60000);
+  const unlockStatus = areMoonsUnlocked() ? " 🔓 [UNLOCKED MODE]" : "";
   console.log(
-    `🌙 New moon selected: ${newPhenomenon.name} (duration: ${durationMins} minutes)`,
+    `🌙 New moon selected: ${newPhenomenon.name} (duration: ${durationMins} minutes)${unlockStatus}`,
   );
 
   return { phenomenon: newPhenomenon, isNewEncounter: true }; // This is a new encounter!
