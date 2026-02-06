@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Edit2, Save, X } from "lucide-react";
+import { ArrowLeft, Trash2, Edit2, Save, X, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DreamDetailHeaderProps {
@@ -10,6 +10,7 @@ interface DreamDetailHeaderProps {
   onCancel: () => void;
   onSave: () => void;
   onDelete: () => void;
+  onExport?: () => void;
 }
 
 export function DreamDetailHeader({
@@ -21,6 +22,7 @@ export function DreamDetailHeader({
   onCancel,
   onSave,
   onDelete,
+  onExport,
 }: DreamDetailHeaderProps) {
   return (
     <div className="flex items-center justify-between">
@@ -49,6 +51,16 @@ export function DreamDetailHeader({
           </>
         ) : (
           <>
+            {onExport && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onExport}
+                title="Export เป็น PDF"
+              >
+                <FileDown className="w-4 h-4" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={onEdit}>
               <Edit2 className="w-4 h-4" />
             </Button>

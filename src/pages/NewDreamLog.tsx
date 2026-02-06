@@ -1,4 +1,11 @@
-import { useState, useEffect, ReactNode, useCallback, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,6 +15,7 @@ import {
   Save,
   ShieldCheck,
   AlertTriangle,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,18 +24,40 @@ import { addDreamLog, getWorlds, getEntities } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { toast } from "@/hooks/use-toast";
 import {
+  getTopEntities,
+  incrementEntityFrequency,
+} from "@/lib/entityFrequency";
+import {
+  getTopEnvironments,
+  incrementEnvironmentFrequency,
+} from "@/lib/environmentFrequency";
+import {
   DateTimeFields,
   WorldSelector,
   EnvironmentSelector,
   EntitySelector,
   DreamSettings,
 } from "@/components/dream-form";
+import { DreamTypeSelector } from "@/components/dream-form/DreamTypeSelector";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  getDrafts,
+  saveDraft,
+  loadDraft,
+  deleteDraft,
+  createNewDraft,
+  getActiveDraftId,
+  setActiveDraftId,
+  migrateLegacyDraft,
+  getRecentDrafts,
+  type DraftMetadata,
+} from "@/lib/draftManager";
+import { DraftSelector } from "@/components/dream-form/DraftSelector";
 
 const DRAFT_STORAGE_KEY = "dream-log-draft-v2";
 
@@ -41,6 +71,7 @@ type DreamFormState = {
   newEnvironment: string;
   selectedEntities: string[];
   newEntity: string;
+  dreamTypes: string[];
   threatLevel: DreamLog["threatLevel"];
   safetyOverride: DreamLog["safetyOverride"];
   exit: DreamLog["exit"];
@@ -64,6 +95,7 @@ const createInitialForm = (): DreamFormState => ({
   newEnvironment: "",
   selectedEntities: [],
   newEntity: "",
+  dreamTypes: [],
   threatLevel: 0,
   safetyOverride: "none",
   exit: "unknown",
@@ -74,72 +106,24 @@ const createInitialForm = (): DreamFormState => ({
 const formatSavedTime = (date: Date) =>
   date.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
-function AnimatedField({
-  children,
-  delay = 0,
-  duration = 400,
-}: {
-  children: ReactNode;
-  delay?: number;
-  duration?: number;
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsVisible(true), delay);
-    return () => clearTimeout(timeout);
-  }, [delay]);
-
-  return (
-    <div
-      className="transition-all"
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(16px)",
-        transitionDuration: `${duration}ms`,
-        transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function SectionCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_15px_45px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
-      <div className="mb-4">
-        <h2
-          className="text-base font-semibold text-slate-900"
-          style={{ fontFamily: "Space Grotesk, sans-serif" }}
-        >
-          {title}
-        </h2>
-        {description && <p className="text-xs text-slate-500">{description}</p>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 export default function NewDreamLog() {
   const navigate = useNavigate();
   const [worlds, setWorlds] = useState<{ id: string; name: string }[]>([]);
   const [entities, setEntities] = useState<{ id: string; name: string }[]>([]);
+  const [topEntities, setTopEntities] = useState<string[]>([]);
+  const [topEnvironments, setTopEnvironments] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [draftState, setDraftState] = useState<
     "idle" | "saving" | "saved" | "restored" | "error"
   >("idle");
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [draftReady, setDraftReady] = useState(false);
+
+  // Multi-draft states
+  const [activeDraftId, setActiveDraftIdState] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, DraftMetadata>>({});
+  const [showDraftSelector, setShowDraftSelector] = useState(false);
+
   const initialFormRef = useRef<DreamFormState>(createInitialForm());
   const [form, setForm] = useState<DreamFormState>(initialFormRef.current);
   const isMountedRef = useRef(true);
@@ -184,6 +168,11 @@ export default function NewDreamLog() {
       ]);
       setWorlds(worldsData.map((w) => ({ id: w.id, name: w.name })));
       setEntities(entitiesData.map((e) => ({ id: e.id, name: e.name })));
+
+      // โหลด Top 9 ตัวละครที่ใช้บ่อยที่สุด
+      setTopEntities(getTopEntities(9));
+      // โหลด Top 6 สภาพแวดล้อมที่ใช้บ่อยที่สุด
+      setTopEnvironments(getTopEnvironments(6));
     };
     loadData();
   }, []);
@@ -191,13 +180,20 @@ export default function NewDreamLog() {
   useEffect(() => {
     let restored = false;
     try {
-      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as DraftPayload | null;
-        if (parsed?.form) {
-          setForm({ ...createInitialForm(), ...parsed.form });
-          if (parsed.savedAt) {
-            const parsedDate = new Date(parsed.savedAt);
+      // 1. Migrate legacy draft if exists
+      const migrated = migrateLegacyDraft();
+
+      // 2. Load active draft ID
+      const activeId = getActiveDraftId();
+
+      // 3. If has active ID, load that draft
+      if (activeId) {
+        const draft = loadDraft(activeId);
+        if (draft) {
+          setForm({ ...createInitialForm(), ...draft.form });
+          setActiveDraftIdState(activeId);
+          if (draft.savedAt) {
+            const parsedDate = new Date(draft.savedAt);
             if (!Number.isNaN(parsedDate.getTime())) {
               setDraftSavedAt(parsedDate);
             }
@@ -206,16 +202,26 @@ export default function NewDreamLog() {
           restored = true;
         }
       }
+
+      // 4. Load all drafts for selector
+      const allDrafts = getDrafts();
+      setDrafts(allDrafts.drafts);
+
+      if (migrated && restored) {
+        toast({
+          title: "คืนค่าร่างล่าสุดแล้ว",
+          description: "แบบร่างเก่าถูกย้ายมาระบบใหม่เรียบร้อยแล้ว",
+        });
+      } else if (restored) {
+        toast({
+          title: "คืนค่าร่างล่าสุดแล้ว",
+          description: "ข้อมูลถูกเก็บไว้ในเครื่องของคุณ",
+        });
+      }
     } catch (error) {
       console.warn("Failed to restore draft:", error);
     }
 
-    if (restored) {
-      toast({
-        title: "คืนค่าร่างล่าสุดแล้ว",
-        description: "ข้อมูลถูกเก็บไว้ในเครื่องของคุณ",
-      });
-    }
     setDraftReady(true);
   }, []);
 
@@ -223,24 +229,29 @@ export default function NewDreamLog() {
     (nextForm: DreamFormState, silent = false) => {
       try {
         if (isDraftEmpty(nextForm)) {
-          localStorage.removeItem(DRAFT_STORAGE_KEY);
-          if (!silent && isMountedRef.current) {
-            setDraftState("idle");
-            setDraftSavedAt(null);
-          }
+          // Don't remove, just don't save
           return;
         }
 
-        const now = new Date();
-        const payload: DraftPayload = {
-          version: 1,
-          savedAt: now.toISOString(),
-          form: nextForm,
-        };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+        let draftId = activeDraftId;
+
+        // If no active draft, create new one
+        if (!draftId) {
+          draftId = createNewDraft(nextForm);
+          setActiveDraftIdState(draftId);
+          setActiveDraftId(draftId);
+        } else {
+          // Update existing draft
+          saveDraft(draftId, nextForm);
+        }
+
+        // Update local state
+        const allDrafts = getDrafts();
+        setDrafts(allDrafts.drafts);
+
         if (!silent && isMountedRef.current) {
           setDraftState("saved");
-          setDraftSavedAt(now);
+          setDraftSavedAt(new Date());
         }
       } catch (error) {
         if (!silent && isMountedRef.current) {
@@ -249,13 +260,12 @@ export default function NewDreamLog() {
         console.warn("Failed to persist draft:", error);
       }
     },
-    [isDraftEmpty],
+    [isDraftEmpty, activeDraftId],
   );
 
   useEffect(() => {
     if (!draftReady) return;
     if (isDraftEmpty(form)) {
-      persistDraft(form);
       return;
     }
     setDraftState("saving");
@@ -267,13 +277,12 @@ export default function NewDreamLog() {
     const handleBeforeUnload = () => {
       if (isDraftEmpty(formRef.current)) return;
       try {
-        const now = new Date();
-        const payload: DraftPayload = {
-          version: 1,
-          savedAt: now.toISOString(),
-          form: formRef.current,
-        };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+        const draftId = getActiveDraftId();
+        if (draftId) {
+          saveDraft(draftId, formRef.current);
+        } else {
+          createNewDraft(formRef.current);
+        }
       } catch (error) {
         console.warn("Failed to save draft on unload:", error);
       }
@@ -284,6 +293,16 @@ export default function NewDreamLog() {
 
   const saveDream = useCallback(async () => {
     if (saving) return;
+
+    // ตรวจสอบว่าต้องมีข้อมูลอย่างน้อย storySummary หรือ notes
+    if (!form.storySummary.trim() && !form.notes.trim()) {
+      toast({
+        title: "ไม่สามารถบันทึกได้",
+        description: "กรุณากรอกเรื่องย่อความฝันหรือ Notes อย่างน้อย 1 อย่าง",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -308,6 +327,7 @@ export default function NewDreamLog() {
         timeSystem: form.timeSystem,
         environments: environmentNames,
         entities: entityNames,
+        dreamTypes: form.dreamTypes.length > 0 ? form.dreamTypes : undefined,
         threatLevel: form.threatLevel,
         safetyOverride: form.safetyOverride,
         exit: form.exit,
@@ -315,6 +335,11 @@ export default function NewDreamLog() {
       });
 
       if (result) {
+        // อัพเดทความถี่การใช้งานตัวละคร
+        incrementEntityFrequency(entityNames);
+        // โหลดค่าใหม่ทันที
+        setTopEntities(getTopEntities(9));
+
         toast({ title: "บันทึกเรียบร้อย" });
         const emptyForm = createInitialForm();
         initialFormRef.current = emptyForm;
@@ -368,7 +393,10 @@ export default function NewDreamLog() {
   };
 
   const handleAddEnvironment = () => {
-    if (form.newEnvironment && !form.environments.includes(form.newEnvironment)) {
+    if (
+      form.newEnvironment &&
+      !form.environments.includes(form.newEnvironment)
+    ) {
       setForm((prev) => ({
         ...prev,
         environments: [...prev.environments, prev.newEnvironment],
@@ -377,46 +405,89 @@ export default function NewDreamLog() {
     }
   };
 
+  const handleAddEntity = () => {
+    if (form.newEntity && !form.selectedEntities.includes(form.newEntity)) {
+      setForm((prev) => ({
+        ...prev,
+        selectedEntities: [...prev.selectedEntities, prev.newEntity],
+        newEntity: "",
+      }));
+    }
+  };
+
   const handleClearDraft = () => {
     const emptyForm = createInitialForm();
     initialFormRef.current = emptyForm;
     setForm(emptyForm);
-    persistDraft(emptyForm);
-    toast({ title: "ล้างแบบร่างแล้ว" });
+    setActiveDraftIdState(null);
+    setActiveDraftId(null);
+    toast({ title: "สร้างแบบร่างใหม่" });
+  };
+
+  const handleLoadDraft = (draftId: string) => {
+    const draft = loadDraft(draftId);
+    if (draft) {
+      setForm({ ...createInitialForm(), ...draft.form });
+      setActiveDraftIdState(draftId);
+      setActiveDraftId(draftId);
+      setShowDraftSelector(false);
+      toast({ title: "โหลดแบบร่าง", description: draft.title });
+    }
+  };
+
+  const handleNewDraft = () => {
+    const emptyForm = createInitialForm();
+    setForm(emptyForm);
+    setActiveDraftIdState(null);
+    setActiveDraftId(null);
+    setShowDraftSelector(false);
+    toast({ title: "สร้างแบบร่างใหม่" });
+  };
+
+  const handleDeleteDraft = (draftId: string) => {
+    deleteDraft(draftId);
+    const allDrafts = getDrafts();
+    setDrafts(allDrafts.drafts);
+
+    if (activeDraftId === draftId) {
+      handleNewDraft();
+    }
+
+    toast({ title: "ลบแบบร่างแล้ว" });
   };
 
   const draftBadge = useMemo(() => {
     if (draftState === "saving") {
       return {
         label: "กำลังบันทึกอัตโนมัติ...",
-        className: "bg-amber-100/80 text-amber-700 border-amber-200/80",
+        className: "bg-muted border-border text-muted-foreground",
         icon: Clock3,
       };
     }
     if (draftState === "saved" && draftSavedAt) {
       return {
         label: `บันทึกล่าสุด ${formatSavedTime(draftSavedAt)}`,
-        className: "bg-emerald-100/80 text-emerald-700 border-emerald-200/80",
+        className: "bg-muted border-border text-foreground",
         icon: CheckCircle2,
       };
     }
     if (draftState === "restored") {
       return {
         label: "กู้คืนแบบร่างล่าสุดแล้ว",
-        className: "bg-sky-100/80 text-sky-700 border-sky-200/80",
+        className: "bg-primary/10 border-primary/20 text-primary",
         icon: RotateCcw,
       };
     }
     if (draftState === "error") {
       return {
         label: "บันทึกอัตโนมัติไม่สำเร็จ",
-        className: "bg-rose-100/80 text-rose-700 border-rose-200/80",
+        className: "bg-destructive/10 border-destructive/20 text-destructive",
         icon: AlertTriangle,
       };
     }
     return {
       label: "บันทึกอัตโนมัติเปิดอยู่",
-      className: "bg-slate-100/80 text-slate-600 border-slate-200/80",
+      className: "bg-muted border-border text-muted-foreground",
       icon: ShieldCheck,
     };
   }, [draftState, draftSavedAt]);
@@ -425,217 +496,219 @@ export default function NewDreamLog() {
 
   return (
     <div className="space-y-6 pb-8">
-      <AnimatedField delay={0} duration={400}>
-        <div className="relative overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-[#fff7ed] via-[#fef3c7]/70 to-[#ecfeff] p-6 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.5)]">
-          <div className="absolute -top-20 right-6 h-32 w-32 rounded-full bg-amber-200/60 blur-3xl" />
-          <div className="absolute -bottom-24 left-4 h-40 w-40 rounded-full bg-cyan-200/40 blur-3xl" />
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-                className="mt-1"
-              >
+      {/* Minimal Header */}
+      <div className="bg-card border-b border-border sticky top-0 z-20 backdrop-blur-sm bg-card/95">
+        <div className="container-app py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <div>
-                <h1
-                  className="text-3xl text-slate-900"
-                  style={{ fontFamily: "DM Serif Display, serif" }}
-                >
-                  บันทึกฝันใหม่
-                </h1>
-                <p className="text-sm text-slate-600">
-                  โหมดกรอกเองแบบเร็ว ไม่มีฟีเจอร์สร้างปก
-                </p>
-              </div>
+              <h1 className="text-xl sm:text-2xl font-semibold truncate">
+                บันทึกฝันใหม่
+              </h1>
             </div>
-            <Button
-              type="button"
-              className="gap-2 bg-slate-900 text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.7)] hover:bg-slate-800"
-              disabled={saving}
-              onClick={saveDream}
-            >
+            <Button onClick={saveDream} disabled={saving}>
               <Save className="w-4 h-4" />
-              {saving ? "กำลังบันทึก..." : "บันทึก"}
+              <span className="hidden sm:inline ml-2">
+                {saving ? "กำลังบันทึก..." : "บันทึก"}
+              </span>
             </Button>
           </div>
 
-          <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${draftBadge.className}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs border rounded-md ${draftBadge.className}`}
             >
-              <DraftIcon className="h-3.5 w-3.5" />
+              <DraftIcon className="w-3 h-3" />
               {draftBadge.label}
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs text-slate-600">
+            <button
+              type="button"
+              onClick={() => setShowDraftSelector(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs border border-border bg-muted text-muted-foreground rounded-md hover:text-foreground transition"
+            >
+              <FolderOpen className="w-3 h-3" />
+              แบบร่าง ({Object.keys(drafts).length})
+            </button>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs border border-border bg-muted text-muted-foreground rounded-md">
               กด Ctrl/Cmd+S เพื่อบันทึกเร็ว
             </span>
             <button
               type="button"
-              onClick={handleClearDraft}
-              className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs text-slate-600 transition hover:text-slate-900"
+              onClick={handleNewDraft}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs border border-border bg-muted text-muted-foreground rounded-md hover:text-foreground transition"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              ล้างแบบร่าง
+              <RotateCcw className="w-3 h-3" />
+              แบบร่างใหม่
             </button>
           </div>
         </div>
-      </AnimatedField>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <AnimatedField delay={80} duration={400}>
-            <SectionCard
-              title="เรื่องย่อความฝัน"
-              description="เล่าแบบสั้นหรือยาวตามที่จำได้ ระบบจะบันทึกรวมกับ notes"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="storySummary">เรื่องย่อ</Label>
-                <Textarea
-                  id="storySummary"
-                  placeholder="เล่าเหตุการณ์ในฝัน..."
-                  value={form.storySummary}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, storySummary: e.target.value }))
-                  }
-                  className="min-h-[160px]"
-                />
+      {/* Draft Selector */}
+      <DraftSelector
+        open={showDraftSelector}
+        onOpenChange={setShowDraftSelector}
+        drafts={getRecentDrafts()}
+        activeDraftId={activeDraftId}
+        onSelectDraft={handleLoadDraft}
+        onDeleteDraft={handleDeleteDraft}
+        onNewDraft={handleNewDraft}
+      />
+
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="container-app space-y-4 sm:space-y-6 pb-32"
+      >
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          {/* LEFT COLUMN - Story Summary */}
+          <div className="lg:row-span-2">
+            <div className="card-minimal p-3 sm:p-4 h-full">
+              <div className="mb-3">
+                <Label htmlFor="storySummary" className="text-base font-medium">
+                  เรื่องย่อความฝัน
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  เล่าแบบสั้นหรือยาวตามที่จำได้
+                </p>
               </div>
-            </SectionCard>
-          </AnimatedField>
-
-          <AnimatedField delay={140} duration={400}>
-            <div className="space-y-6">
-              <SectionCard
-                title="วันที่และเวลาตื่น"
-                description="กรอกเท่าที่จำได้ หากไม่ใส่เวลาตื่น ระบบจะใช้เวลาตอนบันทึก"
-              >
-                <DateTimeFields
-                  date={form.date}
-                  wakeTime={form.wakeTime}
-                  onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
-                  onWakeTimeChange={(v) =>
-                    setForm((prev) => ({ ...prev, wakeTime: v }))
-                  }
-                />
-              </SectionCard>
-
-              <SectionCard
-                title="โลกในฝัน"
-                description="เลือกโลกเดิม หรือพิมพ์โลกใหม่ได้ทันที"
-              >
-                <WorldSelector
-                  worlds={worlds}
-                  selectedWorld={form.world}
-                  newWorld={form.newWorld}
-                  onWorldChange={(v) => setForm((prev) => ({ ...prev, world: v }))}
-                  onNewWorldChange={(v) =>
-                    setForm((prev) => ({ ...prev, newWorld: v }))
-                  }
-                />
-              </SectionCard>
-
-              <SectionCard title="รายละเอียดเพิ่มเติม (ไม่จำเป็น)">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="details" className="border-none">
-                    <AccordionTrigger className="px-0 text-left text-sm font-medium text-slate-700 hover:no-underline">
-                      ปรับความเข้มข้นและองค์ประกอบของฝัน
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-4">
-                      <div className="space-y-6">
-                        <DreamSettings
-                          timeSystem={form.timeSystem}
-                          threatLevel={form.threatLevel}
-                          safetyOverride={form.safetyOverride}
-                          exit={form.exit}
-                          onTimeSystemChange={(v) =>
-                            setForm((prev) => ({ ...prev, timeSystem: v }))
-                          }
-                          onThreatLevelChange={(v) =>
-                            setForm((prev) => ({ ...prev, threatLevel: v }))
-                          }
-                          onSafetyOverrideChange={(v) =>
-                            setForm((prev) => ({ ...prev, safetyOverride: v }))
-                          }
-                          onExitChange={(v) =>
-                            setForm((prev) => ({ ...prev, exit: v }))
-                          }
-                        />
-
-                        <EnvironmentSelector
-                          selectedEnvironments={form.environments}
-                          newEnvironment={form.newEnvironment}
-                          onToggleEnvironment={toggleEnvironment}
-                          onNewEnvironmentChange={(v) =>
-                            setForm((prev) => ({ ...prev, newEnvironment: v }))
-                          }
-                          onAddEnvironment={handleAddEnvironment}
-                        />
-
-                        <EntitySelector
-                          entities={entities}
-                          selectedEntities={form.selectedEntities}
-                          newEntity={form.newEntity}
-                          onToggleEntity={toggleEntity}
-                          onNewEntityChange={(v) =>
-                            setForm((prev) => ({ ...prev, newEntity: v }))
-                          }
-                        />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </SectionCard>
-            </div>
-          </AnimatedField>
-        </div>
-
-        <AnimatedField delay={200} duration={400}>
-          <SectionCard
-            title="Notes เพิ่มเติม"
-            description="ถ้ามีรายละเอียดที่อยากเก็บไว้ เช่น สัญลักษณ์ หรือความหมาย"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="notes">รายละเอียดเพิ่มเติม (optional)</Label>
               <Textarea
-                id="notes"
-                placeholder="พิมพ์เพิ่มเติมที่นี่..."
-                value={form.notes}
+                id="storySummary"
+                placeholder="เล่าเหตุการณ์ในฝัน..."
+                value={form.storySummary}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, notes: e.target.value }))
+                  setForm((prev) => ({ ...prev, storySummary: e.target.value }))
                 }
-                className="min-h-[120px]"
+                className="min-h-[200px] sm:min-h-[240px] lg:min-h-[320px]"
               />
             </div>
-          </SectionCard>
-        </AnimatedField>
+          </div>
 
-        <AnimatedField delay={260} duration={400}>
-          <div className="sticky bottom-24 z-10">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.5)] backdrop-blur">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    พร้อมบันทึกแล้ว
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    ระบบจะเก็บร่างล่าสุดไว้ให้อัตโนมัติ
-                  </p>
-                </div>
-                <Button
-                  type="submit"
-                  className="gap-2 bg-slate-900 text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.7)] hover:bg-slate-800"
-                  disabled={saving}
-                >
-                  <Save className="w-4 h-4" />
-                  {saving ? "กำลังบันทึก..." : "บันทึก"}
-                </Button>
+          {/* RIGHT COLUMN */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Date/Time Card */}
+            <div className="card-minimal p-3 sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-base font-medium">วันที่และเวลาตื่น</h2>
               </div>
+              <DateTimeFields
+                date={form.date}
+                wakeTime={form.wakeTime}
+                onDateChange={(v) => setForm((prev) => ({ ...prev, date: v }))}
+                onWakeTimeChange={(v) =>
+                  setForm((prev) => ({ ...prev, wakeTime: v }))
+                }
+              />
+            </div>
+
+            {/* World Card */}
+            <div className="card-minimal p-3 sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-base font-medium">โลกในฝัน</h2>
+              </div>
+              <WorldSelector
+                worlds={worlds}
+                selectedWorld={form.world}
+                newWorld={form.newWorld}
+                onWorldChange={(v) =>
+                  setForm((prev) => ({ ...prev, world: v }))
+                }
+                onNewWorldChange={(v) =>
+                  setForm((prev) => ({ ...prev, newWorld: v }))
+                }
+              />
+            </div>
+
+            {/* Additional Details Accordion */}
+            <div className="card-minimal p-3 sm:p-4">
+              <Accordion type="single" collapsible>
+                <AccordionItem value="details" className="border-none">
+                  <AccordionTrigger className="px-0 py-0 text-base font-medium hover:no-underline">
+                    รายละเอียดเพิ่มเติม
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4 space-y-4 sm:space-y-6">
+                    <DreamSettings
+                      timeSystem={form.timeSystem}
+                      threatLevel={form.threatLevel}
+                      safetyOverride={form.safetyOverride}
+                      exit={form.exit}
+                      onTimeSystemChange={(v) =>
+                        setForm((prev) => ({ ...prev, timeSystem: v }))
+                      }
+                      onThreatLevelChange={(v) =>
+                        setForm((prev) => ({ ...prev, threatLevel: v }))
+                      }
+                      onSafetyOverrideChange={(v) =>
+                        setForm((prev) => ({ ...prev, safetyOverride: v }))
+                      }
+                      onExitChange={(v) =>
+                        setForm((prev) => ({ ...prev, exit: v }))
+                      }
+                    />
+
+                    <EnvironmentSelector
+                      selectedEnvironments={form.environments}
+                      newEnvironment={form.newEnvironment}
+                      commonEnvironments={topEnvironments}
+                      onToggleEnvironment={toggleEnvironment}
+                      onNewEnvironmentChange={(v) =>
+                        setForm((prev) => ({ ...prev, newEnvironment: v }))
+                      }
+                      onAddEnvironment={handleAddEnvironment}
+                    />
+
+                    <EntitySelector
+                      entities={entities}
+                      selectedEntities={form.selectedEntities}
+                      newEntity={form.newEntity}
+                      commonEntities={topEntities}
+                      onToggleEntity={toggleEntity}
+                      onNewEntityChange={(v) =>
+                        setForm((prev) => ({ ...prev, newEntity: v }))
+                      }
+                      onAddEntity={handleAddEntity}
+                    />
+
+                    <DreamTypeSelector
+                      selectedTypes={form.dreamTypes}
+                      onToggleType={(type) => {
+                        setForm((prev) => ({
+                          ...prev,
+                          dreamTypes: prev.dreamTypes.includes(type)
+                            ? prev.dreamTypes.filter((t) => t !== type)
+                            : [...prev.dreamTypes, type],
+                        }));
+                      }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           </div>
-        </AnimatedField>
+        </div>
+
+        {/* FULL WIDTH - Notes */}
+        <div className="card-minimal p-3 sm:p-4">
+          <div className="mb-3">
+            <Label htmlFor="notes" className="text-base font-medium">
+              Notes เพิ่มเติม
+            </Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              รายละเอียดเสริมที่อยากเก็บไว้
+            </p>
+          </div>
+          <Textarea
+            id="notes"
+            placeholder="พิมพ์เพิ่มเติมที่นี่..."
+            value={form.notes}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, notes: e.target.value }))
+            }
+            className="min-h-[120px]"
+          />
+        </div>
       </form>
     </div>
   );

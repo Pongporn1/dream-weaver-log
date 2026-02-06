@@ -3,12 +3,13 @@ export interface DreamLog {
   date: string;
   wakeTime: string;
   world: string;
-  timeSystem: 'inactive' | 'activated' | 'unknown';
+  timeSystem: "inactive" | "activated" | "unknown";
   environments: string[];
   entities: string[];
+  dreamTypes?: string[];
   threatLevel: 0 | 1 | 2 | 3 | 4 | 5;
-  safetyOverride: 'none' | 'helper' | 'separation' | 'wake' | 'unknown';
-  exit: 'wake' | 'separation' | 'collapse' | 'unknown';
+  safetyOverride: "none" | "helper" | "separation" | "wake" | "unknown";
+  exit: "wake" | "separation" | "collapse" | "unknown";
   notes?: string;
   createdAt: string;
 }
@@ -16,7 +17,7 @@ export interface DreamLog {
 export interface World {
   id: string;
   name: string;
-  type: 'persistent' | 'transient';
+  type: "persistent" | "transient";
   stability: number;
   dreamIds: string[];
   description?: string;
@@ -25,7 +26,7 @@ export interface World {
 export interface Entity {
   id: string;
   name: string;
-  role: 'observer' | 'protector' | 'guide' | 'intruder';
+  role: "observer" | "protector" | "guide" | "intruder";
   dreamIds: string[];
   description?: string;
 }
@@ -33,7 +34,7 @@ export interface Entity {
 export interface SystemModule {
   id: string;
   name: string;
-  type: 'time_activation' | 'safety_override' | 'distance_expansion' | 'other';
+  type: "time_activation" | "safety_override" | "distance_expansion" | "other";
   dreamIds: string[];
   description?: string;
 }
@@ -62,10 +63,47 @@ export interface SleepLog {
 }
 
 export const ENVIRONMENTS = [
-  'fog', 'sea', 'mountain', 'city', 'tunnel', 'rain', 'night', 'sunset'
+  "fog",
+  "sea",
+  "mountain",
+  "city",
+  "tunnel",
+  "rain",
+  "night",
+  "sunset",
 ] as const;
 
-export const TIME_SYSTEMS = ['inactive', 'activated', 'unknown'] as const;
-export const SAFETY_OVERRIDES = ['none', 'helper', 'separation', 'wake', 'unknown'] as const;
-export const EXIT_TYPES = ['wake', 'separation', 'collapse', 'unknown'] as const;
-export const ENTITY_ROLES = ['observer', 'protector', 'guide', 'intruder'] as const;
+export const DREAM_TYPES = [
+  "lucid", // Lucid Dream - รู้ตัวว่ากำลังฝัน
+  "nightmare", // ฝันร้าย
+  "recurring", // ฝันซ้ำ
+  "prophetic", // ฝันทำนาย
+] as const;
+
+export const DREAM_TYPE_LABELS: Record<(typeof DREAM_TYPES)[number], string> = {
+  lucid: "Lucid Dream",
+  nightmare: "ฝันร้าย",
+  recurring: "ฝันซ้ำ",
+  prophetic: "ฝันทำนาย",
+};
+
+export const TIME_SYSTEMS = ["inactive", "activated", "unknown"] as const;
+export const SAFETY_OVERRIDES = [
+  "none",
+  "helper",
+  "separation",
+  "wake",
+  "unknown",
+] as const;
+export const EXIT_TYPES = [
+  "wake",
+  "separation",
+  "collapse",
+  "unknown",
+] as const;
+export const ENTITY_ROLES = [
+  "observer",
+  "protector",
+  "guide",
+  "intruder",
+] as const;

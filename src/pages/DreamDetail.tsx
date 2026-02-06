@@ -3,7 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getDreamLogs, deleteDreamLog, updateDreamLog } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
+import { DREAM_TYPE_LABELS } from "@/types/dream";
 import { toast } from "sonner";
+import { printDreamLog } from "@/lib/exportPdf";
+import { DreamTypeSelector } from "@/components/dream-form/DreamTypeSelector";
 import {
   DreamDetailHeader,
   DreamStatsGrid,
@@ -14,13 +17,13 @@ import {
 } from "@/components/dream-detail";
 
 // Animation wrapper component
-function AnimatedSection({ 
-  children, 
-  delay = 0, 
-  duration = 400 
-}: { 
-  children: ReactNode; 
-  delay?: number; 
+function AnimatedSection({
+  children,
+  delay = 0,
+  duration = 400,
+}: {
+  children: ReactNode;
+  delay?: number;
   duration?: number;
 }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -61,6 +64,7 @@ export default function DreamDetail() {
     exit: "unknown" as DreamLog["exit"],
     environments: [] as string[],
     entities: [] as string[],
+    dreamTypes: [] as string[],
     notes: "",
   });
 
@@ -80,6 +84,7 @@ export default function DreamDetail() {
             exit: found.exit,
             environments: found.environments,
             entities: found.entities,
+            dreamTypes: found.dreamTypes || [],
             notes: found.notes || "",
           });
         }
@@ -108,6 +113,7 @@ export default function DreamDetail() {
         exit: dream.exit,
         environments: dream.environments,
         entities: dream.entities,
+        dreamTypes: dream.dreamTypes || [],
         notes: dream.notes || "",
       });
     }
@@ -147,6 +153,12 @@ export default function DreamDetail() {
     }
   };
 
+  const handleExport = () => {
+    if (dream) {
+      printDreamLog(dream);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-8 text-center text-muted-foreground">กำลังโหลด...</div>
@@ -183,6 +195,7 @@ export default function DreamDetail() {
           onCancel={handleCancel}
           onSave={handleSave}
           onDelete={handleDelete}
+          onExport={handleExport}
         />
       </AnimatedSection>
 
@@ -190,7 +203,10 @@ export default function DreamDetail() {
       <AnimatedSection delay={80} duration={400}>
         <div>
           {isEditing ? (
-            <DreamWorldEdit editForm={editForm} onFormChange={handleFormChange} />
+            <DreamWorldEdit
+              editForm={editForm}
+              onFormChange={handleFormChange}
+            />
           ) : (
             <h1 className="text-xl mb-1">{dream.world}</h1>
           )}
@@ -199,6 +215,44 @@ export default function DreamDetail() {
           </p>
         </div>
       </AnimatedSection>
+
+      {/* Dream Types */}
+      {(isEditing || (dream.dreamTypes && dream.dreamTypes.length > 0)) && (
+        <AnimatedSection delay={120} duration={400}>
+          <div>
+            {isEditing ? (
+              <DreamTypeSelector
+                selectedTypes={editForm.dreamTypes}
+                onToggleType={(type) => {
+                  handleFormChange({
+                    dreamTypes: editForm.dreamTypes.includes(type)
+                      ? editForm.dreamTypes.filter((t) => t !== type)
+                      : [...editForm.dreamTypes, type],
+                  });
+                }}
+              />
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-2">ประเภทฝัน</p>
+                <div className="flex flex-wrap gap-2">
+                  {dream.dreamTypes!.map((type) => (
+                    <span
+                      key={type}
+                      className="px-3 py-1 text-sm rounded-full bg-amber-100 text-amber-800 border border-amber-200"
+                    >
+                      {
+                        DREAM_TYPE_LABELS[
+                          type as keyof typeof DREAM_TYPE_LABELS
+                        ]
+                      }
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </AnimatedSection>
+      )}
 
       <AnimatedSection delay={160} duration={400}>
         <DreamStatsGrid
@@ -214,7 +268,10 @@ export default function DreamDetail() {
         <div>
           <p className="text-sm text-muted-foreground mb-2">Environments</p>
           {isEditing ? (
-            <DreamEnvironmentsEdit editForm={editForm} onFormChange={handleFormChange} />
+            <DreamEnvironmentsEdit
+              editForm={editForm}
+              onFormChange={handleFormChange}
+            />
           ) : dream.environments.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {dream.environments.map((env) => (
@@ -234,7 +291,10 @@ export default function DreamDetail() {
         <div>
           <p className="text-sm text-muted-foreground mb-2">Entities</p>
           {isEditing ? (
-            <DreamEntitiesEdit editForm={editForm} onFormChange={handleFormChange} />
+            <DreamEntitiesEdit
+              editForm={editForm}
+              onFormChange={handleFormChange}
+            />
           ) : dream.entities.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {dream.entities.map((entity) => (
@@ -254,7 +314,10 @@ export default function DreamDetail() {
         <div>
           <p className="text-sm text-muted-foreground mb-2">Notes</p>
           {isEditing ? (
-            <DreamNotesEdit editForm={editForm} onFormChange={handleFormChange} />
+            <DreamNotesEdit
+              editForm={editForm}
+              onFormChange={handleFormChange}
+            />
           ) : dream.notes ? (
             <p className="text-sm whitespace-pre-wrap">{dream.notes}</p>
           ) : (
