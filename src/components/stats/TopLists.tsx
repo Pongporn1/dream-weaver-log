@@ -17,12 +17,12 @@ export function TopWorldsList({ worlds }: { worlds: World[] }) {
       <div className="space-y-2">
         {worldCounts.map((world, index) => (
           <div key={world.name} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
+            <div className="min-w-0 flex items-center gap-2">
               <span className="text-muted-foreground">#{index + 1}</span>
-              <span>{world.name}</span>
-              <span className="text-xs text-muted-foreground">(stability {world.stability}/5)</span>
+              <span className="truncate">{world.name}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">(stability {world.stability}/5)</span>
             </div>
-            <span className="text-xs text-muted-foreground">{world.count} dreams</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{world.count} dreams</span>
           </div>
         ))}
         {worldCounts.length === 0 && (
@@ -48,12 +48,12 @@ export function TopEntitiesList({ entities }: { entities: Entity[] }) {
       <div className="space-y-2">
         {entityCounts.map((entity, index) => (
           <div key={entity.name} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
+            <div className="min-w-0 flex items-center gap-2">
               <span className="text-muted-foreground">#{index + 1}</span>
-              <span>{entity.name}</span>
-              <span className="text-xs text-muted-foreground">({entity.role})</span>
+              <span className="truncate">{entity.name}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">({entity.role})</span>
             </div>
-            <span className="text-xs text-muted-foreground">{entity.count} dreams</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{entity.count} dreams</span>
           </div>
         ))}
         {entityCounts.length === 0 && (
@@ -67,7 +67,12 @@ export function TopEntitiesList({ entities }: { entities: Entity[] }) {
 export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
   const highThreats = threats.filter((t) => t.level >= 4);
   const threatCounts = threats
-    .map((t) => ({ name: t.name, level: t.level, count: t.dreamIds.length }))
+    .map((t) => ({
+      name: t.name,
+      level: t.level,
+      count: t.dreamIds.length,
+      response: t.response,
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
@@ -86,14 +91,21 @@ export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
           <p className="text-xs text-muted-foreground">Most Common Threats:</p>
           {threatCounts.map((threat, index) => (
             <div key={threat.name} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">#{index + 1}</span>
-                <span>{threat.name}</span>
-                <span className={`text-xs ${threat.level >= 4 ? "text-red-500" : "text-muted-foreground"}`}>
-                  (level {threat.level})
-                </span>
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">#{index + 1}</span>
+                  <span className="truncate">{threat.name}</span>
+                  <span className={`shrink-0 text-xs ${threat.level >= 4 ? "text-red-500" : "text-muted-foreground"}`}>
+                    (level {threat.level})
+                  </span>
+                </div>
+                {threat.response && (
+                  <p className="pl-6 text-xs text-muted-foreground truncate">
+                    ความสามารถ: {threat.response}
+                  </p>
+                )}
               </div>
-              <span className="text-xs text-muted-foreground">{threat.count} times</span>
+              <span className="shrink-0 text-xs text-muted-foreground">{threat.count} times</span>
             </div>
           ))}
           {threatCounts.length === 0 && (

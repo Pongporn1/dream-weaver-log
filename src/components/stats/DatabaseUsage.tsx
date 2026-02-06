@@ -26,13 +26,13 @@ export function DatabaseUsage({ totalDreams, worldsCount, entitiesCount, threats
   const estimatedCapacity = Math.floor(remainingMB / (totalUsedMB / totalDreams || 3)) + totalDreams;
 
   return (
-    <div className="card-minimal space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <div className="card-minimal w-full max-w-full space-y-3 sm:space-y-4 p-3 sm:p-4 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0 flex items-center gap-2">
           <Database className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Database Usage</h2>
+          <h2 className="truncate text-sm font-semibold">Database Usage</h2>
         </div>
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className="shrink-0 text-xs">
           <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
           Live
         </Badge>
@@ -40,11 +40,11 @@ export function DatabaseUsage({ totalDreams, worldsCount, entitiesCount, threats
 
       {/* Storage Bar */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="text-muted-foreground">Storage Used</span>
-          <span className="font-semibold">{totalUsedMB.toFixed(2)} MB / {maxStorageMB} MB</span>
+          <span className="font-semibold break-all">{totalUsedMB.toFixed(2)} MB / {maxStorageMB} MB</span>
         </div>
-        <div className="h-3 bg-secondary rounded-full overflow-hidden">
+        <div className="h-2.5 sm:h-3 bg-secondary rounded-full overflow-hidden">
           <div
             className={`h-full transition-all rounded-full ${
               usagePercent > 80 ? "bg-red-500" :
@@ -60,38 +60,38 @@ export function DatabaseUsage({ totalDreams, worldsCount, entitiesCount, threats
       </div>
 
       {/* Details */}
-      <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-        <div className="space-y-1">
+      <div className="grid grid-cols-1 gap-2 pt-2 border-t sm:grid-cols-2">
+        <div className="min-w-0 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <HardDrive className="w-3 h-3" />Dream Logs
           </p>
-          <p className="text-sm font-semibold">{estimatedSize.dreams.toFixed(1)} KB</p>
+          <p className="break-words text-base font-semibold">{estimatedSize.dreams.toFixed(1)} KB</p>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <MapPin className="w-3 h-3" />Worlds
           </p>
-          <p className="text-sm font-semibold">{estimatedSize.worlds.toFixed(1)} KB</p>
+          <p className="break-words text-base font-semibold">{estimatedSize.worlds.toFixed(1)} KB</p>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <Users className="w-3 h-3" />Entities
           </p>
-          <p className="text-sm font-semibold">{estimatedSize.entities.toFixed(1)} KB</p>
+          <p className="break-words text-base font-semibold">{estimatedSize.entities.toFixed(1)} KB</p>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />Threats
           </p>
-          <p className="text-sm font-semibold">{estimatedSize.threats.toFixed(1)} KB</p>
+          <p className="break-words text-base font-semibold">{estimatedSize.threats.toFixed(1)} KB</p>
         </div>
       </div>
 
       {/* Capacity Info */}
-      <div className="pt-2 border-t space-y-1">
-        <div className="flex items-center justify-between text-sm">
+      <div className="pt-2 border-t space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="text-muted-foreground">ความจุโดยประมาณ</span>
-          <span className="font-semibold text-primary">~{estimatedCapacity.toLocaleString()} logs</span>
+          <span className="font-semibold text-primary break-all">~{estimatedCapacity.toLocaleString()} logs</span>
         </div>
         <p className="text-xs text-muted-foreground">
           เพิ่มอีกได้ประมาณ {(estimatedCapacity - totalDreams).toLocaleString()} logs

@@ -76,7 +76,7 @@ export function InsightsCards({ dreams, worldCounts, timeSystemCounts }: Insight
       {insights.map((insight, idx) => (
         <div
           key={idx}
-          className={`card-minimal flex items-start gap-3 ${
+          className={`card-minimal flex min-w-0 items-start gap-3 p-3 sm:p-4 ${
             insight.type === "danger"
               ? "border-red-500/50 bg-red-50/50 dark:bg-red-950/20"
               : insight.type === "warning"
@@ -97,7 +97,7 @@ export function InsightsCards({ dreams, worldCounts, timeSystemCounts }: Insight
                     : "text-blue-500"
             }`}
           />
-          <p className="text-sm flex-1">{insight.text}</p>
+          <p className="text-sm flex-1 break-words">{insight.text}</p>
         </div>
       ))}
     </div>

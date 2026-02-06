@@ -423,7 +423,7 @@
 
 @layer components {
   .container-app {
-    @apply max-w-[720px] mx-auto px-4 py-6;
+    @apply w-full px-3 py-4 sm:px-4 sm:py-6 md:max-w-[720px] md:mx-auto;
   }
 
   .card-minimal {

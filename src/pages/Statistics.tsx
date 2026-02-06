@@ -1,9 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, RefreshCw } from "lucide-react";
-import { getDreamLogs, getWorlds, getEntities, getThreats } from "@/lib/api";
-import { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
+import {
+  getDreamLogs,
+  getWorlds,
+  getEntities,
+  getThreats,
+  addEntity,
+  addThreat,
+} from "@/lib/api";
+import { DreamLog, World, Entity, ThreatEntry, ENTITY_ROLES } from "@/types/dream";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { DreamFrequencyChart } from "@/components/analytics/DreamFrequencyChart";
 import { WordCloud } from "@/components/analytics/WordCloud";
 import { TopTags } from "@/components/analytics/TopTags";
@@ -34,6 +52,18 @@ export default function Statistics() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [addingEntity, setAddingEntity] = useState(false);
+  const [addingThreat, setAddingThreat] = useState(false);
+  const [entityDraft, setEntityDraft] = useState({
+    name: "",
+    role: "observer" as Entity["role"],
+    description: "",
+  });
+  const [threatDraft, setThreatDraft] = useState({
+    name: "",
+    level: "3",
+    response: "",
+  });
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -62,6 +92,104 @@ export default function Statistics() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleAddEntity = async () => {
+    const name = entityDraft.name.trim();
+    if (!name) {
+      toast({
+        title: "กรุณาใส่ชื่อตัวละคร",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const exists = entities.some(
+      (entity) => entity.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    if (exists) {
+      toast({
+        title: "ชื่อตัวละครนี้มีอยู่แล้ว",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingEntity(true);
+    try {
+      const created = await addEntity({
+        name,
+        role: entityDraft.role,
+        description: entityDraft.description.trim() || undefined,
+      });
+
+      if (!created) {
+        toast({
+          title: "เพิ่มตัวละครไม่สำเร็จ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: "เพิ่มตัวละครแล้ว" });
+      setEntityDraft({
+        name: "",
+        role: "observer",
+        description: "",
+      });
+      await loadData(true);
+    } finally {
+      setAddingEntity(false);
+    }
+  };
+
+  const handleAddThreat = async () => {
+    const name = threatDraft.name.trim();
+    if (!name) {
+      toast({
+        title: "กรุณาใส่ชื่อ threat",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const exists = threats.some(
+      (threat) => threat.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    if (exists) {
+      toast({
+        title: "ชื่อ threat นี้มีอยู่แล้ว",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingThreat(true);
+    try {
+      const created = await addThreat({
+        name,
+        level: Number(threatDraft.level) as ThreatEntry["level"],
+        response: threatDraft.response.trim() || undefined,
+      });
+
+      if (!created) {
+        toast({
+          title: "เพิ่ม threat ไม่สำเร็จ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: "เพิ่ม threat แล้ว" });
+      setThreatDraft({
+        name: "",
+        level: "3",
+        response: "",
+      });
+      await loadData(true);
+    } finally {
+      setAddingThreat(false);
+    }
+  };
 
   // Calculate statistics
   const totalDreams = dreams.length;
@@ -101,22 +229,22 @@ export default function Statistics() {
   }
 
   return (
-    <div className="py-4 space-y-6">
+    <div className="container-app space-y-4 sm:space-y-6 overflow-x-hidden pb-20 sm:pb-24 min-h-screen">
       {/* Header */}
       <AnimatedStatsSection delay={0} duration={400}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <h1>Statistics & Insights</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <h1 className="text-lg sm:text-2xl font-semibold truncate">Statistics & Insights</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {lastUpdate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => loadData(true)}
               disabled={refreshing}
             >
@@ -128,14 +256,20 @@ export default function Statistics() {
 
       {/* Tabs */}
       <AnimatedStatsSection delay={80} duration={400}>
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="patterns">Patterns</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-3 sm:space-y-4 max-w-full">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg border bg-muted/60 p-1">
+            <TabsTrigger value="overview" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="patterns" className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm">
+              Patterns
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6 max-w-full">
             <AnimatedStatsSection delay={160} duration={400}>
               <InsightsCards
                 dreams={dreams}
@@ -161,24 +295,170 @@ export default function Statistics() {
               />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={400} duration={400}>
-              <ThreatDistribution dreams={dreams} />
+              <div className="card-minimal space-y-3 sm:space-y-4 border border-amber-200/60 bg-gradient-to-br from-[#fffaf0] via-white to-[#f7fcff] p-3 sm:p-4">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-sm font-semibold">Character & Threat Builder</h2>
+                  <span className="text-xs text-muted-foreground">เพิ่มข้อมูลเข้าฐานโดยตรง</span>
+                </div>
+                <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+                  <form
+                    className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 sm:p-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleAddEntity();
+                    }}
+                  >
+                    <div>
+                      <h3 className="text-sm font-medium">เพิ่มตัวละคร</h3>
+                      <p className="text-xs text-muted-foreground">
+                        ใช้ใน Character Encyclopedia และสถิติ Top Entities
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="entityName">ชื่อตัวละคร</Label>
+                      <Input
+                        id="entityName"
+                        value={entityDraft.name}
+                        onChange={(event) =>
+                          setEntityDraft((prev) => ({
+                            ...prev,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="เช่น ผู้เฝ้ามองไร้เงา"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>บทบาท</Label>
+                      <Select
+                        value={entityDraft.role}
+                        onValueChange={(value) =>
+                          setEntityDraft((prev) => ({
+                            ...prev,
+                            role: value as Entity["role"],
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ENTITY_ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="entityDesc">คำอธิบาย (optional)</Label>
+                      <Textarea
+                        id="entityDesc"
+                        value={entityDraft.description}
+                        onChange={(event) =>
+                          setEntityDraft((prev) => ({
+                            ...prev,
+                            description: event.target.value,
+                          }))
+                        }
+                        placeholder="นิสัย / ลักษณะเด่น"
+                        className="min-h-[84px]"
+                      />
+                    </div>
+                    <Button type="submit" disabled={addingEntity || refreshing}>
+                      {addingEntity ? "กำลังเพิ่ม..." : "เพิ่มตัวละคร"}
+                    </Button>
+                  </form>
+
+                  <form
+                    className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 sm:p-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleAddThreat();
+                    }}
+                  >
+                    <div>
+                      <h3 className="text-sm font-medium">เพิ่ม Threat + ความสามารถ</h3>
+                      <p className="text-xs text-muted-foreground">
+                        ความสามารถจะแสดงใน Threat Analysis ทันที
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="threatName">ชื่อ threat</Label>
+                      <Input
+                        id="threatName"
+                        value={threatDraft.name}
+                        onChange={(event) =>
+                          setThreatDraft((prev) => ({
+                            ...prev,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="เช่น เงาสะท้อนเจาะเวลา"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>ระดับ threat</Label>
+                      <Select
+                        value={threatDraft.level}
+                        onValueChange={(value) =>
+                          setThreatDraft((prev) => ({ ...prev, level: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[0, 1, 2, 3, 4, 5].map((level) => (
+                            <SelectItem key={level} value={String(level)}>
+                              Level {level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="threatAbility">ความสามารถ / วิธีรับมือ (optional)</Label>
+                      <Textarea
+                        id="threatAbility"
+                        value={threatDraft.response}
+                        onChange={(event) =>
+                          setThreatDraft((prev) => ({
+                            ...prev,
+                            response: event.target.value,
+                          }))
+                        }
+                        placeholder="เช่น ดูดพลังความจำ, ลวงเวลา"
+                        className="min-h-[84px]"
+                      />
+                    </div>
+                    <Button type="submit" disabled={addingThreat || refreshing}>
+                      {addingThreat ? "กำลังเพิ่ม..." : "เพิ่ม threat"}
+                    </Button>
+                  </form>
+                </div>
+              </div>
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={480} duration={400}>
-              <TopWorldsList worlds={worlds} />
+              <ThreatDistribution dreams={dreams} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={560} duration={400}>
-              <TopEntitiesList entities={entities} />
+              <TopWorldsList worlds={worlds} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={640} duration={400}>
-              <ThreatAnalysis threats={threats} />
+              <TopEntitiesList entities={entities} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={720} duration={400}>
-              <TimeSystemUsage dreams={dreams} />
+              <ThreatAnalysis threats={threats} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={800} duration={400}>
-              <TopEnvironments dreams={dreams} />
+              <TimeSystemUsage dreams={dreams} />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={880} duration={400}>
+              <TopEnvironments dreams={dreams} />
+            </AnimatedStatsSection>
+            <AnimatedStatsSection delay={960} duration={400}>
               <SafetyOverrideStats dreams={dreams} />
             </AnimatedStatsSection>
           </TabsContent>
