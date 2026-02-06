@@ -29,6 +29,7 @@ const STORAGE_KEY = "dreambook_moon_phenomenon";
 const EXPIRY_KEY = "dreambook_moon_expiry";
 const BOOST_COLLECTION_KEY = "mythic-moon-collection";
 const LOCKED_MOON_KEY = "mythic-locked-moon";
+const MYTHIC_SHUFFLE_KEY = "mythic-shuffle-enabled";
 
 // Base duration before re-rolling (in milliseconds)
 const BASE_DURATION_MS = 30 * 60 * 1000; // 30 minutes base
@@ -78,6 +79,63 @@ const getDurationBoost = (moonId: string): number => {
   return 0;
 };
 
+const getDiscoveredMythicPhenomena = (): MoonPhenomenon[] => {
+  const allMythics = Object.values(MOON_PHENOMENA).filter(
+    (moon) => moon.rarity === "mythic",
+  );
+  try {
+    const stored = localStorage.getItem(BOOST_COLLECTION_KEY);
+    if (!stored) {
+      return areMoonsUnlocked() ? allMythics : [];
+    }
+    const collection = JSON.parse(stored) as Record<string, unknown>;
+
+    const discovered = allMythics.filter((moon) => !!collection[moon.id]);
+    if (discovered.length === 0 && areMoonsUnlocked()) {
+      return allMythics;
+    }
+    return discovered;
+  } catch (e) {
+    console.error("Failed to read mythic collection:", e);
+    return [];
+  }
+};
+
+const selectRandomFromList = (
+  list: MoonPhenomenon[],
+  excludeId?: string,
+): MoonPhenomenon | null => {
+  if (list.length === 0) return null;
+  if (excludeId && list.length > 1) {
+    const filtered = list.filter((moon) => moon.id !== excludeId);
+    if (filtered.length > 0) {
+      return filtered[Math.floor(Math.random() * filtered.length)];
+    }
+  }
+  return list[Math.floor(Math.random() * list.length)];
+};
+
+export const isMythicShuffleEnabled = (): boolean => {
+  try {
+    return localStorage.getItem(MYTHIC_SHUFFLE_KEY) === "1";
+  } catch (e) {
+    console.error("Failed to read mythic shuffle state:", e);
+    return false;
+  }
+};
+
+export const setMythicShuffleEnabled = (enabled: boolean): void => {
+  try {
+    if (enabled) {
+      localStorage.setItem(MYTHIC_SHUFFLE_KEY, "1");
+    } else {
+      localStorage.removeItem(MYTHIC_SHUFFLE_KEY);
+    }
+  } catch (e) {
+    console.error("Failed to set mythic shuffle state:", e);
+  }
+};
+
 /**
  * Calculate total duration for a phenomenon (base + boost)
  */
@@ -108,6 +166,11 @@ export const getSessionPhenomenon = (): {
   phenomenon: MoonPhenomenon;
   isNewEncounter: boolean;
 } => {
+  const shuffleEnabled = isMythicShuffleEnabled();
+  const discoveredMythics = shuffleEnabled ? getDiscoveredMythicPhenomena() : [];
+  const shouldShuffleMythic =
+    shuffleEnabled && discoveredMythics.length > 0;
+
   // First, check if there's a locked moon
   const lockedMoon = getLockedMoon();
   if (lockedMoon) {
@@ -123,18 +186,41 @@ export const getSessionPhenomenon = (): {
   // Try to get existing phenomenon from localStorage
   const storedPhenomenon = localStorage.getItem(STORAGE_KEY);
   const storedExpiry = localStorage.getItem(EXPIRY_KEY);
+  let previousPhenomenonId: string | undefined;
 
   if (storedPhenomenon && storedExpiry) {
     try {
       const parsed = JSON.parse(storedPhenomenon);
       const expiryTime = parseInt(storedExpiry, 10);
+      previousPhenomenonId = parsed?.id;
 
       // Check if still valid (not expired)
       if (parsed && parsed.id && now < expiryTime) {
-        const remainingMs = expiryTime - now;
-        const remainingMins = Math.round(remainingMs / 60000);
-        console.log(`🌙 Moon theme valid for ${remainingMins} more minutes`);
-        return { phenomenon: parsed as MoonPhenomenon, isNewEncounter: false }; // Existing moon
+        if (shouldShuffleMythic) {
+          const isMythic = parsed.rarity === "mythic";
+          const isDiscovered = discoveredMythics.some(
+            (moon) => moon.id === parsed.id,
+          );
+          if (isMythic && isDiscovered) {
+            const remainingMs = expiryTime - now;
+            const remainingMins = Math.round(remainingMs / 60000);
+            console.log(
+              `🌙 Mythic shuffle valid for ${remainingMins} more minutes`,
+            );
+            return {
+              phenomenon: parsed as MoonPhenomenon,
+              isNewEncounter: false,
+            };
+          }
+        } else {
+          const remainingMs = expiryTime - now;
+          const remainingMins = Math.round(remainingMs / 60000);
+          console.log(`🌙 Moon theme valid for ${remainingMins} more minutes`);
+          return {
+            phenomenon: parsed as MoonPhenomenon,
+            isNewEncounter: false,
+          }; // Existing moon
+        }
       }
 
       // Expired - log it
@@ -147,7 +233,10 @@ export const getSessionPhenomenon = (): {
   }
 
   // No valid stored phenomenon - select a new one
-  const newPhenomenon = selectRandomPhenomenon();
+  const newPhenomenon = shouldShuffleMythic
+    ? selectRandomFromList(discoveredMythics, previousPhenomenonId) ||
+      selectRandomPhenomenon()
+    : selectRandomPhenomenon();
 
   // Calculate expiry based on boost
   const duration = calculateTotalDuration(newPhenomenon);

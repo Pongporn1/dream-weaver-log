@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { MythicProgressBar } from "./MythicProgressBar";
-import {
-  useMythicCollection,
-} from "@/hooks/useMythicCollection";
+import { useMythicCollection } from "@/hooks/useMythicCollection";
 import { MOON_PHENOMENA } from "@/data/moonPhenomena";
 import type {
   MoonCollectionEntry,
   MythicParticleConfig,
 } from "@/hooks/useMythicCollection";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
+import { areMoonsUnlocked } from "@/lib/moonUnlock";
 import {
   Star,
   Lock,
@@ -163,6 +162,7 @@ const MoonCard = React.memo(function MoonCard({
   onToggleLock,
   onAddBoost,
   particles,
+  isUnlocked,
 }: {
   moon: MythicMoon;
   entry: MoonCollectionEntry | null;
@@ -172,7 +172,10 @@ const MoonCard = React.memo(function MoonCard({
   onToggleLock: () => void;
   onAddBoost: (seconds: number) => void;
   particles: MythicParticleConfig | null;
+  isUnlocked: boolean;
 }) {
+  const canUseSubFeatures = isUnlocked || (entry?.encounterCount ?? 0) >= 5;
+
   return (
     <div
       className={cn(
@@ -208,9 +211,7 @@ const MoonCard = React.memo(function MoonCard({
 
         <div className="flex-1 text-left min-w-0">
           <div className="font-semibold text-white truncate">{moon.name}</div>
-          <div className="text-xs text-white/60 truncate">
-            {moon.nameEn}
-          </div>
+          <div className="text-xs text-white/60 truncate">{moon.nameEn}</div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -221,9 +222,9 @@ const MoonCard = React.memo(function MoonCard({
             ×{entry?.encounterCount || 0}
           </Badge>
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-4 w-4 text-amber-300" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4 text-amber-300" />
           )}
         </div>
       </button>
@@ -284,11 +285,11 @@ const MoonCard = React.memo(function MoonCard({
                   variant="outline"
                   onClick={() => onAddBoost(3600)}
                   disabled={
-                    (entry?.encounterCount ?? 0) < 5 ||
+                    !canUseSubFeatures ||
                     (entry?.themeDurationBoost || 0) >= 86400
                   }
                   title={
-                    (entry?.encounterCount ?? 0) < 5
+                    !canUseSubFeatures
                       ? `ต้องเจออีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
                       : undefined
                   }
@@ -302,11 +303,11 @@ const MoonCard = React.memo(function MoonCard({
                   variant="outline"
                   onClick={() => onAddBoost(21600)}
                   disabled={
-                    (entry?.encounterCount ?? 0) < 5 ||
+                    !canUseSubFeatures ||
                     (entry?.themeDurationBoost || 0) >= 86400
                   }
                   title={
-                    (entry?.encounterCount ?? 0) < 5
+                    !canUseSubFeatures
                       ? `ต้องเจออีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
                       : undefined
                   }
@@ -325,14 +326,14 @@ const MoonCard = React.memo(function MoonCard({
                 size="sm"
                 variant={entry?.isLocked ? "default" : "outline"}
                 onClick={onToggleLock}
-                disabled={(entry?.encounterCount ?? 0) < 5 && !entry?.isLocked}
+                disabled={!canUseSubFeatures && !entry?.isLocked}
                 className={cn(
                   "flex-1",
                   entry?.isLocked &&
                     "bg-amber-500 hover:bg-amber-600 text-white",
                 )}
                 title={
-                  (entry?.encounterCount ?? 0) < 5 && !entry?.isLocked
+                  !canUseSubFeatures && !entry?.isLocked
                     ? `ต้องเจอดวงจันทร์นี้อีก ${5 - (entry?.encounterCount ?? 0)} ครั้ง`
                     : undefined
                 }
@@ -345,9 +346,9 @@ const MoonCard = React.memo(function MoonCard({
                 ) : (
                   <>
                     <Unlock className="h-4 w-4 mr-2" />
-                    {(entry?.encounterCount ?? 0) < 5
-                      ? `Lock (${entry?.encounterCount ?? 0}/5)`
-                      : "Lock Theme"}
+                    {canUseSubFeatures
+                      ? "Lock Theme"
+                      : `Lock (${entry?.encounterCount ?? 0}/5)`}
                   </>
                 )}
               </Button>
@@ -398,6 +399,7 @@ function formatDuration(seconds: number): string {
 }
 
 export function MythicCodex({ className, compact = false }: MythicCodexProps) {
+  const isUnlocked = areMoonsUnlocked();
   const {
     collection,
     getMythicMoons,
@@ -800,6 +802,7 @@ export function MythicCodex({ className, compact = false }: MythicCodexProps) {
                     onToggleLock={() => toggleLock(moon.id)}
                     onAddBoost={(seconds) => addDurationBoost(moon.id, seconds)}
                     particles={particles}
+                    isUnlocked={isUnlocked}
                   />
                 );
               })}

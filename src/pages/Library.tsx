@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Library as LibraryIcon, Moon, BookOpen } from "lucide-react";
+import { Library as LibraryIcon, Moon, BookOpen, Shuffle } from "lucide-react";
 import { getDreamLogs } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
 import {
   getSessionPhenomenon,
   clearSessionPhenomenon,
+  isMythicShuffleEnabled,
+  setMythicShuffleEnabled,
 } from "@/utils/raritySystem";
 import { applyMoonTheme } from "@/utils/moonTheme";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
@@ -16,6 +18,7 @@ import { MythicCodex } from "@/components/mythic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 type GroupBy = "date" | "world";
 type LibraryTab = "dreams" | "codex";
@@ -38,6 +41,7 @@ export default function Library() {
     useState<MoonPhenomenon | null>(null);
   const [isDebugSuperBlue, setIsDebugSuperBlue] = useState(false);
   const [isDebugPixel, setIsDebugPixel] = useState(false);
+  const [mythicShuffleEnabled, setMythicShuffleEnabledState] = useState(false);
 
   const debugMoonId = "superBlueBloodMoon";
   const pixelMoonId = "pixelDreamMoon";
@@ -52,9 +56,33 @@ export default function Library() {
     setIsDebugPixel(
       localStorage.getItem(lockedMoonKey) === pixelMoonId,
     );
+    setMythicShuffleEnabledState(isMythicShuffleEnabled());
   }, []);
 
   const changePhenomenon = () => {
+    clearSessionPhenomenon();
+    const { phenomenon: newPhenomenon } = getSessionPhenomenon();
+    setCurrentPhenomenon(newPhenomenon);
+    applyMoonTheme(newPhenomenon);
+  };
+
+  const handleMythicShuffleToggle = (enabled: boolean) => {
+    setMythicShuffleEnabled(enabled);
+    setMythicShuffleEnabledState(enabled);
+
+    if (enabled) {
+      clearSessionPhenomenon();
+      const { phenomenon: newPhenomenon } = getSessionPhenomenon();
+      setCurrentPhenomenon(newPhenomenon);
+      applyMoonTheme(newPhenomenon);
+    }
+  };
+
+  const handleMythicShuffleNow = () => {
+    if (!mythicShuffleEnabled) {
+      setMythicShuffleEnabled(true);
+      setMythicShuffleEnabledState(true);
+    }
     clearSessionPhenomenon();
     const { phenomenon: newPhenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(newPhenomenon);
@@ -295,6 +323,39 @@ export default function Library() {
         <TabsContent value="codex" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full pb-28 relative z-0">
             <div className="p-4">
+              <div className="card-minimal mb-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Shuffle className="h-4 w-4 text-primary" />
+                      Mythic Shuffle
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      สุ่มสลับเฉพาะธีมระดับ Mythic ที่ค้นพบ
+                    </p>
+                  </div>
+                  <Switch
+                    checked={mythicShuffleEnabled}
+                    onCheckedChange={handleMythicShuffleToggle}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleMythicShuffleNow}
+                    className="h-8"
+                  >
+                    <Shuffle className="h-4 w-4 mr-1" />
+                    สลับตอนนี้
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {mythicShuffleEnabled
+                      ? "กำลังสุ่มอัตโนมัติ"
+                      : "ปิดอยู่"}
+                  </span>
+                </div>
+              </div>
               <MythicCodex />
             </div>
           </ScrollArea>

@@ -20,6 +20,7 @@ import { APP_VERSION } from "@/config/appVersion";
 import { AppUpdateProvider } from "@/hooks/useAppUpdate";
 import { PixelParticleEffects } from "@/components/PixelParticleEffects";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { syncUnlockedCollection } from "@/lib/moonUnlock";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,11 @@ const App = () => {
     console.log(
       `📦 App Version: ${APP_VERSION} | Build: ${new Date().toISOString()}`,
     );
+  }, []);
+
+  // Ensure unlock state is reflected in collection data
+  useEffect(() => {
+    syncUnlockedCollection();
   }, []);
 
   return (

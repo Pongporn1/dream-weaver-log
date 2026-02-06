@@ -20,7 +20,6 @@ import {
   areMoonsUnlocked,
   getUnlockStatus,
 } from "@/lib/moonUnlock";
-import { useMythicCollection } from "@/hooks/useMythicCollection";
 import { toast } from "@/hooks/use-toast";
 
 export default function About() {
@@ -32,8 +31,6 @@ export default function About() {
     checkForUpdates,
     applyUpdate,
   } = useAppUpdate();
-
-  const { unlockAllMoonsInCollection } = useMythicCollection();
 
   const [secretCode, setSecretCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -47,13 +44,18 @@ export default function About() {
     try {
       const isValid = await verifySecretCode(secretCode);
       if (isValid) {
-        unlockAllMoons(unlockAllMoonsInCollection);
+        unlockAllMoons();
         setIsUnlocked(true);
         toast({
           title: "🌕 ปลดล็อกสำเร็จ!",
           description: "ดวงจันทร์ทั้งหมด 54 ดวงถูกปลดล็อกแล้ว",
         });
         setSecretCode("");
+
+        // Reload page after a short delay to ensure all components load fresh data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         toast({
           title: "❌ รหัสไม่ถูกต้อง",

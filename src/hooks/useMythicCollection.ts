@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { MoonPhenomenon, MoonRarity } from "@/data/moonPhenomena";
 import { MOON_PHENOMENA } from "@/data/moonPhenomena";
+import { areMoonsUnlocked } from "@/lib/moonUnlock";
 
 // Collection entry for a discovered moon
 export interface MoonCollectionEntry {
@@ -247,7 +248,7 @@ export function useMythicCollection() {
       if (!existing) return prev;
 
       // Require 5+ encounters to unlock the lock feature
-      if (existing.encounterCount < 5 && !existing.isLocked) {
+      if (!areMoonsUnlocked() && existing.encounterCount < 5 && !existing.isLocked) {
         console.log(
           `🔒 Need ${5 - existing.encounterCount} more encounters to unlock Lock Theme feature`,
         );
