@@ -25,10 +25,10 @@ export function WorldSelector({
 }: WorldSelectorProps) {
   return (
     <div className="space-y-2">
-      <Label>World</Label>
+      <Label>โลกในฝัน</Label>
       <Select value={selectedWorld} onValueChange={onWorldChange}>
         <SelectTrigger>
-          <SelectValue placeholder="Select or create new" />
+          <SelectValue placeholder="เลือกโลกเดิม" />
         </SelectTrigger>
         <SelectContent>
           {worlds.map((w) => (

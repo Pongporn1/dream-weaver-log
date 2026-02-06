@@ -10,9 +10,9 @@ interface DateTimeFieldsProps {
 
 export function DateTimeFields({ date, wakeTime, onDateChange, onWakeTimeChange }: DateTimeFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">วันที่ฝัน</Label>
         <Input
           id="date"
           type="date"
@@ -22,13 +22,12 @@ export function DateTimeFields({ date, wakeTime, onDateChange, onWakeTimeChange 
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="wakeTime">Wake Time</Label>
+        <Label htmlFor="wakeTime">เวลาตื่น (ถ้าจำได้)</Label>
         <Input
           id="wakeTime"
           type="time"
           value={wakeTime}
           onChange={(e) => onWakeTimeChange(e.target.value)}
-          required
         />
       </div>
     </div>

@@ -33,7 +33,7 @@ export function DreamSettings({
     <>
       {/* Time System */}
       <div className="space-y-2">
-        <Label>Time System</Label>
+        <Label>ระบบเวลา (Time System)</Label>
         <Select
           value={timeSystem}
           onValueChange={(v) => onTimeSystemChange(v as DreamLog["timeSystem"])}
@@ -53,7 +53,7 @@ export function DreamSettings({
 
       {/* Threat Level */}
       <div className="space-y-2">
-        <Label>Threat Level: {threatLevel}</Label>
+        <Label>ระดับภัยคุกคาม: {threatLevel}</Label>
         <input
           type="range"
           min="0"
@@ -62,7 +62,7 @@ export function DreamSettings({
           onChange={(e) =>
             onThreatLevelChange(Number(e.target.value) as DreamLog["threatLevel"])
           }
-          className="w-full accent-primary"
+          className="w-full accent-amber-500"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>0</span>
@@ -72,7 +72,7 @@ export function DreamSettings({
 
       {/* Safety Override */}
       <div className="space-y-2">
-        <Label>Safety Override</Label>
+        <Label>ระบบความปลอดภัย</Label>
         <Select
           value={safetyOverride}
           onValueChange={(v) => onSafetyOverrideChange(v as DreamLog["safetyOverride"])}
@@ -92,7 +92,7 @@ export function DreamSettings({
 
       {/* Exit */}
       <div className="space-y-2">
-        <Label>Exit</Label>
+        <Label>การออกจากฝัน</Label>
         <Select
           value={exit}
           onValueChange={(v) => onExitChange(v as DreamLog["exit"])}

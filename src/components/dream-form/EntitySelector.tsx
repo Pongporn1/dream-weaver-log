@@ -19,7 +19,7 @@ export function EntitySelector({
 }: EntitySelectorProps) {
   return (
     <div className="space-y-2">
-      <Label>Entities</Label>
+      <Label>ตัวละคร/สิ่งมีชีวิต</Label>
       <div className="space-y-2">
         {entities.map((entity) => (
           <div key={entity.id} className="flex items-center gap-2">
@@ -27,6 +27,7 @@ export function EntitySelector({
               id={entity.id}
               checked={selectedEntities.includes(entity.name)}
               onCheckedChange={() => onToggleEntity(entity.name)}
+              className="border-slate-400 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white data-[state=checked]:border-slate-900"
             />
             <label htmlFor={entity.id} className="text-sm">
               {entity.name}
@@ -35,7 +36,7 @@ export function EntitySelector({
         ))}
       </div>
       <Input
-        placeholder="หรือเพิ่ม entity ใหม่..."
+        placeholder="หรือเพิ่มตัวละครใหม่..."
         value={newEntity}
         onChange={(e) => onNewEntityChange(e.target.value)}
       />

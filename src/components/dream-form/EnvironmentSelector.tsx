@@ -29,7 +29,7 @@ export function EnvironmentSelector({
 
   return (
     <div className="space-y-2">
-      <Label>Environments</Label>
+      <Label>สภาพแวดล้อม</Label>
       <div className="flex flex-wrap gap-2">
         {ENVIRONMENTS.map((env) => (
           <button
@@ -38,8 +38,8 @@ export function EnvironmentSelector({
             onClick={() => onToggleEnvironment(env)}
             className={`tag transition-colors ${
               selectedEnvironments.includes(env)
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-secondary"
+                ? "bg-slate-900 text-white"
+                : "hover:bg-slate-200"
             }`}
           >
             {env}
@@ -51,7 +51,7 @@ export function EnvironmentSelector({
       <div className="flex gap-2 mt-2">
         <Input
           type="text"
-          placeholder="เพิ่ม environment ใหม่..."
+          placeholder="เพิ่มสภาพแวดล้อมใหม่..."
           value={newEnvironment}
           onChange={(e) => onNewEnvironmentChange(e.target.value)}
           className="flex-1"
@@ -62,6 +62,7 @@ export function EnvironmentSelector({
           size="sm"
           disabled={!newEnvironment}
           onClick={onAddEnvironment}
+          className="border-slate-300 text-slate-700 hover:bg-slate-100"
         >
           เพิ่ม
         </Button>
@@ -75,7 +76,7 @@ export function EnvironmentSelector({
               key={env}
               type="button"
               onClick={() => onToggleEnvironment(env)}
-              className="tag bg-primary text-primary-foreground"
+              className="tag bg-slate-900 text-white"
             >
               {env}
             </button>

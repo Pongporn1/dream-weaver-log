@@ -131,7 +131,7 @@ export function StoryDetailsFields({
               className={cn(
                 "relative overflow-hidden px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 atmosphereColors.includes(color.id)
-                  ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
+                  ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-background scale-105"
                   : "opacity-70 hover:opacity-100"
               )}
             >
