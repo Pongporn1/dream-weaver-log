@@ -58,8 +58,9 @@ function buildDreamSeed(dreams: DreamLog[]): string {
 }
 
 import { PixelTransitionOverlay } from "./mythic/PixelTransitionOverlay";
+import { MythicIntroOverlay } from "./mythic/MythicIntroOverlay";
 
-const PIXEL_INTRO_SEEN_KEY = "pixel-intro-seen";
+const MYTHIC_INTRO_SESSION_KEY = "mythic-intro-seen";
 
 function formatDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -135,12 +136,17 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
   const moonPhaseRef = useRef(getMoonPhase());
   const scrollOffsetRef = useRef({ x: 0, y: 0 });
   const [showPixelIntro, setShowPixelIntro] = useState(false);
+  const [showMythicIntro, setShowMythicIntro] = useState(false);
 
   const [phenomenon, setPhenomenon] = useState<MoonPhenomenon | null>(null);
   const currentStreak = useMemo(() => getCurrentDreamStreak(dreams), [dreams]);
 
   const handlePixelIntroComplete = useCallback(() => {
     setShowPixelIntro(false);
+  }, []);
+
+  const handleMythicIntroComplete = useCallback(() => {
+    setShowMythicIntro(false);
   }, []);
 
   // Pull-to-refresh handler
@@ -151,9 +157,13 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
     setPhenomenon(newPhenomenon);
     applyMoonTheme(newPhenomenon);
 
-    // Trigger Intro for Pixel Theme
-    if (newPhenomenon.id === 'pixelDreamMoon') {
-       setShowPixelIntro(true);
+    // Trigger Intro for ALL mythic themes
+    if (newPhenomenon.rarity === "mythic") {
+      if (newPhenomenon.id === "pixelDreamMoon") {
+        setShowPixelIntro(true);
+      } else {
+        setShowMythicIntro(true);
+      }
     }
 
     // Record encounter in collection only if it's a new encounter
@@ -227,11 +237,17 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
     setPhenomenon(sessionPhenomenon);
     applyMoonTheme(sessionPhenomenon);
 
-    if (sessionPhenomenon.id === "pixelDreamMoon") {
-      const introSeen = sessionStorage.getItem(PIXEL_INTRO_SEEN_KEY);
+    // Show intro for ALL mythic themes on first visit
+    if (sessionPhenomenon.rarity === "mythic") {
+      const introKey = `${MYTHIC_INTRO_SESSION_KEY}-${sessionPhenomenon.id}`;
+      const introSeen = sessionStorage.getItem(introKey);
       if (!introSeen) {
-        setShowPixelIntro(true);
-        sessionStorage.setItem(PIXEL_INTRO_SEEN_KEY, "1");
+        if (sessionPhenomenon.id === "pixelDreamMoon") {
+          setShowPixelIntro(true);
+        } else {
+          setShowMythicIntro(true);
+        }
+        sessionStorage.setItem(introKey, "1");
       }
     }
 
@@ -505,10 +521,17 @@ export function AnimatedProfileHeader({ dreams = [] }: AnimatedProfileHeaderProp
         />
       )}
       
-      {/* Pixel Mythic Theme Intro */ }
+      {/* Pixel Mythic Theme Intro */}
       <PixelTransitionOverlay 
         show={showPixelIntro} 
         onComplete={handlePixelIntroComplete} 
+      />
+
+      {/* Universal Mythic Theme Intro (for all other mythic themes) */}
+      <MythicIntroOverlay
+        show={showMythicIntro}
+        phenomenon={phenomenon}
+        onComplete={handleMythicIntroComplete}
       />
     </div>
   );
