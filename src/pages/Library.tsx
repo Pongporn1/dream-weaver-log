@@ -203,7 +203,6 @@ export default function Library() {
         onGroupByChange={setGroupBy}
         totalDreams={filteredDreams.length}
         currentPhenomenon={currentPhenomenon}
-        onChangePhenomenon={changePhenomenon}
         showDreamFilters={activeTab === "dreams"}
       />
       {import.meta.env.DEV && (
