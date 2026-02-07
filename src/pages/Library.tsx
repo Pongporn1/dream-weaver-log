@@ -1,7 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Library as LibraryIcon, Moon, BookOpen, Shuffle } from "lucide-react";
-import { getDreamLogs } from "@/lib/api";
-import { DreamLog } from "@/types/dream";
+import {
+  Library as LibraryIcon,
+  Moon,
+  BookOpen,
+  Shuffle,
+  AlertTriangle,
+} from "lucide-react";
+import { getDreamLogs, getThreats } from "@/lib/api";
+import { DreamLog, ThreatEntry } from "@/types/dream";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
 import {
   getSessionPhenomenon,
@@ -13,7 +19,12 @@ import { applyMoonTheme } from "@/utils/moonTheme";
 import type { MoonPhenomenon } from "@/data/moonPhenomena";
 import { LibraryPageSkeleton } from "@/components/skeletons/LibrarySkeleton";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { LibraryHeader, DateSection, WorldSection } from "@/components/library";
+import {
+  LibraryHeader,
+  DateSection,
+  WorldSection,
+  ThreatSection,
+} from "@/components/library";
 import { MythicCodex } from "@/components/mythic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,13 +32,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 type GroupBy = "date" | "world";
-type LibraryTab = "dreams" | "codex";
+type LibraryTab = "dreams" | "threats" | "codex";
 
 export default function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("date");
   const [activeTab, setActiveTab] = useState<LibraryTab>("dreams");
   const [dreamLogs, setDreamLogs] = useState<DreamLog[]>([]);
+  const [threats, setThreats] = useState<ThreatEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -130,8 +142,12 @@ export default function Library() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const dreamsData = await getDreamLogs();
+        const [dreamsData, threatsData] = await Promise.all([
+          getDreamLogs(),
+          getThreats(),
+        ]);
         setDreamLogs(dreamsData);
+        setThreats(threatsData);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -194,6 +210,15 @@ export default function Library() {
     }));
   };
 
+  const headerTotalCount =
+    activeTab === "threats"
+        ? threats.length
+        : filteredDreams.length;
+  const headerTotalLabel =
+    activeTab === "threats"
+        ? "threat"
+        : "ความฝัน";
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <LibraryHeader
@@ -201,41 +226,41 @@ export default function Library() {
         onSearchChange={setSearchQuery}
         groupBy={groupBy}
         onGroupByChange={setGroupBy}
-        totalDreams={filteredDreams.length}
+        totalCount={headerTotalCount}
+        totalLabel={headerTotalLabel}
         currentPhenomenon={currentPhenomenon}
         showDreamFilters={activeTab === "dreams"}
       />
       {import.meta.env.DEV && (
-        <div className="px-4 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={isDebugSuperBlue ? "default" : "outline"}
-                size="sm"
-                onClick={toggleDebugSuperBlue}
-                className="h-8"
-                title="Debug: สลับเป็น Super Blue Blood Moon ชั่วคราว"
-              >
-                {isDebugSuperBlue
-                  ? "Debug: Super Blue Blood (ON)"
-                  : "Debug: Super Blue Blood"}
-              </Button>
-              <Button
-                variant={isDebugPixel ? "default" : "outline"}
-                size="sm"
-                onClick={toggleDebugPixelMoon}
-                className="h-8"
-                title="Debug: ล็อก Pixel Dream Moon ชั่วคราว"
-              >
-                {isDebugPixel
-                  ? "Debug: Pixel Dream (ON)"
-                  : "Debug: Pixel Dream"}
-              </Button>
-              
-            </div>
-            
+        <details className="border-b bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            Developer tools
+          </summary>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            <Button
+              variant={isDebugSuperBlue ? "default" : "outline"}
+              size="sm"
+              onClick={toggleDebugSuperBlue}
+              className="h-8 shrink-0"
+              title="Debug: สลับเป็น Super Blue Blood Moon ชั่วคราว"
+            >
+              {isDebugSuperBlue
+                ? "Debug: Super Blue Blood (ON)"
+                : "Debug: Super Blue Blood"}
+            </Button>
+            <Button
+              variant={isDebugPixel ? "default" : "outline"}
+              size="sm"
+              onClick={toggleDebugPixelMoon}
+              className="h-8 shrink-0"
+              title="Debug: ล็อก Pixel Dream Moon ชั่วคราว"
+            >
+              {isDebugPixel
+                ? "Debug: Pixel Dream (ON)"
+                : "Debug: Pixel Dream"}
+            </Button>
           </div>
-        </div>
+        </details>
       )}
 
       {/* Tab Navigation */}
@@ -252,6 +277,13 @@ export default function Library() {
             >
               <BookOpen className="h-4 w-4" />
               <span>Dream Logs</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="threats"
+              className="flex-1 gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span>Threats</span>
             </TabsTrigger>
             <TabsTrigger
               value="codex"
@@ -316,6 +348,23 @@ export default function Library() {
                 ))}
               </div>
             )}
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="threats" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full pb-28 relative z-0">
+            <div className="p-4">
+              {loading ? (
+                <LibraryPageSkeleton />
+              ) : (
+                <ThreatSection
+                  threats={threats}
+                  dreams={dreamLogs}
+                  compact
+                  showHeader={false}
+                />
+              )}
+            </div>
           </ScrollArea>
         </TabsContent>
 

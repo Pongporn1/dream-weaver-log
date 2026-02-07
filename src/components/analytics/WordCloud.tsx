@@ -186,36 +186,11 @@ export function WordCloud({ dreams }: Props) {
   }, [dreams]);
 
   const palette = [
-    {
-      text: "text-sky-700 dark:text-sky-300",
-      bg: "bg-sky-100/70 dark:bg-sky-900/30",
-      ring: "ring-sky-200/70 dark:ring-sky-800/50",
-      gradient: "linear-gradient(120deg, #38bdf8, #6366f1)",
-    },
-    {
-      text: "text-violet-700 dark:text-violet-300",
-      bg: "bg-violet-100/70 dark:bg-violet-900/30",
-      ring: "ring-violet-200/70 dark:ring-violet-800/50",
-      gradient: "linear-gradient(120deg, #a855f7, #6366f1)",
-    },
-    {
-      text: "text-emerald-700 dark:text-emerald-300",
-      bg: "bg-emerald-100/70 dark:bg-emerald-900/30",
-      ring: "ring-emerald-200/70 dark:ring-emerald-800/50",
-      gradient: "linear-gradient(120deg, #34d399, #38bdf8)",
-    },
-    {
-      text: "text-amber-700 dark:text-amber-300",
-      bg: "bg-amber-100/70 dark:bg-amber-900/30",
-      ring: "ring-amber-200/70 dark:ring-amber-800/50",
-      gradient: "linear-gradient(120deg, #f59e0b, #fb7185)",
-    },
-    {
-      text: "text-rose-700 dark:text-rose-300",
-      bg: "bg-rose-100/70 dark:bg-rose-900/30",
-      ring: "ring-rose-200/70 dark:ring-rose-800/50",
-      gradient: "linear-gradient(120deg, #fb7185, #a855f7)",
-    },
+    "linear-gradient(120deg, #38bdf8, #6366f1)",
+    "linear-gradient(120deg, #a855f7, #6366f1)",
+    "linear-gradient(120deg, #34d399, #38bdf8)",
+    "linear-gradient(120deg, #f59e0b, #fb7185)",
+    "linear-gradient(120deg, #fb7185, #a855f7)",
   ];
 
   if (words.length === 0) {
@@ -259,15 +234,15 @@ export function WordCloud({ dreams }: Props) {
         </div>
       </div>
 
-      <div className="relative flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-        <span className="px-2 py-0.5 rounded-full bg-secondary/70">
+      <div className="relative flex flex-wrap gap-2 text-[11px] text-foreground/75">
+        <span className="rounded-full border border-border/70 bg-background/70 px-2 py-0.5">
           คำไม่ซ้ำ {uniqueCount}
         </span>
-        <span className="px-2 py-0.5 rounded-full bg-secondary/70">
+        <span className="rounded-full border border-border/70 bg-background/70 px-2 py-0.5">
           ทั้งหมด {totalMentions} ครั้ง
         </span>
         {topWord && (
-          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary">
             ยอดนิยม: {topWord}
           </span>
         )}
@@ -275,7 +250,7 @@ export function WordCloud({ dreams }: Props) {
 
       <div className="relative flex flex-wrap gap-2 justify-center items-center py-4 min-h-[220px]">
         {words.map(({ word, count, size, tier, colorIndex, rotate }) => {
-          const paletteEntry = palette[colorIndex];
+          const heroGradient = palette[colorIndex];
           const isHero = tier === "hero";
           const isCore = tier === "core";
 
@@ -286,17 +261,14 @@ export function WordCloud({ dreams }: Props) {
               "cursor-default select-none transition-all duration-200 ease-out",
               isHero
                 ? "px-1 font-semibold tracking-tight text-transparent bg-clip-text drop-shadow-sm"
-                : "px-2.5 py-1 rounded-full ring-1",
-              !isHero && paletteEntry.bg,
-              !isHero && paletteEntry.ring,
-              !isHero && paletteEntry.text,
+                : "rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-foreground shadow-sm",
             )}
             style={{
               fontSize: `${size}px`,
               fontWeight: isHero ? 600 : isCore ? 500 : 400,
               opacity: isHero ? 0.95 : isCore ? 0.85 : 0.7,
               transform: `rotate(${rotate}deg)`,
-              backgroundImage: isHero ? paletteEntry.gradient : undefined,
+              backgroundImage: isHero ? heroGradient : undefined,
             }}
             title={`${count} ครั้ง`}
           >

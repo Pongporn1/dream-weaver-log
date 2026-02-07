@@ -83,15 +83,15 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "observer":
-        return "text-blue-500 bg-blue-100 dark:bg-blue-950";
+        return "border border-blue-400/40 bg-blue-500/15 text-blue-300";
       case "protector":
-        return "text-green-500 bg-green-100 dark:bg-green-950";
+        return "border border-green-400/40 bg-green-500/15 text-green-300";
       case "guide":
-        return "text-purple-500 bg-purple-100 dark:bg-purple-950";
+        return "border border-purple-400/40 bg-purple-500/15 text-purple-300";
       case "intruder":
-        return "text-red-500 bg-red-100 dark:bg-red-950";
+        return "border border-red-400/40 bg-red-500/15 text-red-300";
       default:
-        return "text-muted-foreground bg-secondary";
+        return "border border-border/70 bg-background/70 text-foreground/80";
     }
   };
 
@@ -127,7 +127,7 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
                     {char.entity.name}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <Badge className={getRoleColor(char.entity.role)}>
+                    <Badge variant="outline" className={getRoleColor(char.entity.role)}>
                       <RoleIcon className="w-3 h-3 mr-1" />
                       {char.entity.role}
                     </Badge>
@@ -142,13 +142,13 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-2 p-3 bg-secondary/50 rounded-lg">
+              <div className="grid grid-cols-3 gap-2 rounded-lg border border-border/70 bg-background/65 p-3">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Worlds</p>
-                  <p className="text-sm font-semibold">{char.worlds.size}</p>
+                  <p className="mb-1 text-xs text-foreground/70">Worlds</p>
+                  <p className="text-sm font-semibold text-foreground">{char.worlds.size}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">
+                  <p className="mb-1 text-xs text-foreground/70">
                     Avg Threat
                   </p>
                   <p
@@ -164,10 +164,10 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">
+                  <p className="mb-1 text-xs text-foreground/70">
                     Co-appear
                   </p>
-                  <p className="text-sm font-semibold">
+                  <p className="text-sm font-semibold text-foreground">
                     {char.coAppearances.size}
                   </p>
                 </div>
@@ -207,8 +207,8 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
 
               {/* Co-appearances */}
               {char.coAppearances.size > 0 && (
-                <div className="space-y-1 pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">ปรากฏร่วมกับ:</p>
+                <div className="space-y-1 border-t border-border/70 pt-2">
+                  <p className="text-xs text-foreground/70">ปรากฏร่วมกับ:</p>
                   <div className="space-y-1">
                     {Array.from(char.coAppearances.entries())
                       .sort((a, b) => b[1] - a[1])
@@ -218,8 +218,11 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
                           key={name}
                           className="flex items-center justify-between text-xs"
                         >
-                          <span className="text-muted-foreground">{name}</span>
-                          <Badge variant="secondary" className="text-xs">
+                          <span className="text-foreground/80">{name}</span>
+                          <Badge
+                            variant="secondary"
+                            className="border border-border/70 bg-background/70 text-xs text-foreground"
+                          >
                             {count}x
                           </Badge>
                         </div>
@@ -230,7 +233,7 @@ export function CharacterEncyclopedia({ dreams, entities }: Props) {
 
               {/* Description */}
               {char.entity.description && (
-                <p className="text-xs text-muted-foreground pt-2 border-t">
+                <p className="border-t border-border/70 pt-2 text-xs text-foreground/70">
                   {char.entity.description}
                 </p>
               )}

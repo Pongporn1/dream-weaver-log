@@ -83,14 +83,16 @@ export function ThreatTrends({ dreams }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-3 p-3 bg-secondary/50 rounded-lg">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border border-border/70 bg-background/65 p-3">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">7 วันล่าสุด</p>
-          <p className="text-lg font-bold">{trendData.recentAvg.toFixed(2)}</p>
+          <p className="mb-1 text-xs text-foreground/70">7 วันล่าสุด</p>
+          <p className="text-lg font-bold text-foreground">
+            {trendData.recentAvg.toFixed(2)}
+          </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground mb-1">7 วันก่อนหน้า</p>
-          <p className="text-lg font-bold">
+          <p className="mb-1 text-xs text-foreground/70">7 วันก่อนหน้า</p>
+          <p className="text-lg font-bold text-foreground">
             {trendData.previousAvg.toFixed(2)}
           </p>
         </div>
@@ -100,7 +102,7 @@ export function ThreatTrends({ dreams }: Props) {
         {trendData.data.map((item, index) => (
           <div key={index} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{item.label}</span>
+              <span className="text-foreground/70">{item.label}</span>
               <span
                 className={`font-semibold ${
                   item.avgThreat >= 4
@@ -114,7 +116,7 @@ export function ThreatTrends({ dreams }: Props) {
               </span>
             </div>
             {item.count > 0 && (
-              <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted/70">
                 <div
                   className={`h-full rounded-full transition-all ${
                     item.avgThreat >= 4

@@ -299,34 +299,34 @@ export default function Statistics() {
           defaultValue="overview"
           className="space-y-3 sm:space-y-4 max-w-full"
         >
-          <TabsList className="grid h-auto w-full grid-cols-5 gap-1 rounded-lg border bg-muted/60 p-1">
+          <TabsList className="grid h-auto w-full grid-cols-5 gap-1 rounded-lg border border-border/70 bg-background/70 p-1 text-foreground/75">
             <TabsTrigger
               value="overview"
-              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+              className="px-1.5 py-2 text-xs text-foreground/75 hover:text-foreground data-[state=active]:text-foreground sm:px-3 sm:text-sm"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
-              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+              className="px-1.5 py-2 text-xs text-foreground/75 hover:text-foreground data-[state=active]:text-foreground sm:px-3 sm:text-sm"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger
               value="patterns"
-              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+              className="px-1.5 py-2 text-xs text-foreground/75 hover:text-foreground data-[state=active]:text-foreground sm:px-3 sm:text-sm"
             >
               Patterns
             </TabsTrigger>
             <TabsTrigger
               value="calendar"
-              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+              className="px-1.5 py-2 text-xs text-foreground/75 hover:text-foreground data-[state=active]:text-foreground sm:px-3 sm:text-sm"
             >
               ปฏิทิน
             </TabsTrigger>
             <TabsTrigger
               value="map"
-              className="px-1.5 py-2 text-xs sm:px-3 sm:text-sm"
+              className="px-1.5 py-2 text-xs text-foreground/75 hover:text-foreground data-[state=active]:text-foreground sm:px-3 sm:text-sm"
             >
               แผนที่
             </TabsTrigger>
@@ -361,9 +361,9 @@ export default function Statistics() {
               />
             </AnimatedStatsSection>
             <AnimatedStatsSection delay={400} duration={400}>
-              <div className="card-minimal space-y-3 sm:space-y-4 border border-amber-200/60 bg-gradient-to-br from-[#fffaf0] via-white to-[#f7fcff] p-3 sm:p-4">
+              <div className="card-minimal space-y-3 sm:space-y-4 border border-border/70 bg-card/90 p-3 backdrop-blur-sm sm:p-4">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-sm font-semibold">
+                  <h2 className="text-sm font-semibold text-foreground">
                     Character & Threat Builder
                   </h2>
                   <span className="text-xs text-muted-foreground">
@@ -372,22 +372,27 @@ export default function Statistics() {
                 </div>
                 <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                   <form
-                    className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 sm:p-4"
+                    className="space-y-3 rounded-xl border border-border/70 bg-background/60 p-3 backdrop-blur-sm sm:p-4"
                     onSubmit={(event) => {
                       event.preventDefault();
                       void handleAddEntity();
                     }}
                   >
                     <div>
-                      <h3 className="text-sm font-medium">เพิ่มตัวละคร</h3>
+                      <h3 className="text-sm font-medium text-foreground">
+                        เพิ่มตัวละคร
+                      </h3>
                       <p className="text-xs text-muted-foreground">
                         ใช้ใน Character Encyclopedia และสถิติ Top Entities
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="entityName">ชื่อตัวละคร</Label>
+                      <Label htmlFor="entityName" className="text-foreground/90">
+                        ชื่อตัวละคร
+                      </Label>
                       <Input
                         id="entityName"
+                        className="border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                         value={entityDraft.name}
                         onChange={(event) =>
                           setEntityDraft((prev) => ({
@@ -399,7 +404,7 @@ export default function Statistics() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>บทบาท</Label>
+                      <Label className="text-foreground/90">บทบาท</Label>
                       <Select
                         value={entityDraft.role}
                         onValueChange={(value) =>
@@ -409,10 +414,10 @@ export default function Statistics() {
                           }))
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="border-input/80 bg-background/90 text-foreground focus:ring-ring [&>span]:text-foreground">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="border-border bg-popover text-popover-foreground">
                           {ENTITY_ROLES.map((role) => (
                             <SelectItem key={role} value={role}>
                               {role}
@@ -422,9 +427,12 @@ export default function Statistics() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="entityDesc">คำอธิบาย (optional)</Label>
+                      <Label htmlFor="entityDesc" className="text-foreground/90">
+                        คำอธิบาย (optional)
+                      </Label>
                       <Textarea
                         id="entityDesc"
+                        className="min-h-[84px] border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                         value={entityDraft.description}
                         onChange={(event) =>
                           setEntityDraft((prev) => ({
@@ -433,7 +441,6 @@ export default function Statistics() {
                           }))
                         }
                         placeholder="นิสัย / ลักษณะเด่น"
-                        className="min-h-[84px]"
                       />
                     </div>
                     <Button type="submit" disabled={addingEntity || refreshing}>
@@ -442,14 +449,14 @@ export default function Statistics() {
                   </form>
 
                   <form
-                    className="space-y-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 sm:p-4"
+                    className="space-y-3 rounded-xl border border-border/70 bg-background/60 p-3 backdrop-blur-sm sm:p-4"
                     onSubmit={(event) => {
                       event.preventDefault();
                       void handleAddThreat();
                     }}
                   >
                     <div>
-                      <h3 className="text-sm font-medium">
+                      <h3 className="text-sm font-medium text-foreground">
                         เพิ่ม Threat + ความสามารถ
                       </h3>
                       <p className="text-xs text-muted-foreground">
@@ -457,9 +464,12 @@ export default function Statistics() {
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="threatName">ชื่อ threat</Label>
+                      <Label htmlFor="threatName" className="text-foreground/90">
+                        ชื่อ threat
+                      </Label>
                       <Input
                         id="threatName"
+                        className="border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                         value={threatDraft.name}
                         onChange={(event) =>
                           setThreatDraft((prev) => ({
@@ -471,17 +481,17 @@ export default function Statistics() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>ระดับ threat</Label>
+                      <Label className="text-foreground/90">ระดับ threat</Label>
                       <Select
                         value={threatDraft.level}
                         onValueChange={(value) =>
                           setThreatDraft((prev) => ({ ...prev, level: value }))
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="border-input/80 bg-background/90 text-foreground focus:ring-ring [&>span]:text-foreground">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="border-border bg-popover text-popover-foreground">
                           {[0, 1, 2, 3, 4, 5].map((level) => (
                             <SelectItem key={level} value={String(level)}>
                               Level {level}
@@ -491,11 +501,12 @@ export default function Statistics() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="threatAbility">
+                      <Label htmlFor="threatAbility" className="text-foreground/90">
                         ความสามารถ / วิธีรับมือ (optional)
                       </Label>
                       <Textarea
                         id="threatAbility"
+                        className="min-h-[84px] border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                         value={threatDraft.response}
                         onChange={(event) =>
                           setThreatDraft((prev) => ({
@@ -504,7 +515,6 @@ export default function Statistics() {
                           }))
                         }
                         placeholder="เช่น ดูดพลังความจำ, ลวงเวลา"
-                        className="min-h-[84px]"
                       />
                     </div>
                     <Button type="submit" disabled={addingThreat || refreshing}>

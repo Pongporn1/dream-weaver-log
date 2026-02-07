@@ -75,17 +75,20 @@ export function RecurringPatterns({ dreams }: Props) {
           {/* Recurring Environments */}
           {patterns.recurringEnvs.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground">
+              <h3 className="text-xs font-medium text-foreground/70">
                 สภาพแวดล้อมที่พบบ่อย
               </h3>
               <div className="space-y-1">
                 {patterns.recurringEnvs.map(({ env, count }) => (
                   <div
                     key={env}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between rounded-md border border-border/60 bg-background/45 px-2 py-1.5 text-sm"
                   >
-                    <span>{env}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="text-foreground">{env}</span>
+                    <Badge
+                      variant="secondary"
+                      className="border border-border/70 bg-background/70 text-xs text-foreground"
+                    >
                       {count} ครั้ง
                     </Badge>
                   </div>
@@ -97,17 +100,22 @@ export function RecurringPatterns({ dreams }: Props) {
           {/* Recurring Entity Combinations */}
           {patterns.recurringCombos.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground">
+              <h3 className="text-xs font-medium text-foreground/70">
                 ตัวละครที่ปรากฏพร้อมกัน
               </h3>
               <div className="space-y-1">
                 {patterns.recurringCombos.map(({ combo, count }) => (
                   <div
                     key={combo}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between rounded-md border border-border/60 bg-background/45 px-2 py-1.5 text-sm"
                   >
-                    <span className="text-xs">{combo}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="max-w-[80%] truncate text-xs text-foreground/90">
+                      {combo}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="border border-border/70 bg-background/70 text-xs text-foreground"
+                    >
                       {count} ครั้ง
                     </Badge>
                   </div>
@@ -119,17 +127,22 @@ export function RecurringPatterns({ dreams }: Props) {
           {/* World Patterns */}
           {patterns.worldPatterns.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground">
+              <h3 className="text-xs font-medium text-foreground/70">
                 ลำดับโลกที่เกิดซ้ำ
               </h3>
               <div className="space-y-1">
                 {patterns.worldPatterns.map(({ seq, count }) => (
                   <div
                     key={seq}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between rounded-md border border-border/60 bg-background/45 px-2 py-1.5 text-sm"
                   >
-                    <span className="text-xs">{seq}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="max-w-[80%] truncate text-xs text-foreground/90">
+                      {seq}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="border border-border/70 bg-background/70 text-xs text-foreground"
+                    >
                       {count} ครั้ง
                     </Badge>
                   </div>

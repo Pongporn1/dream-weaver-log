@@ -58,10 +58,10 @@ export function EntityFrequency({ dreams, entities }: Props) {
           {notifications.map((msg, idx) => (
             <div
               key={idx}
-              className="flex items-start gap-2 p-2 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-500/50 rounded-lg"
+              className="flex items-start gap-2 rounded-lg border border-primary/35 bg-primary/10 p-2"
             >
-              <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-blue-700 dark:text-blue-300">{msg}</p>
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+              <p className="text-xs text-foreground/90">{msg}</p>
             </div>
           ))}
         </div>
@@ -73,13 +73,16 @@ export function EntityFrequency({ dreams, entities }: Props) {
           {frequentEntities.map(({ name, count, role }) => (
             <div
               key={name}
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+              className="flex items-center justify-between rounded-lg border border-border/60 bg-background/45 p-2 transition-colors hover:bg-background/70"
             >
               <div className="flex-1">
-                <p className="text-sm font-medium">{name}</p>
-                <p className="text-xs text-muted-foreground">{role}</p>
+                <p className="text-sm font-medium text-foreground">{name}</p>
+                <p className="text-xs text-foreground/70">{role}</p>
               </div>
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="border border-border/70 bg-background/70 text-xs text-foreground"
+              >
                 {count} ครั้ง
               </Badge>
             </div>

@@ -10,7 +10,8 @@ interface LibraryHeaderProps {
   onSearchChange: (query: string) => void;
   groupBy: GroupBy;
   onGroupByChange: (groupBy: GroupBy) => void;
-  totalDreams: number;
+  totalCount: number;
+  totalLabel?: string;
   currentPhenomenon: MoonPhenomenon | null;
   showDreamFilters?: boolean;
 }
@@ -20,7 +21,8 @@ export function LibraryHeader({
   onSearchChange,
   groupBy,
   onGroupByChange,
-  totalDreams,
+  totalCount,
+  totalLabel = "ความฝัน",
   currentPhenomenon,
   showDreamFilters = true,
 }: LibraryHeaderProps) {
@@ -56,7 +58,7 @@ export function LibraryHeader({
               <Shuffle className="w-4 h-4" />
             </Button> */}
             <div className="text-sm text-muted-foreground">
-              {totalDreams} ความฝัน
+              {totalCount} {totalLabel}
             </div>
           </div>
         </div>

@@ -182,9 +182,9 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-2 p-2 bg-secondary/50 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/70 bg-background/65 p-2">
               <div>
-                <p className="text-xs text-muted-foreground">Avg Threat</p>
+                <p className="text-xs text-foreground/70">Avg Threat</p>
                 <p
                   className={`text-sm font-semibold ${
                     node.avgThreat >= 4
@@ -198,8 +198,8 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Connections</p>
-                <p className="text-sm font-semibold">
+                <p className="text-xs text-foreground/70">Connections</p>
+                <p className="text-sm font-semibold text-foreground">
                   {Object.keys(node.connections).length}
                 </p>
               </div>
@@ -208,12 +208,16 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
             {/* Common Entities */}
             {node.commonEntities.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground/70">
                   ตัวละครที่พบบ่อย:
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {node.commonEntities.map((entity) => (
-                    <Badge key={entity} variant="secondary" className="text-xs">
+                    <Badge
+                      key={entity}
+                      variant="secondary"
+                      className="border border-border/70 bg-background/70 text-xs text-foreground"
+                    >
                       {entity}
                     </Badge>
                   ))}
@@ -223,10 +227,10 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
 
             {/* Connections */}
             {Object.keys(node.connections).length > 0 && (
-              <div className="space-y-1 pt-2 border-t">
+              <div className="space-y-1 border-t border-border/70 pt-2">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">
+                  <TrendingUp className="w-3 h-3 text-foreground/70" />
+                  <p className="text-xs text-foreground/70">
                     เชื่อมต่อไปยัง:
                   </p>
                 </div>
@@ -239,10 +243,13 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
                         key={toWorld}
                         className="flex items-center justify-between text-xs"
                       >
-                        <span className="text-muted-foreground">
+                        <span className="text-foreground/80">
                           → {worldNameByKey.get(toWorld) || toWorld}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge
+                          variant="outline"
+                          className="border-border/80 bg-background/70 text-xs text-foreground/90"
+                        >
                           {count}x
                         </Badge>
                       </div>
@@ -253,7 +260,7 @@ export function DreamUniverseMap({ dreams, worlds }: Props) {
 
             {/* Description */}
             {node.world.description && (
-              <p className="text-xs text-muted-foreground pt-2 border-t">
+              <p className="border-t border-border/70 pt-2 text-xs text-foreground/70">
                 {node.world.description}
               </p>
             )}

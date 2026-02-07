@@ -131,10 +131,16 @@ export function ConnectedDreams({ dreams }: Props) {
       </div>
 
       {connections.map((conn, index) => (
-        <div key={index} className="card-minimal">
+        <div
+          key={index}
+          className="card-minimal border border-border/70 bg-card/90 backdrop-blur-sm"
+        >
           {/* Connection Strength */}
           <div className="flex items-center justify-between mb-3">
-            <Badge variant="secondary" className="text-xs">
+            <Badge
+              variant="secondary"
+              className="border border-border/70 bg-background/80 text-xs text-foreground"
+            >
               คะแนนเชื่อมโยง: {conn.score.toFixed(1)}
             </Badge>
           </div>
@@ -143,20 +149,24 @@ export function ConnectedDreams({ dreams }: Props) {
           <div className="grid md:grid-cols-2 gap-4">
             {/* Dream 1 */}
             <Link to={`/logs/${conn.dream1.id}`}>
-              <div className="p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+              <div className="rounded-lg border border-border/70 bg-card/75 p-3 text-foreground shadow-sm transition-colors hover:bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-3 h-3 text-primary" />
                   <span className="text-sm font-semibold">
                     {conn.dream1.world}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground/70">
                   {new Date(conn.dream1.date).toLocaleDateString("th-TH")}
                 </p>
                 {conn.dream1.entities.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {conn.dream1.entities.slice(0, 3).map((e) => (
-                      <Badge key={e} variant="outline" className="text-xs">
+                      <Badge
+                        key={e}
+                        variant="outline"
+                        className="border-border/80 bg-background/70 text-xs text-foreground/90"
+                      >
                         {e}
                       </Badge>
                     ))}
@@ -167,20 +177,24 @@ export function ConnectedDreams({ dreams }: Props) {
 
             {/* Dream 2 */}
             <Link to={`/logs/${conn.dream2.id}`}>
-              <div className="p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+              <div className="rounded-lg border border-border/70 bg-card/75 p-3 text-foreground shadow-sm transition-colors hover:bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-3 h-3 text-primary" />
                   <span className="text-sm font-semibold">
                     {conn.dream2.world}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground/70">
                   {new Date(conn.dream2.date).toLocaleDateString("th-TH")}
                 </p>
                 {conn.dream2.entities.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {conn.dream2.entities.slice(0, 3).map((e) => (
-                      <Badge key={e} variant="outline" className="text-xs">
+                      <Badge
+                        key={e}
+                        variant="outline"
+                        className="border-border/80 bg-background/70 text-xs text-foreground/90"
+                      >
                         {e}
                       </Badge>
                     ))}
@@ -191,11 +205,11 @@ export function ConnectedDreams({ dreams }: Props) {
           </div>
 
           {/* Connection Details */}
-          <div className="mt-3 pt-3 border-t space-y-1">
+          <div className="mt-3 space-y-1 border-t border-border/70 pt-3">
             {conn.connections.map((connection, idx) => (
               <p
                 key={idx}
-                className="text-xs text-muted-foreground flex items-center gap-1.5"
+                className="flex items-center gap-1.5 text-xs text-foreground/80"
               >
                 <span className="w-1 h-1 rounded-full bg-primary" />
                 {connection}

@@ -84,28 +84,31 @@ export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span>High Threats (Level 4-5)</span>
+          <span className="text-foreground">High Threats (Level 4-5)</span>
           <span className="font-semibold text-red-500">{highThreats.length}</span>
         </div>
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Most Common Threats:</p>
+          <p className="text-xs text-foreground/75">Most Common Threats:</p>
           {threatCounts.map((threat, index) => (
-            <div key={threat.name} className="flex items-center justify-between text-sm">
+            <div
+              key={threat.name}
+              className="flex items-center justify-between rounded-md border border-border/60 bg-background/45 px-2 py-1.5 text-sm"
+            >
               <div className="min-w-0 space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">#{index + 1}</span>
-                  <span className="truncate">{threat.name}</span>
-                  <span className={`shrink-0 text-xs ${threat.level >= 4 ? "text-red-500" : "text-muted-foreground"}`}>
+                  <span className="text-foreground/65">#{index + 1}</span>
+                  <span className="truncate text-foreground">{threat.name}</span>
+                  <span className={`shrink-0 text-xs ${threat.level >= 4 ? "text-red-400" : "text-foreground/70"}`}>
                     (level {threat.level})
                   </span>
                 </div>
                 {threat.response && (
-                  <p className="pl-6 text-xs text-muted-foreground truncate">
+                  <p className="truncate pl-6 text-xs text-foreground/70">
                     ความสามารถ: {threat.response}
                   </p>
                 )}
               </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{threat.count} times</span>
+              <span className="shrink-0 text-xs text-foreground/75">{threat.count} times</span>
             </div>
           ))}
           {threatCounts.length === 0 && (
@@ -176,9 +179,17 @@ export function TopEnvironments({ dreams }: { dreams: DreamLog[] }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {topEnvironments.map(([env, count]) => (
-          <div key={env} className="flex items-center gap-1 px-3 py-1.5 bg-secondary rounded-full">
-            <span className="text-sm">{env}</span>
-            <Badge variant="outline" className="text-xs ml-1">{count}</Badge>
+          <div
+            key={env}
+            className="flex items-center gap-1 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-card-foreground shadow-sm"
+          >
+            <span className="max-w-[11rem] truncate text-sm">{env}</span>
+            <Badge
+              variant="outline"
+              className="ml-1 border-border/80 bg-background/70 text-foreground/90"
+            >
+              {count}
+            </Badge>
           </div>
         ))}
       </div>
@@ -202,9 +213,12 @@ export function SafetyOverrideStats({ dreams }: { dreams: DreamLog[] }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         {Object.entries(safetyStats).map(([key, value]) => (
-          <div key={key} className="text-center p-3 bg-secondary/50 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-1 capitalize">{key}</p>
-            <p className="text-xl font-bold">{value}</p>
+          <div
+            key={key}
+            className="rounded-lg border border-border/70 bg-background/70 p-3 text-center shadow-sm"
+          >
+            <p className="mb-1 text-xs capitalize text-foreground/75">{key}</p>
+            <p className="text-xl font-bold text-foreground">{value}</p>
           </div>
         ))}
       </div>
