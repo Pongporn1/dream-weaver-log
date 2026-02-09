@@ -126,6 +126,7 @@ export type Database = {
           threat_level: number
           time_system: Database["public"]["Enums"]["time_system"]
           updated_at: string
+          user_id: string | null
           wake_time: string
           world_id: string | null
         }
@@ -141,6 +142,7 @@ export type Database = {
           threat_level?: number
           time_system?: Database["public"]["Enums"]["time_system"]
           updated_at?: string
+          user_id?: string | null
           wake_time: string
           world_id?: string | null
         }
@@ -156,6 +158,7 @@ export type Database = {
           threat_level?: number
           time_system?: Database["public"]["Enums"]["time_system"]
           updated_at?: string
+          user_id?: string | null
           wake_time?: string
           world_id?: string | null
         }
@@ -177,6 +180,7 @@ export type Database = {
           name: string
           role: Database["public"]["Enums"]["entity_role"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -185,6 +189,7 @@ export type Database = {
           name: string
           role?: Database["public"]["Enums"]["entity_role"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -193,6 +198,34 @@ export type Database = {
           name?: string
           role?: Database["public"]["Enums"]["entity_role"]
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -216,6 +249,7 @@ export type Database = {
           sleep_start: string
           total_hours: number
           total_minutes: number
+          user_id: string | null
           wake_time: string
         }
         Insert: {
@@ -237,6 +271,7 @@ export type Database = {
           sleep_start: string
           total_hours?: number
           total_minutes?: number
+          user_id?: string | null
           wake_time: string
         }
         Update: {
@@ -258,6 +293,7 @@ export type Database = {
           sleep_start?: string
           total_hours?: number
           total_minutes?: number
+          user_id?: string | null
           wake_time?: string
         }
         Relationships: []
@@ -270,6 +306,7 @@ export type Database = {
           name: string
           type: Database["public"]["Enums"]["module_type"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -278,6 +315,7 @@ export type Database = {
           name: string
           type?: Database["public"]["Enums"]["module_type"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -286,6 +324,7 @@ export type Database = {
           name?: string
           type?: Database["public"]["Enums"]["module_type"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -297,6 +336,7 @@ export type Database = {
           name: string
           response: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -305,6 +345,7 @@ export type Database = {
           name: string
           response?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -313,6 +354,7 @@ export type Database = {
           name?: string
           response?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -325,6 +367,7 @@ export type Database = {
           stability: number
           type: Database["public"]["Enums"]["world_type"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -334,6 +377,7 @@ export type Database = {
           stability?: number
           type?: Database["public"]["Enums"]["world_type"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -343,6 +387,7 @@ export type Database = {
           stability?: number
           type?: Database["public"]["Enums"]["world_type"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
