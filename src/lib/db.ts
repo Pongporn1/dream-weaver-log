@@ -109,6 +109,14 @@ export async function getCachedDreamLogs(): Promise<DreamLog[]> {
   return cached.map(item => item.data);
 }
 
+// Read cached dream logs without cache-age validation.
+// Used for explicit migration/export recovery flows.
+export async function getCachedDreamLogsRaw(): Promise<DreamLog[]> {
+  const db = await getDB();
+  const cached = await db.getAll("dreamLogs");
+  return cached.map((item) => item.data);
+}
+
 // Sleep logs cache operations
 export async function cacheSleepLogs(logs: SleepLog[]): Promise<void> {
   const db = await getDB();

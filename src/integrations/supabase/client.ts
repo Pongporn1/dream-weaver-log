@@ -6,6 +6,7 @@ const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
   "https://rapxqrjhrehfhqsafovf.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhcHhxcmpocmVoZmhxc2Fmb3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MjczOTYsImV4cCI6MjA4NDUwMzM5Nn0.OpoDaXxYH0wDGj9S4AYRDwVVfW2xhOsBjY8Nh8zl2co";
 

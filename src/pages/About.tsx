@@ -23,6 +23,7 @@ import {
   getUnlockStatus,
 } from "@/lib/moonUnlock";
 import { toast } from "@/hooks/use-toast";
+import { DataTransferPanel } from "@/components/DataTransferPanel";
 
 export default function About() {
   const { user, signOut } = useAuth();
@@ -158,6 +159,10 @@ export default function About() {
           </section>
         </AnimatedSection>
 
+        <AnimatedSection delay={140} duration={400}>
+          <DataTransferPanel />
+        </AnimatedSection>
+
         <AnimatedSection delay={160} duration={400}>
           <section className="card-minimal space-y-4">
             <div className="mb-3">
@@ -227,7 +232,7 @@ export default function About() {
           </section>
         </AnimatedSection>
 
-        <AnimatedSection delay={320} duration={400}>
+        <AnimatedSection delay={240} duration={400}>
           <section className="card-minimal space-y-3">
             <div className="flex items-center justify-between">
               <div className="space-y-1">

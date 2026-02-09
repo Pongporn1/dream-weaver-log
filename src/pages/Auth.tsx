@@ -10,6 +10,40 @@ import { Moon, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+
+const getAuthErrorMessage = (error: unknown) => {
+  const fallbackMessage = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+
+  if (!(error instanceof Error)) {
+    return fallbackMessage;
+  }
+
+  const message = error.message.toLowerCase();
+
+  if (message.includes("invalid login credentials")) {
+    return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+  }
+
+  if (message.includes("email not confirmed")) {
+    return "กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ";
+  }
+
+  if (message.includes("user already registered")) {
+    return "อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบแทน";
+  }
+
+  if (message.includes("password should be at least")) {
+    return "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร";
+  }
+
+  if (message.includes("network") || message.includes("failed to fetch")) {
+    return "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง";
+  }
+
+  return error.message || fallbackMessage;
+};
+
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -30,16 +64,18 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      const normalizedEmail = normalizeEmail(email);
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
         if (error) throw error;
         navigate("/");
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
           options: {
             emailRedirectTo: window.location.origin,
@@ -52,10 +88,10 @@ export default function Auth() {
           description: "กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -70,10 +106,10 @@ export default function Auth() {
         redirect_uri: window.location.origin,
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
       setGoogleLoading(false);
@@ -167,6 +203,9 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="pl-10"
               />
             </div>
@@ -184,6 +223,8 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                autoCapitalize="none"
+                autoCorrect="off"
                 className="pl-10"
               />
             </div>
