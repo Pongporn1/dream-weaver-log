@@ -7,7 +7,9 @@ import {
   Lock,
   Unlock,
   Sparkles,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { AnimatedSection } from "@/components/ui/animated";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 export default function About() {
+  const { user, signOut } = useAuth();
   const {
     updateAvailable,
     isChecking,
@@ -221,6 +224,23 @@ export default function About() {
             <p className="text-xs text-muted-foreground mt-1">
               Personal Dream Logging System
             </p>
+          </section>
+        </AnimatedSection>
+
+        <AnimatedSection delay={320} duration={400}>
+          <section className="card-minimal space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h2 className="text-lg font-medium">บัญชีผู้ใช้</h2>
+                <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                  {user?.email}
+                </p>
+              </div>
+              <Button variant="outline" onClick={signOut} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                ออกจากระบบ
+              </Button>
+            </div>
           </section>
         </AnimatedSection>
       </div>
