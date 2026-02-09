@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Library as LibraryIcon,
   Moon,
@@ -27,10 +27,10 @@ import {
 } from "@/components/library";
 import { MythicCodex } from "@/components/mythic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 type GroupBy = "date" | "world";
 type LibraryTab = "dreams" | "threats" | "codex";
@@ -136,23 +136,28 @@ export default function Library() {
     setIsDebugPixel(true);
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [dreamsData, threatsData] = await Promise.all([
-          getDreamLogs(),
-          getThreats(),
-        ]);
-        setDreamLogs(dreamsData);
-        setThreats(threatsData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      const [dreamsData, threatsData] = await Promise.all([
+        getDreamLogs(),
+        getThreats(),
+      ]);
+      setDreamLogs(dreamsData);
+      setThreats(threatsData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    await loadData();
+  }, [loadData]);
 
   const filteredDreams = useMemo(() => {
     if (!searchQuery) return dreamLogs;
@@ -338,7 +343,7 @@ export default function Library() {
         </div>
 
         <TabsContent value="dreams" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full pb-28 relative z-0">
+          <PullToRefresh onRefresh={handleRefresh} className="h-full pb-28">
             {loading ? (
               <LibraryPageSkeleton />
             ) : filteredDreams.length === 0 ? (
@@ -390,11 +395,11 @@ export default function Library() {
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </PullToRefresh>
         </TabsContent>
 
         <TabsContent value="threats" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full pb-28 relative z-0">
+          <PullToRefresh onRefresh={handleRefresh} className="h-full pb-28">
             <div className="p-4">
               {loading ? (
                 <LibraryPageSkeleton />
@@ -409,11 +414,11 @@ export default function Library() {
                 />
               )}
             </div>
-          </ScrollArea>
+          </PullToRefresh>
         </TabsContent>
 
         <TabsContent value="codex" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full pb-28 relative z-0">
+          <PullToRefresh onRefresh={handleRefresh} className="h-full pb-28">
             <div className="p-4">
               <div className="card-minimal mb-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -448,7 +453,7 @@ export default function Library() {
               </div>
               <MythicCodex />
             </div>
-          </ScrollArea>
+          </PullToRefresh>
         </TabsContent>
       </Tabs>
 

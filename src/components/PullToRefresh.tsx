@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { RefreshCw, ArrowDown } from 'lucide-react';
+import { RefreshCw, ChevronDown } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { cn } from '@/lib/utils';
 
@@ -7,21 +7,40 @@ interface PullToRefreshProps {
   children: ReactNode;
   onRefresh: () => Promise<void>;
   className?: string;
+  indicatorClassName?: string;
 }
 
-export function PullToRefresh({ children, onRefresh, className }: PullToRefreshProps) {
-  const { containerRef, pullDistance, isRefreshing, isPulling } = usePullToRefresh({
+export function PullToRefresh({ 
+  children, 
+  onRefresh, 
+  className,
+  indicatorClassName 
+}: PullToRefreshProps) {
+  const { 
+    containerRef, 
+    pullDistance, 
+    isRefreshing, 
+    isPulling,
+    progress,
+    isReady 
+  } = usePullToRefresh({
     onRefresh,
     threshold: 80,
+    maxPull: 150,
   });
 
-  const progress = Math.min(pullDistance / 80, 1);
   const showIndicator = pullDistance > 10 || isRefreshing;
+  
+  // Calculate indicator position with smooth curve
+  const indicatorOffset = Math.min(pullDistance, 100);
+  
+  // Rotation based on progress (full rotation when ready)
+  const rotation = isReady ? 180 : progress * 180;
 
   return (
     <div 
       ref={containerRef}
-      className={cn("relative", className)}
+      className={cn("relative touch-pan-y", className)}
       style={{ 
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -32,41 +51,82 @@ export function PullToRefresh({ children, onRefresh, className }: PullToRefreshP
       {/* Pull Indicator */}
       <div 
         className={cn(
-          "absolute left-0 right-0 flex justify-center transition-all duration-200 z-10",
-          showIndicator ? "opacity-100" : "opacity-0"
+          "absolute left-0 right-0 flex justify-center pointer-events-none z-20",
+          "transition-opacity duration-200",
+          showIndicator ? "opacity-100" : "opacity-0",
+          indicatorClassName
         )}
         style={{ 
-          top: -40 + pullDistance,
-          transform: `translateY(${Math.min(pullDistance, 60)}px)` 
+          top: 0,
+          transform: `translateY(${indicatorOffset - 48}px)`,
         }}
       >
-        <div className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full",
-          "bg-primary/10 backdrop-blur-sm border border-primary/20",
-          "shadow-lg"
-        )}>
+        <div 
+          className={cn(
+            "flex items-center justify-center w-12 h-12 rounded-full",
+            "bg-background/90 backdrop-blur-md",
+            "border-2 transition-all duration-200",
+            isReady || isRefreshing 
+              ? "border-primary shadow-lg shadow-primary/20" 
+              : "border-muted-foreground/30",
+          )}
+          style={{
+            transform: `scale(${0.8 + progress * 0.2})`,
+          }}
+        >
           {isRefreshing ? (
-            <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+            <RefreshCw 
+              className="w-5 h-5 text-primary animate-spin" 
+            />
           ) : (
-            <ArrowDown 
+            <ChevronDown 
               className={cn(
-                "w-5 h-5 text-primary transition-transform duration-200",
-                progress >= 1 && "rotate-180"
-              )} 
+                "w-5 h-5 transition-all duration-200",
+                isReady ? "text-primary" : "text-muted-foreground"
+              )}
               style={{ 
-                transform: `rotate(${progress * 180}deg)`,
-                opacity: progress 
+                transform: `rotate(${rotation}deg)`,
+                opacity: 0.6 + progress * 0.4
               }}
             />
           )}
         </div>
+        
+        {/* Progress ring */}
+        {!isRefreshing && progress > 0 && (
+          <svg 
+            className="absolute inset-0 w-12 h-12 -rotate-90"
+            viewBox="0 0 48 48"
+          >
+            <circle
+              cx="24"
+              cy="24"
+              r="22"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-primary/30"
+            />
+            <circle
+              cx="24"
+              cy="24"
+              r="22"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="text-primary"
+              strokeDasharray={`${progress * 138} 138`}
+            />
+          </svg>
+        )}
       </div>
 
-      {/* Content */}
+      {/* Content with pull effect */}
       <div 
         style={{ 
           transform: `translateY(${isRefreshing ? 60 : pullDistance * 0.5}px)`,
-          transition: isPulling ? 'none' : 'transform 0.2s ease-out'
+          transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {children}

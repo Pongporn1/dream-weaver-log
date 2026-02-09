@@ -51,6 +51,7 @@ import {
   TopEnvironments,
   SafetyOverrideStats,
 } from "@/components/stats/TopLists";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 export default function Statistics() {
   const [dreams, setDreams] = useState<DreamLog[]>([]);
@@ -236,6 +237,10 @@ export default function Statistics() {
     unknown: dreams.filter((d) => d.timeSystem === "unknown").length,
   };
 
+  const handleRefresh = useCallback(async () => {
+    await loadData(true);
+  }, [loadData]);
+
   if (loading) {
     return (
       <div className="py-4">
@@ -245,7 +250,8 @@ export default function Statistics() {
   }
 
   return (
-    <div className="container-app space-y-4 sm:space-y-6 overflow-x-hidden pb-20 sm:pb-24 min-h-screen">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen pb-20 sm:pb-24">
+      <div className="container-app space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* Header */}
       <AnimatedStatsSection delay={0} duration={400}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -592,6 +598,7 @@ export default function Statistics() {
           </TabsContent>
         </Tabs>
       </AnimatedStatsSection>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }
