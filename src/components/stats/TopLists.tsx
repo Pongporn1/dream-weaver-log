@@ -71,6 +71,9 @@ export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
       name: t.name,
       level: t.level,
       count: t.dreamIds.length,
+      ability: t.ability,
+      countermeasure: t.countermeasure,
+      summonMedium: t.summonMedium,
       response: t.response,
     }))
     .sort((a, b) => b.count - a.count)
@@ -102,9 +105,24 @@ export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
                     (level {threat.level})
                   </span>
                 </div>
-                {threat.response && (
+                {threat.ability && (
                   <p className="truncate pl-6 text-xs text-foreground/70">
-                    ความสามารถ: {threat.response}
+                    ความสามารถ: {threat.ability}
+                  </p>
+                )}
+                {threat.countermeasure && (
+                  <p className="truncate pl-6 text-xs text-foreground/70">
+                    วิธีรับมือ: {threat.countermeasure}
+                  </p>
+                )}
+                {threat.summonMedium && (
+                  <p className="truncate pl-6 text-xs text-foreground/70">
+                    สื่อกลางอัญเชิญ: {threat.summonMedium}
+                  </p>
+                )}
+                {!threat.ability && !threat.countermeasure && !threat.summonMedium && threat.response && (
+                  <p className="truncate pl-6 text-xs text-foreground/70">
+                    ข้อมูลเดิม: {threat.response}
                   </p>
                 )}
               </div>

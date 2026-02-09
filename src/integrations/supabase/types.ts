@@ -291,27 +291,36 @@ export type Database = {
       }
       threats: {
         Row: {
+          ability: string | null
+          countermeasure: string | null
           created_at: string
           id: string
           level: number
           name: string
           response: string | null
+          summon_medium: string | null
           updated_at: string
         }
         Insert: {
+          ability?: string | null
+          countermeasure?: string | null
           created_at?: string
           id?: string
           level?: number
           name: string
           response?: string | null
+          summon_medium?: string | null
           updated_at?: string
         }
         Update: {
+          ability?: string | null
+          countermeasure?: string | null
           created_at?: string
           id?: string
           level?: number
           name?: string
           response?: string | null
+          summon_medium?: string | null
           updated_at?: string
         }
         Relationships: []

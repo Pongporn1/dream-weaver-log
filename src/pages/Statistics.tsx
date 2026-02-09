@@ -71,7 +71,9 @@ export default function Statistics() {
   const [threatDraft, setThreatDraft] = useState({
     name: "",
     level: "3",
-    response: "",
+    ability: "",
+    countermeasure: "",
+    summonMedium: "",
   });
 
   const loadData = useCallback(async (isRefresh = false) => {
@@ -178,7 +180,9 @@ export default function Statistics() {
       const created = await addThreat({
         name,
         level: Number(threatDraft.level) as ThreatEntry["level"],
-        response: threatDraft.response.trim() || undefined,
+        ability: threatDraft.ability.trim() || undefined,
+        countermeasure: threatDraft.countermeasure.trim() || undefined,
+        summonMedium: threatDraft.summonMedium.trim() || undefined,
       });
 
       if (!created) {
@@ -193,7 +197,9 @@ export default function Statistics() {
       setThreatDraft({
         name: "",
         level: "3",
-        response: "",
+        ability: "",
+        countermeasure: "",
+        summonMedium: "",
       });
       await loadData(true);
     } finally {
@@ -462,10 +468,10 @@ export default function Statistics() {
                   >
                     <div>
                       <h3 className="text-sm font-medium text-foreground">
-                        เพิ่ม Threat + ความสามารถ
+                        เพิ่ม Threat Detail
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        ความสามารถจะแสดงใน Threat Analysis ทันที
+                        แยกความสามารถ / วิธีรับมือ / สื่อกลางอัญเชิญ
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -510,19 +516,53 @@ export default function Statistics() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="threatAbility" className="text-foreground/90">
-                        ความสามารถ / วิธีรับมือ (optional)
+                        ความสามารถ (optional)
                       </Label>
                       <Textarea
                         id="threatAbility"
                         className="min-h-[84px] border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
-                        value={threatDraft.response}
+                        value={threatDraft.ability}
                         onChange={(event) =>
                           setThreatDraft((prev) => ({
                             ...prev,
-                            response: event.target.value,
+                            ability: event.target.value,
                           }))
                         }
                         placeholder="เช่น ดูดพลังความจำ, ลวงเวลา"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="threatCounter" className="text-foreground/90">
+                        วิธีรับมือ (optional)
+                      </Label>
+                      <Textarea
+                        id="threatCounter"
+                        className="min-h-[84px] border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
+                        value={threatDraft.countermeasure}
+                        onChange={(event) =>
+                          setThreatDraft((prev) => ({
+                            ...prev,
+                            countermeasure: event.target.value,
+                          }))
+                        }
+                        placeholder="เช่น หลีกเลี่ยงช่วงเวลา 18:00+, ใช้คำปลุกเฉพาะ"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="threatSummonMedium" className="text-foreground/90">
+                        สื่อกลางในการอัญเชิญ (optional)
+                      </Label>
+                      <Input
+                        id="threatSummonMedium"
+                        className="border-input/80 bg-background/90 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
+                        value={threatDraft.summonMedium}
+                        onChange={(event) =>
+                          setThreatDraft((prev) => ({
+                            ...prev,
+                            summonMedium: event.target.value,
+                          }))
+                        }
+                        placeholder="เช่น กระจกแตก, ไฟเทียนสีดำ, เสียงสวด"
                       />
                     </div>
                     <Button type="submit" disabled={addingThreat || refreshing}>

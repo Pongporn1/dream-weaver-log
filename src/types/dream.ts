@@ -56,6 +56,10 @@ export interface ThreatEntry {
   id: string;
   name: string;
   level: ThreatEntryLevel;
+  ability?: string;
+  countermeasure?: string;
+  summonMedium?: string;
+  // Legacy combined field for backward compatibility.
   response?: string;
   dreamIds: string[];
 }

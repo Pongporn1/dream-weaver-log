@@ -520,6 +520,9 @@ export async function getThreats(): Promise<ThreatEntry[]> {
     id: threat.id,
     name: threat.name,
     level: threat.level as ThreatEntry["level"],
+    ability: threat.ability || undefined,
+    countermeasure: threat.countermeasure || undefined,
+    summonMedium: threat.summon_medium || undefined,
     response: threat.response || undefined,
     dreamIds:
       threat.dream_log_threats
@@ -765,6 +768,9 @@ export async function addThreat(
     .insert({
       name: threat.name,
       level: threat.level,
+      ability: threat.ability?.trim() || null,
+      countermeasure: threat.countermeasure?.trim() || null,
+      summon_medium: threat.summonMedium?.trim() || null,
       response: threat.response,
     })
     .select()
@@ -779,6 +785,9 @@ export async function addThreat(
     id: data.id,
     name: data.name,
     level: data.level as ThreatEntry["level"],
+    ability: data.ability || undefined,
+    countermeasure: data.countermeasure || undefined,
+    summonMedium: data.summon_medium || undefined,
     response: data.response || undefined,
     dreamIds: [],
   };
@@ -791,6 +800,15 @@ export async function updateThreat(
   const payload = {
     ...(updates.name !== undefined ? { name: updates.name } : {}),
     ...(updates.level !== undefined ? { level: updates.level } : {}),
+    ...(updates.ability !== undefined
+      ? { ability: updates.ability?.trim() || null }
+      : {}),
+    ...(updates.countermeasure !== undefined
+      ? { countermeasure: updates.countermeasure?.trim() || null }
+      : {}),
+    ...(updates.summonMedium !== undefined
+      ? { summon_medium: updates.summonMedium?.trim() || null }
+      : {}),
     ...(updates.response !== undefined
       ? { response: updates.response?.trim() || null }
       : {}),
@@ -812,6 +830,9 @@ export async function updateThreat(
     id: data.id,
     name: data.name,
     level: data.level as ThreatEntry["level"],
+    ability: data.ability || undefined,
+    countermeasure: data.countermeasure || undefined,
+    summonMedium: data.summon_medium || undefined,
     response: data.response || undefined,
     dreamIds: [],
   };

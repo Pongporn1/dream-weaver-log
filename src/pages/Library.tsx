@@ -246,6 +246,9 @@ export default function Library() {
     const updated = await updateThreat(threatId, {
       name,
       level: updates.level,
+      ability: updates.ability,
+      countermeasure: updates.countermeasure,
+      summonMedium: updates.summonMedium,
       response: updates.response,
     });
 
