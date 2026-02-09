@@ -784,6 +784,39 @@ export async function addThreat(
   };
 }
 
+export async function updateThreat(
+  id: string,
+  updates: Partial<Omit<ThreatEntry, "id" | "dreamIds">>,
+): Promise<ThreatEntry | null> {
+  const payload = {
+    ...(updates.name !== undefined ? { name: updates.name } : {}),
+    ...(updates.level !== undefined ? { level: updates.level } : {}),
+    ...(updates.response !== undefined
+      ? { response: updates.response?.trim() || null }
+      : {}),
+  };
+
+  const { data, error } = await supabase
+    .from("threats")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error("Error updating threat:", error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    level: data.level as ThreatEntry["level"],
+    response: data.response || undefined,
+    dreamIds: [],
+  };
+}
+
 export async function deleteThreat(id: string): Promise<boolean> {
   const { error } = await supabase.from("threats").delete().eq("id", id);
   return !error;

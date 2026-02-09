@@ -10,12 +10,11 @@ import {
 } from "@/lib/api";
 import { downloadHTML } from "@/lib/exportHTML";
 import {
-  DreamLog,
-  World,
-  Entity,
-  ThreatEntry,
   ENTITY_ROLES,
+  THREAT_ENTRY_LEVELS,
+  THREAT_ENTRY_LEVEL_LABELS,
 } from "@/types/dream";
+import type { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -492,13 +491,16 @@ export default function Statistics() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="border-border bg-popover text-popover-foreground">
-                          {[0, 1, 2, 3, 4, 5].map((level) => (
+                          {THREAT_ENTRY_LEVELS.map((level) => (
                             <SelectItem key={level} value={String(level)}>
-                              Level {level}
+                              {THREAT_ENTRY_LEVEL_LABELS[level]}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        ระดับพิเศษ: Level 6 = Warden, Level 7 = Colossus Predator
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="threatAbility" className="text-foreground/90">

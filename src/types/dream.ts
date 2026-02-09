@@ -39,10 +39,23 @@ export interface SystemModule {
   description?: string;
 }
 
+export const THREAT_ENTRY_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+export type ThreatEntryLevel = (typeof THREAT_ENTRY_LEVELS)[number];
+export const THREAT_ENTRY_LEVEL_LABELS: Record<ThreatEntryLevel, string> = {
+  0: "Level 0",
+  1: "Level 1",
+  2: "Level 2",
+  3: "Level 3",
+  4: "Level 4",
+  5: "Level 5",
+  6: "Level 6 - Warden",
+  7: "Level 7 - Colossus Predator",
+};
+
 export interface ThreatEntry {
   id: string;
   name: string;
-  level: 0 | 1 | 2 | 3 | 4 | 5;
+  level: ThreatEntryLevel;
   response?: string;
   dreamIds: string[];
 }

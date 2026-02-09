@@ -1,6 +1,6 @@
 import { MapPin, Users, AlertTriangle, Clock, Zap, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
+import type { DreamLog, World, Entity, ThreatEntry } from "@/types/dream";
 
 export function TopWorldsList({ worlds }: { worlds: World[] }) {
   const worldCounts = worlds
@@ -84,7 +84,7 @@ export function ThreatAnalysis({ threats }: { threats: ThreatEntry[] }) {
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-foreground">High Threats (Level 4-5)</span>
+          <span className="text-foreground">High Threats (Level 4+)</span>
           <span className="font-semibold text-red-500">{highThreats.length}</span>
         </div>
         <div className="space-y-2">

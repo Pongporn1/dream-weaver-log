@@ -6,8 +6,8 @@ import {
   Shuffle,
   AlertTriangle,
 } from "lucide-react";
-import { getDreamLogs, getThreats } from "@/lib/api";
-import { DreamLog, ThreatEntry } from "@/types/dream";
+import { getDreamLogs, getThreats, updateThreat } from "@/lib/api";
+import type { DreamLog, ThreatEntry } from "@/types/dream";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
 import {
   getSessionPhenomenon,
@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
 
 type GroupBy = "date" | "world";
 type LibraryTab = "dreams" | "threats" | "codex";
@@ -62,12 +63,8 @@ export default function Library() {
   useEffect(() => {
     const { phenomenon } = getSessionPhenomenon();
     setCurrentPhenomenon(phenomenon);
-    setIsDebugSuperBlue(
-      localStorage.getItem(lockedMoonKey) === debugMoonId,
-    );
-    setIsDebugPixel(
-      localStorage.getItem(lockedMoonKey) === pixelMoonId,
-    );
+    setIsDebugSuperBlue(localStorage.getItem(lockedMoonKey) === debugMoonId);
+    setIsDebugPixel(localStorage.getItem(lockedMoonKey) === pixelMoonId);
     setMythicShuffleEnabledState(isMythicShuffleEnabled());
   }, []);
 
@@ -211,13 +208,60 @@ export default function Library() {
   };
 
   const headerTotalCount =
-    activeTab === "threats"
-        ? threats.length
-        : filteredDreams.length;
-  const headerTotalLabel =
-    activeTab === "threats"
-        ? "threat"
-        : "ความฝัน";
+    activeTab === "threats" ? threats.length : filteredDreams.length;
+  const headerTotalLabel = activeTab === "threats" ? "threat" : "ความฝัน";
+
+  const handleThreatUpdate = async (
+    threatId: string,
+    updates: Partial<Omit<ThreatEntry, "id" | "dreamIds">>,
+  ): Promise<boolean> => {
+    const name = updates.name?.trim() || "";
+    if (!name) {
+      toast({
+        title: "กรุณาใส่ชื่อ threat",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const hasDuplicate = threats.some(
+      (threat) =>
+        threat.id !== threatId &&
+        threat.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+
+    if (hasDuplicate) {
+      toast({
+        title: "ชื่อ threat นี้มีอยู่แล้ว",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const updated = await updateThreat(threatId, {
+      name,
+      level: updates.level,
+      response: updates.response,
+    });
+
+    if (!updated) {
+      toast({
+        title: "แก้ไข threat ไม่สำเร็จ",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setThreats((prev) =>
+      prev.map((threat) =>
+        threat.id === threatId
+          ? { ...threat, ...updated, dreamIds: threat.dreamIds }
+          : threat,
+      ),
+    );
+    toast({ title: "บันทึก threat แล้ว" });
+    return true;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -255,9 +299,7 @@ export default function Library() {
               className="h-8 shrink-0"
               title="Debug: ล็อก Pixel Dream Moon ชั่วคราว"
             >
-              {isDebugPixel
-                ? "Debug: Pixel Dream (ON)"
-                : "Debug: Pixel Dream"}
+              {isDebugPixel ? "Debug: Pixel Dream (ON)" : "Debug: Pixel Dream"}
             </Button>
           </div>
         </details>
@@ -362,6 +404,8 @@ export default function Library() {
                   dreams={dreamLogs}
                   compact
                   showHeader={false}
+                  editable
+                  onThreatUpdate={handleThreatUpdate}
                 />
               )}
             </div>
@@ -398,9 +442,7 @@ export default function Library() {
                     สลับตอนนี้
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    {mythicShuffleEnabled
-                      ? "กำลังสุ่มอัตโนมัติ"
-                      : "ปิดอยู่"}
+                    {mythicShuffleEnabled ? "กำลังสุ่มอัตโนมัติ" : "ปิดอยู่"}
                   </span>
                 </div>
               </div>
