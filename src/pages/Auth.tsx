@@ -89,17 +89,13 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const isLovableDomain = window.location.hostname.endsWith('.lovable.app');
-      if (isLovableDomain) {
-        const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin },
-        });
-        if (error) throw error;
-      }
+      // Use purely Supabase auth to avoid Lovable backend 404s on GitHub Pages
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        // Provide full URL to ensure it returns correctly
+        options: { redirectTo: window.location.origin + window.location.pathname },
+      });
+      if (error) throw error;
     } catch (error) {
       toast({ title: "เกิดข้อผิดพลาด", description: getAuthErrorMessage(error), variant: "destructive" });
       setGoogleLoading(false);

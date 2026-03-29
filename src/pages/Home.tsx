@@ -4,7 +4,7 @@ import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exportElementToPDF } from "@/utils/exportPdf";
+import { PrintableDreamBook } from "@/components/library/PrintableDreamBook";
 import { AnimatedProfileHeader } from "@/components/AnimatedProfileHeader";
 import { HomeSkeleton } from "@/components/skeletons/HomeSkeleton";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -51,24 +51,17 @@ export default function Home() {
     toast.success("รีเฟรชข้อมูลแล้ว");
   }, [loadData]);
 
-  const handleExportPDF = async () => {
-    if (!homeRef.current) return;
-    try {
-      setIsExporting(true);
-      toast.info("กำลังรวบรวมข้อมูลเป็นหนังสือ PDF...");
-      await new Promise(resolve => setTimeout(resolve, 300));
-      await exportElementToPDF(homeRef.current, "dream-weaver-book.pdf");
-      toast.success("ดาวน์โหลดหนังสือ PDF สำเร็จ!");
-    } catch (error) {
-      console.error(error);
-      toast.error("เกิดข้อผิดพลาดในการโหลด PDF");
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExportPDF = () => {
+    // Simply use the browser's native print, which has been configured
+    // via CSS (@media print) to render the PrintableDreamBook component
+    // and hide the rest of the website's UI.
+    window.print();
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" ref={homeRef}>
+    <>
+      <PrintableDreamBook dreams={allDreams} />
+      <div className="min-h-screen bg-background flex flex-col print:hidden" ref={homeRef}>
       <OfflineIndicator />
       <AnimatedProfileHeader dreams={allDreams} />
 
@@ -110,5 +103,6 @@ export default function Home() {
 
       <BottomNavigation />
     </div>
+    </>
   );
 }

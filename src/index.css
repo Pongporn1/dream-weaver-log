@@ -788,3 +788,28 @@
     filter: brightness(1.08) contrast(1.06);
   }
 }
+
+/* Print Styles for PDF Export */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 2cm;
+  }
+
+  html, body {
+    background-color: white !important;
+    background-image: none !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
