@@ -67,7 +67,13 @@ export function usePullToRefresh({
     
     // Record start position and scroll state
     startY.current = e.touches[0].clientY;
-    startScrollTop.current = container.scrollTop;
+    
+    // Check if container is actually scrolling itself, or if we are relying on window scroll
+    const scrollTop = container.scrollTop > 0 
+      ? container.scrollTop 
+      : window.scrollY || document.documentElement.scrollTop;
+      
+    startScrollTop.current = scrollTop;
     lastY.current = e.touches[0].clientY;
     lastTime.current = Date.now();
     velocity.current = 0;
@@ -94,7 +100,11 @@ export function usePullToRefresh({
     
     // Check if we should activate pull-to-refresh
     // Must be at top AND pulling down AND started from near top
-    const isAtTop = container.scrollTop <= 0;
+    const currentScrollTop = container.scrollTop > 0 
+      ? container.scrollTop 
+      : window.scrollY || document.documentElement.scrollTop;
+      
+    const isAtTop = currentScrollTop <= 0;
     const startedNearTop = startScrollTop.current <= 5;
     const isPullingDown = deltaY > 0;
     

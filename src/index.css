@@ -396,6 +396,11 @@
     @apply border-border;
   }
 
+  html, body {
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family:
