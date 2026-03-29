@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/~oauth/],
         // Manual update prompt
         skipWaiting: false,
         clientsClaim: true,
