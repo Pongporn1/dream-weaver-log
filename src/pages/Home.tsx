@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getDreamLogs, getWorlds, getEntities } from "@/lib/api";
 import { DreamLog } from "@/types/dream";
 import { toast } from "sonner";
+import { Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportElementToPDF } from "@/utils/exportPdf";
 import { AnimatedProfileHeader } from "@/components/AnimatedProfileHeader";
 import { HomeSkeleton } from "@/components/skeletons/HomeSkeleton";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -18,6 +21,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [existingWorlds, setExistingWorlds] = useState<string[]>([]);
   const [existingEntities, setExistingEntities] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const homeRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -46,8 +51,24 @@ export default function Home() {
     toast.success("รีเฟรชข้อมูลแล้ว");
   }, [loadData]);
 
+  const handleExportPDF = async () => {
+    if (!homeRef.current) return;
+    try {
+      setIsExporting(true);
+      toast.info("กำลังรวบรวมข้อมูลเป็นหนังสือ PDF...");
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await exportElementToPDF(homeRef.current, "dream-weaver-book.pdf");
+      toast.success("ดาวน์โหลดหนังสือ PDF สำเร็จ!");
+    } catch (error) {
+      console.error(error);
+      toast.error("เกิดข้อผิดพลาดในการโหลด PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" ref={homeRef}>
       <OfflineIndicator />
       <AnimatedProfileHeader dreams={allDreams} />
 
@@ -62,6 +83,22 @@ export default function Home() {
           />
 
           <QuickActions />
+
+          <div className="flex justify-center mt-6">
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/10 h-12"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Download className="w-5 h-5" />
+              )}
+              {isExporting ? "กำลังจัดทำรูปเล่ม..." : "ส่งออกเป็นหนังสือ PDF"}
+            </Button>
+          </div>
 
           {loading ? (
             <HomeSkeleton />
