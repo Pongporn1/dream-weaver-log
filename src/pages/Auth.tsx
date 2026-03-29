@@ -89,8 +89,17 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-      if (error) throw error;
+      const isLovableDomain = window.location.hostname.endsWith('.lovable.app');
+      if (isLovableDomain) {
+        const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin },
+        });
+        if (error) throw error;
+      }
     } catch (error) {
       toast({ title: "เกิดข้อผิดพลาด", description: getAuthErrorMessage(error), variant: "destructive" });
       setGoogleLoading(false);
